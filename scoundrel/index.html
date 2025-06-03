@@ -1,1 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scoundrel - Roguelike Card Game</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #334155 100%
+        );
+        color: #f1f5f9;
+        height: 100vh;
+        overflow: hidden; /* Prevent body scroll, panels will scroll if needed */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      #app {
+        height: 100vh;
+      }
+
+      .game-container {
+        display: grid;
+        grid-template-columns: 200px 1fr; /* Status panel width fixed */
+        grid-template-rows: 1fr 100px; /* MODIFIED: Gameplay area takes 1fr, Events log is 150px high */
+        grid-template-areas:
+          "status gameplay"
+          "status events";
+        height: 100%;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .status-panel {
+        grid-area: status;
+        background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+        border: 2px solid #475569;
+        border-radius: 12px;
+        padding: 20px 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        overflow-y: auto;
+      }
+
+      .status-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #38bdf8;
+        margin-bottom: 20px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 8px;
+        background: rgba(71, 85, 105, 0.3);
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+      .stat-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .stat-item:hover {
+        background: rgba(71, 85, 105, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #cbd5e1;
+        font-weight: 500;
+      }
+
+      .stat-value {
+        font-size: 14px;
+        font-weight: bold;
+        color: #fff;
+        text-align: right; /* Ensure values align well if they wrap */
+      }
+
+      .stat-value.health-color {
+        color: #ef4444;
+      } /* Red for health */
+      .stat-value.score-color {
+        color: #22c55e;
+      } /* Green for score */
+      .stat-value small {
+        font-size: 0.8em;
+        opacity: 0.8;
+        display: block;
+      }
+
+      .gameplay-area {
+        grid-area: gameplay;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 2px solid #475569;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex; /* Centering for non-gameplay states */
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden; /* Content inside will scroll if needed */
+      }
+
+      .gameplay-area::before {
+        /* Subtle background radial */
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(56, 189, 248, 0.05) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      /* Layout for active gameplay (title, cards, interaction) */
+      .gameplay-active-layout {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        z-index: 1; /* Above ::before pseudo-element */
+      }
+
+      .room-title-display {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #38bdf8; /* Light blue title */
+        text-align: center;
+        padding-bottom: 15px; /* Space below title */
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .room-title-display .button-group {
+        margin-left: 15px;
+        display: inline-block; /* Keep button next to title */
+        vertical-align: middle;
+      }
+
+      .game-field {
+        /* Main card display area */
+        width: 100%;
+        flex-grow: 1; /* Takes up available space */
+        background: rgba(168, 85, 247, 0.05); /* Subtle purple tint */
+        border: 2px dashed #a855f7; /* Purple dashed border */
+        border-radius: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px; /* Gap between cards */
+        justify-content: center;
+        align-items: flex-start; /* Align card tops */
+        padding: 15px;
+        overflow-y: auto; /* Scroll if cards overflow */
+        position: relative; /* For z-index if needed */
+        z-index: 1;
+      }
+      .game-field::-webkit-scrollbar {
+        width: 6px;
+      }
+      .game-field::-webkit-scrollbar-track {
+        background: rgba(71, 85, 105, 0.2);
+        border-radius: 3px;
+      }
+      .game-field::-webkit-scrollbar-thumb {
+        background: #a855f7;
+        border-radius: 3px;
+      }
+      .game-field::-webkit-scrollbar-thumb:hover {
+        background: #9333ea;
+      }
+
+      /* Centered content for mode/modifier selection and game over */
+      .centered-content-container {
+        text-align: center;
+        z-index: 1; /* Above ::before pseudo-element */
+      }
+      .section-title {
+        /* For titles in mode/modifier/game_over */
+        color: #a855f7; /* Purple title */
+        font-weight: bold;
+        font-size: 28px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        opacity: 0.9;
+        margin-bottom: 25px;
+      }
+      .centered-content-container .button-group {
+        margin-top: 15px;
+      }
+      .game-over-details {
+        list-style-type: none;
+        padding: 0;
+        margin: 20px 0;
+        font-size: 1.1em;
+      }
+      .game-over-details li {
+        margin-bottom: 8px;
+        padding: 5px;
+        background: rgba(71, 85, 105, 0.2);
+        border-radius: 4px;
+      }
+      .final-score-display {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #22c55e; /* Green for score */
+        margin: 15px 0;
+      }
+
+      .events-log {
+        grid-area: events;
+        background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+        border: 2px solid #475569;
+        border-radius: 12px;
+        padding: 20px;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .events-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #38bdf8;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .event-item {
+        background: rgba(71, 85, 105, 0.3);
+        border-left: 3px solid #38bdf8; /* Default border color */
+        padding: 10px 14px; /* Adjusted padding */
+        margin-bottom: 8px;
+        border-radius: 6px;
+        font-size: 0.85em; /* Slightly smaller log font */
+        line-height: 1.4;
+        transition: all 0.3s ease;
+        animation: slideIn 0.3s ease-out;
+      }
+      .event-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .event-item:hover {
+        background: rgba(71, 85, 105, 0.5);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* Scrollbar styling for events log */
+      .events-log::-webkit-scrollbar {
+        width: 6px;
+      }
+      .events-log::-webkit-scrollbar-track {
+        background: rgba(71, 85, 105, 0.3);
+        border-radius: 3px;
+      }
+      .events-log::-webkit-scrollbar-thumb {
+        background: #38bdf8;
+        border-radius: 3px;
+      }
+      .events-log::-webkit-scrollbar-thumb:hover {
+        background: #0ea5e9;
+      }
+
+      /* --- Scoundrel Specific Styles Integrated --- */
+
+      /* Button Styling - Base from target, colors from Scoundrel */
+      button {
+        background-color: #007acc; /* Default blue from Scoundrel */
+        color: white;
+        border: none;
+        padding: 10px 18px; /* Target layout size */
+        margin: 5px; /* Target layout margin */
+        border-radius: 6px; /* Target layout radius */
+        cursor: pointer;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: background-color 0.3s ease, transform 0.1s ease;
+        flex-shrink: 0;
+      }
+      button:hover {
+        background-color: #005f99; /* Darker blue */
+        transform: translateY(-1px);
+      }
+      button:active {
+        transform: translateY(0px);
+      }
+      button:disabled {
+        background-color: #555 !important; /* Use important to override specifics */
+        color: #999;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px; /* Spacing between buttons */
+      }
+
+      .danger-button {
+        background-color: #c9302c;
+      }
+      .danger-button:hover {
+        background-color: #a9201c;
+      }
+      .success-button {
+        background-color: #4cae4c;
+      }
+      .success-button:hover {
+        background-color: #3a8e3a;
+      }
+      .warning-button {
+        background-color: #800080;
+      } /* Purple */
+      .warning-button:hover {
+        background-color: #6a006a;
+      } /* Darker Purple */
+
+      /* Card Styling from Scoundrel - preserved with minor adjustments */
+      .card-layout-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 110px; /* Original width */
+      }
+
+      .card-text-header {
+        text-align: center;
+        margin-bottom: 4px;
+        color: #e0e0e0; /* Brighter for contrast on dark bg */
+        width: 100%;
+        font-size: 0.9em;
+      }
+      .card-name-header {
+        font-weight: bold;
+        font-size: 1em;
+      }
+      .card-type-header {
+        font-style: italic;
+        font-size: 0.85em;
+      }
+
+      .card {
+        border: 1px solid #555;
+        padding: 15px;
+        width: 90px; /* Original width */
+        min-height: 125px; /* Original height */
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        background-color: white; /* Fallback */
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .card:hover {
+        transform: translateY(-4px) scale(1.03); /* Slightly more pop */
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+      }
+      .card.monster {
+        border-left: 4px solid #ef4444;
+      } /* Target Red */
+      .card.weapon {
+        border-left: 4px solid #3b82f6;
+      } /* Target Blue */
+      .card.potion {
+        border-left: 4px solid #22c55e;
+      } /* Target Green */
+
+      .disabled-card {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+      .disabled-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(50, 50, 50, 0.5); /* Darker overlay */
+        z-index: 1;
+        border-radius: inherit;
+      }
+      .disabled-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+
+      .card-text-footer {
+        text-align: center;
+        margin-top: 4px;
+        color: #cccccc; /* Lighter for readability */
+        width: 100%;
+      }
+      .card-flavor-footer {
+        font-size: 0.7em;
+        font-style: italic;
+        color: #a0a0a0;
+      }
+
+      /* Monster Interaction Prompt from Scoundrel */
+      .monster-interaction-prompt {
+        padding: 15px 0; /* Space around prompt */
+        text-align: center;
+        flex-shrink: 0;
+        background: rgba(30, 41, 59, 0.5); /* Subtle background */
+        border-radius: 8px;
+        margin-top: 10px; /* Space from game-field */
+      }
+      .monster-interaction-prompt h4 {
+        font-size: 1.1em;
+        margin: 5px 0 10px 0;
+        color: #e0e0e0;
+      }
+      .monster-interaction-prompt h4 span {
+        font-weight: normal;
+      }
+      .monster-interaction-prompt .button-group {
+        margin-top: 5px;
+      }
+
+      /* Monarch Modifier Buttons from Scoundrel */
+      .monarch-modifier-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch; /* Buttons take full width available in group */
+        gap: 10px;
+        max-width: 400px; /* Limit width for readability */
+        margin: 0 auto; /* Center the group */
+      }
+      .monarch-modifier-buttons button {
+        margin: 0; /* Remove default button margin if any */
+        text-align: left;
+        padding: 12px 15px;
+      }
+      .monarch-modifier-buttons button small {
+        display: block;
+        margin-top: 3px;
+        font-size: 0.9em;
+        opacity: 0.85;
+        font-weight: normal;
+      }
+
+      /* Responsive design from target layout, with Scoundrel additions */
+      @media (max-width: 768px) {
+        .game-container {
+          grid-template-columns: 1fr;
+          /* The third 'auto' here will be effectively overridden by the fixed height on .events-log */
+          grid-template-rows: auto minmax(300px, 1fr) auto;
+          grid-template-areas:
+            "status"
+            "gameplay"
+            "events";
+          padding: 8px;
+          gap: 8px;
+        }
+
+        .status-panel {
+          /* Becomes horizontal flex */
+          display: flex;
+          flex-wrap: wrap; /* Allow wrapping if too many stats for one line */
+          gap: 10px;
+          padding: 12px;
+          overflow-y: visible; /* No scroll for status panel itself */
+        }
+        .status-title {
+          display: none;
+        } /* Title hidden, items become primary */
+        .stat-item {
+          margin-bottom: 0;
+          flex-grow: 1; /* Items try to fill space */
+          flex-basis: calc(50% - 10px); /* Roughly 2 items per row */
+          min-width: 120px; /* Minimum width for a stat item */
+        }
+        .stat-label {
+          font-size: 11px;
+        }
+        .stat-value {
+          font-size: 13px;
+        }
+
+        .gameplay-area {
+          padding: 15px;
+        }
+        .section-title {
+          font-size: 22px;
+          margin-bottom: 20px;
+        }
+        .room-title-display {
+          font-size: 1.1em;
+          padding-bottom: 10px;
+        }
+
+        .game-field {
+          padding: 10px;
+          gap: 8px;
+        }
+
+        /* Scoundrel's mobile card sizes */
+        .card-layout-wrapper {
+          width: 130px;
+        }
+        .card {
+          width: 75px;
+          min-height: 105px;
+        }
+        .card-text-header {
+          font-size: 0.8em;
+        }
+        .card-flavor-footer {
+          font-size: 0.65em;
+        }
+
+        button {
+          font-size: 0.85em;
+          padding: 8px 12px;
+          margin: 4px;
+        }
+        .monarch-modifier-buttons button small {
+          font-size: 0.8em;
+        }
+
+        .events-log {
+          padding: 15px;
+          height: 150px;
+        }
+        .events-title {
+          margin-bottom: 10px;
+        }
+        .event-item {
+          padding: 8px 10px;
+          font-size: 0.8em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="game-container">
+        <!-- Status Panel -->
+        <div class="status-panel">
+          <div class="status-title">Player Status</div>
+          <div class="stat-item">
+            <span class="stat-label">Health</span>
+            <span class="stat-value health-color"
+              >{{ player.health }} / {{ player.maxHealth }}
+              <small v-if="player.gameModeSpecificFlags.overhealEnabled"
+                >(Overheal)</small
+              >
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Score</span>
+            <span class="stat-value score-color">{{ player.score }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Weapon</span>
+            <span class="stat-value">
+              <template v-if="player.equippedWeapon">
+                {{ getCardFlavorName(player.equippedWeapon) }} ({{
+                player.equippedWeapon.value }})
+                <small
+                  v-if="!player.gameModeSpecificFlags.weaponDullingDisabled"
+                >
+                  (Hits < {{ player.lastMonsterValueDefeated || 'Any' }})
+                </small>
+                <small v-else>(Dulling Off)</small>
+              </template>
+              <template v-else>None</template>
+            </span>
+          </div>
+          <div class="stat-item" v-if="player.gameMode">
+            <span class="stat-label">Mode</span>
+            <span class="stat-value">{{ player.gameMode }}</span>
+          </div>
+          <div class="stat-item" v-if="player.monarchModifier">
+            <span class="stat-label">Modifier</span>
+            <span class="stat-value"
+              >{{ getMonarchModifierDetails(player.monarchModifier)?.name
+              }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Main Gameplay Area -->
+        <div class="gameplay-area">
+          <!-- Mode Selection -->
+          <div
+            v-if="gameState === 'mode_selection'"
+            class="centered-content-container"
+          >
+            <h2 class="section-title">Choose Game Mode</h2>
+            <div class="button-group">
+              <button @click="selectGameMode('Scoundrel')">Scoundrel</button>
+              <button @click="selectGameMode('Ace of Thieves')">
+                Ace of Thieves
+              </button>
+              <button @click="selectGameMode('Monarch')">Monarch</button>
+            </div>
+          </div>
+
+          <!-- Modifier Selection -->
+          <div
+            v-else-if="gameState === 'modifier_selection'"
+            class="centered-content-container"
+          >
+            <h2 class="section-title">Choose Monarch Modifier</h2>
+            <div class="button-group monarch-modifier-buttons">
+              <button
+                v-for="modifier in monarchModifiers"
+                :key="modifier.id"
+                @click="selectMonarchModifier(modifier.id)"
+              >
+                {{ modifier.name }}: <small>{{ modifier.description }}</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Gameplay -->
+          <div
+            v-else-if="gameState === 'gameplay'"
+            class="gameplay-active-layout"
+          >
+            <h3 class="room-title-display">
+              Room {{ turnCount }}
+              <small style="font-weight: normal; opacity: 0.8"
+                >(Interact: {{ interactionsNeeded }})</small
+              >
+              <div class="button-group" v-if="canFlee">
+                <button @click="fleeRoom" class="danger-button">
+                  Flee (-100)
+                </button>
+              </div>
+            </h3>
+            <div class="game-field">
+              <div
+                v-for="(card, index) in currentRoom"
+                :key="card.baseName + '-' + index"
+                class="card-layout-wrapper"
+              >
+                <div class="card-text-header">
+                  <div class="card-name-header">{{ card.baseName }}</div>
+                  <div class="card-type-header">
+                    {{ card.cardType }} ({{ card.value }})
+                  </div>
+                </div>
+                <div
+                  :class="['card', card.cardType.toLowerCase(), { 'disabled-card': interactionsNeeded === 0 && currentRoom.length === 1 && currentTurnInitialRoomSize > 0 && interactionsMadeThisRoom < (currentTurnInitialRoomSize -1) }]"
+                  :style="{ backgroundImage: 'url(\'' + card.backgroundImageUrl + '\')' }"
+                  @click="(interactionsNeeded > 0 || (currentRoom.length === 1 && currentTurnInitialRoomSize === 1 && interactionsMadeThisRoom === 0)) ? handleCardClick(card, index) : null"
+                ></div>
+                <div class="card-text-footer">
+                  <div class="card-flavor-footer">
+                    {{ getCardFlavorName(card) }}
+                  </div>
+                </div>
+              </div>
+              <p
+                v-if="currentRoom.length === 0 && deck.length > 0"
+                style="align-self: center; color: #aaa"
+              >
+                Dealing next room...
+              </p>
+            </div>
+            <div
+              v-if="selectedCardForMonsterInteraction"
+              class="monster-interaction-prompt"
+            >
+              <h4>
+                Vs {{ getCardFlavorName(selectedCardForMonsterInteraction) }}
+                ({{ selectedCardForMonsterInteraction.value }})
+                <template v-if="player.equippedWeapon">
+                  <br />
+                  <span
+                    v-if="weaponAttackOutcome.isAutoWin"
+                    style="color: #b8ffb8"
+                    >(Monarch Auto-Win! No damage)</span
+                  >
+                  <span
+                    v-else-if="weaponAttackOutcome.isDullAttack && weaponAttackOutcome.damageAmount > 0"
+                    style="color: #ffb8b8"
+                    >(Weapon DULL! Take {{ weaponAttackOutcome.damageAmount }}
+                    dmg)</span
+                  >
+                  <span
+                    v-else-if="weaponAttackOutcome.willTakeDamage && weaponAttackOutcome.damageAmount > 0"
+                    style="color: #ffb8b8"
+                    >(Use Weapon: Take {{ weaponAttackOutcome.damageAmount }}
+                    dmg)</span
+                  >
+                  <span
+                    v-else-if="!weaponAttackOutcome.willTakeDamage && weaponAttackOutcome.damageAmount === 0 && !weaponAttackOutcome.isDullAttack && !weaponAttackOutcome.isAutoWin"
+                    style="color: #b8ffb8"
+                    >(Use Weapon: No damage!)</span
+                  >
+                </template>
+              </h4>
+              <div class="button-group">
+                <button
+                  @click="fightMonster('weapon')"
+                  :disabled="!player.equippedWeapon"
+                  :class="{ 'warning-button': weaponAttackOutcome.willTakeDamage && weaponAttackOutcome.damageAmount > 0 && !weaponAttackOutcome.isAutoWin }"
+                >
+                  Use Weapon
+                </button>
+                <button @click="fightMonster('barehanded')">Barehanded</button>
+                <button
+                  @click="cancelMonsterInteraction()"
+                  class="danger-button"
+                  style="margin-left: 10px"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Game Over -->
+          <div
+            v-else-if="gameState === 'game_over'"
+            class="centered-content-container"
+          >
+            <h2 class="section-title" v-if="player.health > 0">
+              Dungeon Cleared! You Win!
+            </h2>
+            <h2 class="section-title" v-else>Game Over! You were defeated.</h2>
+            <div class="final-score-display">Final Score: {{ finalScore }}</div>
+            <ul class="game-over-details">
+              <li>Game Mode: {{ player.gameMode }}</li>
+              <li v-if="player.monarchModifier">
+                Monarch Modifier: {{
+                getMonarchModifierDetails(player.monarchModifier)?.name }}
+              </li>
+              <li>Monsters Killed: {{ player.monstersKilled }}</li>
+              <li>
+                Rooms Cleared (Turns): {{ turnCount > 0 ? turnCount -1 : 0 }}
+              </li>
+            </ul>
+            <button @click="resetGame()" class="success-button">
+              Play Again?
+            </button>
+          </div>
+        </div>
+
+        <!-- Events Log -->
+        <div class="events-log">
+          <div
+            v-for="(log, index) in gameLog.slice().reverse().slice(0, 15)"
+            :key="index"
+            class="event-item"
+            :style="getLogItemStyle(log.type)"
+          >
+            {{ log.message }}
+          </div>
+          <p
+            v-if="gameLog.length === 0"
+            style="color: #aaa; text-align: center; font-style: italic"
+          >
+            No events yet.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, reactive, computed, watch } = Vue;
+
+      const SUITS = { SPADES: "♠", CLUBS: "♣", HEARTS: "♥", DIAMONDS: "♦" };
+      const SUIT_NAMES_FOR_URL = {
+        "♠": "spades",
+        "♣": "clubs",
+        "♥": "hearts",
+        "♦": "diamonds",
+      };
+      const RANK_NAMES_FOR_SVG_URL = {
+        A: "ace",
+        K: "king",
+        Q: "queen",
+        J: "jack",
+        10: "10",
+        9: "9",
+        8: "8",
+        7: "7",
+        6: "6",
+        5: "5",
+        4: "4",
+        3: "3",
+        2: "2",
+      };
+      const RANKS = [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "J",
+        "Q",
+        "K",
+        "A",
+      ];
+
+      const FLAVOR_NAMES = {
+        "A♠": "👹 Lich King",
+        "K♠": "👹 Frost Giant",
+        "Q♠": "👹 Spirit Naga",
+        "J♠": "👹 Assassin",
+        "10♠": "👹 Hill Giant",
+        "9♠": "👹 Shadow",
+        "8♠": "👹 Minotaur",
+        "7♠": "👹 Bugbear",
+        "6♠": "👹 Hobgoblin",
+        "5♠": "👹 Zombie",
+        "4♠": "👹 Goblin",
+        "3♠": "👹 Giant Spider",
+        "2♠": "👹 Spider",
+        "A♣": "👹 Young Red Dragon",
+        "K♣": "👹 Cloud Giant",
+        "Q♣": "👹 Drow Priestess",
+        "J♣": "👹 Oni",
+        "10♣": "👹 Troll",
+        "9♣": "👹 Ettin",
+        "8♣": "👹 Werewolf",
+        "7♣": "👹 Gnoll",
+        "6♣": "👹 Orc",
+        "5♣": "👹 Skeleton",
+        "4♣": "👹 Kobold",
+        "3♣": "👹 Giant Rat",
+        "2♣": "👹 Rat",
+        "10♦": "⚔️ Ceremonial Greatblade",
+        "9♦": "⚔️ Elven Shortsword",
+        "8♦": "⚔️ Bloodtwin Handwraps",
+        "7♦": "⚔️ Broadsword",
+        "6♦": "⚔️ Wretched Sickle",
+        "5♦": "⚔️ Iron Spear",
+        "4♦": "⚔️ Lumber Axe",
+        "3♦": "⚔️ Club of Clubs",
+        "2♦": "⚔️ Heirloom Dagger",
+        "10♥": "🧪 Ambrosial Tonic",
+        "9♥": "🧪 Divine Salve",
+        "8♥": "🧪 Elixir of Renewal",
+        "7♥": "🧪 Restorative Draught",
+        "6♥": "🧪 Vitality Elixir",
+        "5♥": "🧪 Superior Healing Potion",
+        "4♥": "🧪 Greater Healing Potion",
+        "3♥": "🧪 Standard Healing Potion",
+        "2♥": "🧪 Minor Healing Potion",
+      };
+
+      const MONARCH_MODIFIERS_DETAILS = [
+        {
+          id: "KH",
+          name: "King of Hearts",
+          description: "MaxHealth +15. Start with extra HP.",
+        },
+        {
+          id: "KD",
+          name: "King of Diamonds",
+          description: "Start with top Weapon.",
+        },
+        {
+          id: "KS",
+          name: "King of Spades",
+          description: "Use two potions per room.",
+        },
+        {
+          id: "KC",
+          name: "King of Clubs",
+          description: "Can flee twice in a row.",
+        },
+        {
+          id: "QH",
+          name: "Queen of Hearts",
+          description: "Overheal enabled (heal beyond MaxHealth).",
+        },
+        {
+          id: "QD",
+          name: "Queen of Diamonds",
+          description: "Weapon dulling disabled.",
+        },
+        {
+          id: "QS",
+          name: "Queen of Spades",
+          description: "Potions heal for double.",
+        },
+        {
+          id: "QC",
+          name: "Queen of Clubs",
+          description: "Lifesteal: Heal HP on Weapon hit.",
+        },
+      ];
+
+      createApp({
+        data() {
+          return {
+            gameState: "mode_selection", // mode_selection, modifier_selection, gameplay, game_over
+            deck: [],
+            player: this.getInitialPlayerState(),
+            currentRoom: [],
+            cardKeptFromLastRoom: null,
+            turnCount: 0,
+            fledLastRoom: false,
+            gameLog: [],
+            interactionsMadeThisRoom: 0,
+            selectedCardForMonsterInteraction: null,
+            monarchModifiers: MONARCH_MODIFIERS_DETAILS,
+            currentTurnInitialRoomSize: 0,
+            imagesPreloaded: false,
+          };
+        },
+        computed: {
+          interactionsNeeded() {
+            if (
+              this.currentRoom.length === 1 &&
+              this.currentTurnInitialRoomSize === 1 &&
+              this.interactionsMadeThisRoom === 0
+            )
+              return 0;
+            if (
+              this.currentRoom.length === 1 &&
+              this.interactionsMadeThisRoom >=
+                Math.max(0, this.currentTurnInitialRoomSize - 1)
+            )
+              return 0;
+            return Math.max(
+              0,
+              this.currentTurnInitialRoomSize -
+                1 -
+                this.interactionsMadeThisRoom
+            );
+          },
+          canFlee() {
+            if (
+              this.interactionsMadeThisRoom > 0 ||
+              this.currentTurnInitialRoomSize !== 4
+            )
+              return false;
+            if (
+              this.player.gameModeSpecificFlags.canFleeTwiceInRow &&
+              this.player.gameModeSpecificFlags.consecutiveFleesUsed < 2
+            )
+              return true;
+            return !this.fledLastRoom;
+          },
+          finalScore() {
+            let score = this.player.score;
+            if (this.player.gameMode === "Ace of Thieves") score *= 4;
+            return score;
+          },
+          weaponAttackOutcome() {
+            if (
+              !this.selectedCardForMonsterInteraction ||
+              !this.player.equippedWeapon
+            )
+              return {
+                willTakeDamage: false,
+                damageAmount: 0,
+                isDullAttack: false,
+                isAutoWin: false,
+              };
+            const monster = this.selectedCardForMonsterInteraction;
+            const weapon = this.player.equippedWeapon;
+            if (
+              this.player.gameMode === "Monarch" &&
+              weapon.value > monster.value
+            )
+              return {
+                willTakeDamage: false,
+                damageAmount: 0,
+                isDullAttack: false,
+                isAutoWin: true,
+              };
+            const isDull =
+              !this.player.gameModeSpecificFlags.weaponDullingDisabled &&
+              this.player.lastMonsterValueDefeated > 0 &&
+              monster.value >= this.player.lastMonsterValueDefeated;
+            if (isDull)
+              return {
+                willTakeDamage: monster.value > 0,
+                damageAmount: monster.value,
+                isDullAttack: true,
+                isAutoWin: false,
+              };
+            const damageToPlayer = Math.max(0, monster.value - weapon.value);
+            return {
+              willTakeDamage: damageToPlayer > 0,
+              damageAmount: damageToPlayer,
+              isDullAttack: false,
+              isAutoWin: false,
+            };
+          },
+        },
+        methods: {
+          getLogItemStyle(logType) {
+            let borderColor = "#38bdf8"; // Default blue
+            let backgroundColor = "rgba(71, 85, 105, 0.3)"; // Default background
+            // Customize border and background based on log type
+            if (logType === "log-damage") {
+              borderColor = "#ef4444"; // Red
+              backgroundColor = "rgba(239, 68, 68, 0.15)";
+            } else if (logType === "log-heal") {
+              borderColor = "#22c55e"; // Green
+              backgroundColor = "rgba(34, 197, 94, 0.15)";
+            } else if (logType === "log-score") {
+              borderColor = "#f59e0b"; // Amber/Yellow
+              backgroundColor = "rgba(245, 158, 11, 0.15)";
+            } else if (logType === "log-info") {
+              // Default blue border, slightly different bg for info
+              backgroundColor = "rgba(56, 189, 248, 0.15)";
+            }
+            return {
+              borderLeftColor: borderColor,
+              backgroundColor: backgroundColor,
+            };
+          },
+          getInitialPlayerState() {
+            return {
+              health: 0,
+              maxHealth: 0,
+              equippedWeapon: null,
+              lastMonsterValueDefeated: 0,
+              score: 0,
+              monstersKilled: 0,
+              gameMode: null,
+              monarchModifier: null,
+              potionsUsedCountThisRoom: 0,
+              gameModeSpecificFlags: {
+                canUseTwoPotionsThisRoom: false,
+                canFleeTwiceInRow: false,
+                consecutiveFleesUsed: 0,
+                overhealEnabled: false,
+                weaponDullingDisabled: false,
+                doublePotionHealing: false,
+                queenOfClubsLifeLeech: false,
+              },
+            };
+          },
+          resetGame() {
+            this.deck = [];
+            this.player = this.getInitialPlayerState();
+            this.currentRoom = [];
+            this.cardKeptFromLastRoom = null;
+            this.turnCount = 0;
+            this.fledLastRoom = false;
+            this.gameLog = [];
+            this.interactionsMadeThisRoom = 0;
+            this.selectedCardForMonsterInteraction = null;
+            this.currentTurnInitialRoomSize = 0;
+            this.gameState = "mode_selection";
+            this.addLog(
+              "Game Reset. Welcome! Please select a game mode.",
+              "log-info"
+            );
+          },
+          selectGameMode(mode) {
+            this.player.gameMode = mode;
+            this.addLog(`Selected game mode: ${mode}`, "log-info");
+            if (mode === "Monarch") this.gameState = "modifier_selection";
+            else this.initializeGame();
+          },
+          getMonarchModifierDetails(id) {
+            return this.monarchModifiers.find((m) => m.id === id);
+          },
+          selectMonarchModifier(modifierId) {
+            this.player.monarchModifier = modifierId;
+            this.addLog(
+              `Selected Monarch modifier: ${
+                this.getMonarchModifierDetails(modifierId).name
+              }`,
+              "log-info"
+            );
+            this.initializeGame();
+          },
+          initializeGame() {
+            this.player.health =
+              this.player.gameMode === "Ace of Thieves" ? 14 : 20;
+            this.player.maxHealth = this.player.health;
+            if (
+              this.player.gameMode === "Monarch" &&
+              this.player.monarchModifier
+            ) {
+              const mod = this.player.monarchModifier;
+              if (mod === "KH") {
+                this.player.maxHealth += 15;
+                this.player.health += 15;
+              }
+              if (mod === "KD") {
+                this.player.equippedWeapon = this.createCard(
+                  SUITS.DIAMONDS,
+                  "10"
+                );
+                this.player.lastMonsterValueDefeated = 0;
+                this.addLog(
+                  "Started with Ceremonial Greatblade (10♦).",
+                  "log-info"
+                );
+              }
+              if (mod === "KS")
+                this.player.gameModeSpecificFlags.canUseTwoPotionsThisRoom = true;
+              if (mod === "KC")
+                this.player.gameModeSpecificFlags.canFleeTwiceInRow = true;
+              if (mod === "QH")
+                this.player.gameModeSpecificFlags.overhealEnabled = true;
+              if (mod === "QD")
+                this.player.gameModeSpecificFlags.weaponDullingDisabled = true;
+              if (mod === "QS")
+                this.player.gameModeSpecificFlags.doublePotionHealing = true;
+              if (mod === "QC")
+                this.player.gameModeSpecificFlags.queenOfClubsLifeLeech = true;
+            }
+            this.createAndShuffleDeck();
+            this.gameState = "gameplay";
+            this.nextTurn();
+          },
+          getCardImageUrl(suitSymbol, rankValue) {
+            const rankName = RANK_NAMES_FOR_SVG_URL[rankValue];
+            const suitName = SUIT_NAMES_FOR_URL[suitSymbol];
+            if (rankName && suitName)
+              return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/svg-cards/${rankName}_of_${suitName}.svg`;
+            return ""; // Fallback or error placeholder
+          },
+          createCard(suit, rank) {
+            const baseName = rank + suit;
+            let value;
+            if (["J", "Q", "K", "A"].includes(rank)) {
+              if (rank === "A") value = 14;
+              else if (rank === "K") value = 13;
+              else if (rank === "Q") value = 12;
+              else value = 11;
+            } else value = parseInt(rank);
+            let cardType;
+            if (suit === SUITS.SPADES || suit === SUITS.CLUBS)
+              cardType = "Monster";
+            else if (suit === SUITS.DIAMONDS) cardType = "Weapon";
+            else cardType = "Potion";
+            return {
+              suit,
+              rank,
+              baseName,
+              value,
+              cardType,
+              flavorName: this.getCardFlavorName({ baseName }),
+              backgroundImageUrl: this.getCardImageUrl(suit, rank),
+            };
+          },
+          createAndShuffleDeck() {
+            this.deck = [];
+            const removed = ["A♥", "K♥", "Q♥", "J♥", "A♦", "K♦", "Q♦", "J♦"];
+            for (const sKey in SUITS) {
+              const suitSymbol = SUITS[sKey];
+              for (const r of RANKS) {
+                if (!removed.includes(r + suitSymbol))
+                  this.deck.push(this.createCard(suitSymbol, r));
+              }
+            }
+            this.shuffleDeck();
+            this.addLog("Deck created and shuffled (44 cards).", "log-info");
+          },
+          shuffleDeck() {
+            for (let i = this.deck.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+            }
+          },
+          getCardFlavorName(card) {
+            return FLAVOR_NAMES[card.baseName] || card.baseName;
+          },
+          addLog(message, type = "log-info") {
+            this.gameLog.push({ message, type });
+            if (this.gameLog.length > 20) this.gameLog.shift();
+          }, // Increased log history
+          nextTurn() {
+            if (this.player.health <= 0) {
+              this.endGame();
+              return;
+            }
+            this.turnCount++;
+            this.player.potionsUsedCountThisRoom = 0;
+            this.interactionsMadeThisRoom = 0;
+            this.selectedCardForMonsterInteraction = null;
+            if (
+              this.fledLastRoom &&
+              (!this.player.gameModeSpecificFlags.canFleeTwiceInRow ||
+                this.player.gameModeSpecificFlags.consecutiveFleesUsed >= 2)
+            )
+              this.player.gameModeSpecificFlags.consecutiveFleesUsed = 0;
+            this.dealRoom();
+          },
+          dealRoom() {
+            this.currentRoom = [];
+            if (this.cardKeptFromLastRoom) {
+              this.currentRoom.push(this.cardKeptFromLastRoom);
+              this.addLog(
+                `Brought "${this.getCardFlavorName(
+                  this.cardKeptFromLastRoom
+                )}" to new room.`,
+                "log-info"
+              );
+              this.cardKeptFromLastRoom = null;
+            }
+            const cardsToDraw = 4 - this.currentRoom.length;
+            for (let i = 0; i < cardsToDraw; i++) {
+              if (this.deck.length > 0)
+                this.currentRoom.push(this.deck.shift());
+              else break;
+            }
+            this.currentTurnInitialRoomSize = this.currentRoom.length;
+            if (this.currentRoom.length === 0) {
+              this.addLog("Dungeon empty! All cards dealt.", "log-info");
+              this.endGame();
+              return;
+            }
+            this.addLog(
+              `Room ${this.turnCount} drawn: ${this.currentRoom.length} cards. Interact with ${this.interactionsNeeded}.`,
+              "log-info"
+            );
+          },
+          handleCardClick(card, index) {
+            if (
+              this.interactionsNeeded <= 0 &&
+              !(
+                this.currentRoom.length === 1 &&
+                this.currentTurnInitialRoomSize === 1 &&
+                this.interactionsMadeThisRoom === 0
+              )
+            )
+              return;
+            if (this.selectedCardForMonsterInteraction) return; // Already in monster interaction
+
+            const chosenCard = this.currentRoom[index];
+            if (chosenCard.cardType === "Monster") {
+              this.selectedCardForMonsterInteraction = chosenCard;
+              this.addLog(
+                `Selected ${this.getCardFlavorName(
+                  chosenCard
+                )}. Choose combat action.`,
+                "log-info"
+              );
+              return; // Wait for fight/cancel action
+            }
+            // Process non-monster card immediately
+            this.processCard(chosenCard);
+            this.currentRoom.splice(index, 1);
+            this.interactionsMadeThisRoom++;
+            this.fledLastRoom = false;
+            this.player.gameModeSpecificFlags.consecutiveFleesUsed = 0;
+
+            if (this.player.health <= 0) {
+              this.endGame();
+              return;
+            }
+            if (
+              this.interactionsNeeded === 0 &&
+              this.currentTurnInitialRoomSize > 0 &&
+              !this.selectedCardForMonsterInteraction
+            )
+              this.resolveRoomAndProceed();
+          },
+          processCard(card) {
+            if (card.cardType === "Weapon") this.processWeaponCard(card);
+            else if (card.cardType === "Potion") this.processPotionCard(card);
+          },
+          cancelMonsterInteraction() {
+            if (this.selectedCardForMonsterInteraction) {
+              this.addLog(
+                `Cancelled fight with ${this.getCardFlavorName(
+                  this.selectedCardForMonsterInteraction
+                )}.`,
+                "log-info"
+              );
+              this.selectedCardForMonsterInteraction = null;
+            }
+          },
+          fightMonster(method) {
+            const monster = this.selectedCardForMonsterInteraction;
+            if (!monster) return;
+            let dmgToPlayer = 0,
+              defeated = false,
+              score = 0;
+            this.addLog(
+              `Fighting ${this.getCardFlavorName(monster)}(${monster.value}) ${
+                method === "weapon" && this.player.equippedWeapon
+                  ? "with " + this.getCardFlavorName(this.player.equippedWeapon)
+                  : "barehanded"
+              }.`,
+              "log-info"
+            );
+
+            if (
+              this.player.gameMode === "Monarch" &&
+              this.player.equippedWeapon &&
+              method === "weapon" &&
+              this.player.equippedWeapon.value > monster.value
+            ) {
+              this.addLog(
+                `Monarch Auto-Win vs ${monster.baseName}! No damage taken.`,
+                "log-heal"
+              );
+              defeated = true;
+              score = monster.value;
+            } else if (method === "weapon" && this.player.equippedWeapon) {
+              let dull =
+                !this.player.gameModeSpecificFlags.weaponDullingDisabled &&
+                this.player.lastMonsterValueDefeated > 0 &&
+                monster.value >= this.player.lastMonsterValueDefeated;
+              if (dull) {
+                this.addLog(
+                  `Weapon dull! Last monster value ${this.player.lastMonsterValueDefeated}. Current monster ${monster.value}. Taking full damage.`,
+                  "log-damage"
+                );
+                dmgToPlayer = monster.value;
+              } else {
+                dmgToPlayer = Math.max(
+                  0,
+                  monster.value - this.player.equippedWeapon.value
+                );
+                if (dmgToPlayer === 0 && monster.value > 0)
+                  this.addLog("Blocked all damage with weapon!", "log-heal");
+              }
+
+              if (this.player.health - dmgToPlayer > 0) {
+                // Survived
+                defeated = true;
+                score = monster.value;
+                if (
+                  !dull &&
+                  !this.player.gameModeSpecificFlags.weaponDullingDisabled
+                ) {
+                  this.player.lastMonsterValueDefeated = monster.value;
+                  this.addLog(
+                    `Weapon now hits targets < ${monster.value}.`,
+                    "log-info"
+                  );
+                }
+                if (
+                  !dull &&
+                  this.player.gameModeSpecificFlags.queenOfClubsLifeLeech
+                ) {
+                  const heal = Math.floor(this.player.equippedWeapon.value / 2);
+                  if (heal > 0) this.applyHealing(heal, "Lifesteal");
+                }
+              }
+            } else {
+              // Barehanded
+              dmgToPlayer = monster.value;
+              if (this.player.health - dmgToPlayer > 0) {
+                defeated = true;
+                score = !this.player.equippedWeapon
+                  ? monster.value * 2
+                  : monster.value;
+                if (!this.player.equippedWeapon)
+                  this.addLog(
+                    "Barehanded bonus! Double score for this monster.",
+                    "log-score"
+                  );
+              }
+            }
+
+            if (dmgToPlayer > 0) {
+              this.player.health -= dmgToPlayer;
+              this.addLog(
+                `Took ${dmgToPlayer} damage. HP: ${this.player.health}`,
+                "log-damage"
+              );
+            }
+            if (defeated && this.player.health > 0) {
+              this.player.score += score;
+              this.player.monstersKilled++;
+              this.addLog(
+                `Defeated ${this.getCardFlavorName(
+                  monster
+                )}! +${score} score. Total: ${this.player.score}`,
+                "log-score"
+              );
+            }
+
+            this.currentRoom.splice(this.currentRoom.indexOf(monster), 1);
+            this.selectedCardForMonsterInteraction = null;
+            this.interactionsMadeThisRoom++;
+            this.fledLastRoom = false;
+            this.player.gameModeSpecificFlags.consecutiveFleesUsed = 0;
+
+            if (this.player.health <= 0) {
+              this.endGame();
+              return;
+            }
+            if (
+              this.interactionsNeeded === 0 &&
+              this.currentTurnInitialRoomSize > 0 &&
+              !this.selectedCardForMonsterInteraction
+            )
+              this.resolveRoomAndProceed();
+          },
+          processWeaponCard(weapon) {
+            if (this.player.equippedWeapon)
+              this.addLog(
+                `Discarded ${this.getCardFlavorName(
+                  this.player.equippedWeapon
+                )}.`,
+                "log-info"
+              );
+            this.player.equippedWeapon = weapon;
+            this.player.lastMonsterValueDefeated = 0; // Weapon is sharp
+            this.addLog(
+              `Equipped ${this.getCardFlavorName(weapon)} (${
+                weapon.value
+              }). Weapon is sharp.`,
+              "log-info"
+            );
+          },
+          processPotionCard(potion) {
+            const maxPotions = this.player.gameModeSpecificFlags
+              .canUseTwoPotionsThisRoom
+              ? 2
+              : 1;
+            if (this.player.potionsUsedCountThisRoom < maxPotions) {
+              let healAmount = potion.value;
+              if (this.player.gameModeSpecificFlags.doublePotionHealing)
+                healAmount *= 2;
+              this.applyHealing(
+                healAmount,
+                `${this.getCardFlavorName(potion)}`
+              );
+              this.player.potionsUsedCountThisRoom++;
+            } else
+              this.addLog(
+                `Potion limit reached for this room. ${this.getCardFlavorName(
+                  potion
+                )} discarded.`,
+                "log-damage"
+              );
+          },
+          applyHealing(amount, source) {
+            const oldHp = this.player.health;
+            this.player.health += amount;
+            if (
+              !this.player.gameModeSpecificFlags.overhealEnabled &&
+              this.player.health > this.player.maxHealth
+            )
+              this.player.health = this.player.maxHealth;
+            const healedBy = this.player.health - oldHp;
+            if (healedBy > 0)
+              this.addLog(
+                `Healed ${healedBy} HP from ${source}. Current HP: ${this.player.health}`,
+                "log-heal"
+              );
+            else if (
+              this.player.gameModeSpecificFlags.overhealEnabled &&
+              amount > 0
+            )
+              this.addLog(
+                `Healed ${amount} HP (Overheal) from ${source}. Current HP: ${this.player.health}`,
+                "log-heal"
+              );
+            else
+              this.addLog(
+                `${source} had no effect. HP remains ${this.player.health}.`,
+                "log-info"
+              );
+          },
+          fleeRoom() {
+            if (!this.canFlee) return;
+            this.player.score = Math.max(0, this.player.score - 100); // Score can't go below 0
+            this.addLog(
+              `Fled the room! -100 score. Current score: ${this.player.score}`,
+              "log-score"
+            );
+            this.deck.push(...this.currentRoom);
+            this.shuffleDeck();
+            this.addLog(
+              "Fled cards were reshuffled into the deck.",
+              "log-info"
+            );
+            this.currentRoom = [];
+            this.fledLastRoom = true;
+            if (this.player.gameModeSpecificFlags.canFleeTwiceInRow) {
+              this.player.gameModeSpecificFlags.consecutiveFleesUsed++;
+              this.addLog(
+                `Consecutive flees used: ${this.player.gameModeSpecificFlags.consecutiveFleesUsed}/2.`,
+                "log-info"
+              );
+            }
+            this.resolveRoomAndProceed(true); // isFleeing = true
+          },
+          resolveRoomAndProceed(isFleeing = false) {
+            if (!isFleeing && this.player.health <= 0) {
+              this.endGame();
+              return;
+            }
+
+            if (!isFleeing) {
+              if (this.currentRoom.length === 1) {
+                this.cardKeptFromLastRoom = this.currentRoom[0];
+                this.addLog(
+                  `Kept "${this.getCardFlavorName(
+                    this.currentRoom[0]
+                  )}" for next room.`,
+                  "log-info"
+                );
+              } else this.cardKeptFromLastRoom = null;
+              this.player.score += 100;
+              this.addLog("Room cleared! +100 score.", "log-score");
+              this.fledLastRoom = false;
+              this.player.gameModeSpecificFlags.consecutiveFleesUsed = 0;
+            }
+            this.currentRoom = []; // Clear current room for next turn or if fled
+
+            if (this.deck.length === 0 && !this.cardKeptFromLastRoom) {
+              this.addLog(
+                "Dungeon cleared! No cards left in deck or kept.",
+                "log-info"
+              );
+              this.endGame();
+            } else if (this.player.health > 0) this.nextTurn();
+            else this.endGame();
+          },
+          endGame() {
+            this.gameState = "game_over";
+            this.addLog(
+              `${
+                this.player.health > 0 ? "Dungeon Cleared!" : "Defeated."
+              } Final Score: ${this.finalScore}`,
+              "log-score"
+            );
+          },
+          preloadAllCardImages() {
+            // Preload images
+            const removed = ["A♥", "K♥", "Q♥", "J♥", "A♦", "K♦", "Q♦", "J♦"];
+            let preloadedCount = 0;
+            const uniqueImageUrls = new Set();
+            for (const sKey in SUITS) {
+              const suitSymbol = SUITS[sKey];
+              for (const r of RANKS) {
+                if (!removed.includes(r + suitSymbol)) {
+                  const imageUrl = this.getCardImageUrl(suitSymbol, r);
+                  if (imageUrl && !uniqueImageUrls.has(imageUrl)) {
+                    uniqueImageUrls.add(imageUrl);
+                    const img = new Image();
+                    img.src = imageUrl;
+                    preloadedCount++;
+                  }
+                }
+              }
+            }
+            this.addLog(
+              `Preloading ${preloadedCount} card images...`,
+              "log-info"
+            );
+          },
+        },
+        mounted() {
+          this.resetGame();
+          if (!this.imagesPreloaded) {
+            this.preloadAllCardImages();
+            this.imagesPreloaded = true;
+          }
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
 
