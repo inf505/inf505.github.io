@@ -1132,8 +1132,7 @@
               description:
                 "A hooded figure eyes you, gesturing to their wares.",
               // show me this crypt/dungeon location: (Shop) "Mysterious Merchant" "A hooded figure eyes you, gesturing to their wares." in landscape orientation
-              imageUrl:
-                "https://inf505.github.io/skeletonking/evt_shop.png",
+              imageUrl: "https://inf505.github.io/skeletonking/evt_shop.png",
               effects: [{ trigger: "shop", chance: 1.0 }], // If this card is drawn, shop is guaranteed
             };
 
@@ -1144,8 +1143,7 @@
                 title: "Dusty Corridor",
                 description: "A long, dark corridor stretches ahead.",
                 // in a pixel art style show me this crypt/dungeon location: (Hallway) "Dusty Corridor" "A long, dark corridor stretches ahead." in  landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt01.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt01.png",
                 effects: [{ trigger: "monster", chance: 0.3 }],
               },
               {
@@ -1154,8 +1152,7 @@
                 title: "Small Antechamber",
                 description: "A square room, possibly a guard post.",
                 // show me this crypt/dungeon location: (Room) "Small Antechamber" "A square room, possibly a guard post." in landscape orientation - there are no stairs
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt02.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt02.png",
                 effects: [
                   { trigger: "monster", chance: 0.5 },
                   { trigger: "treasure", chance: 0.3 },
@@ -1167,8 +1164,7 @@
                 title: "Crumbling Passage",
                 description: "The walls here are unstable.",
                 // show me this crypt/dungeon location: (Hallway) "Crumbling Passage" "AThe walls here are unstable." in landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt03.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt03.png",
                 effects: [
                   {
                     trigger: "trap",
@@ -1184,8 +1180,7 @@
                 description:
                   "An old shrine to a forgotten deity. It feels strangely peaceful.",
                 // show me this crypt/dungeon location: (Room) "Forgotten Shrine" "An old shrine to a forgotten deity. It feels strangely peaceful." in landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt04.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt04.png",
                 effects: [
                   { trigger: "treasure", chance: 0.7, itemType: "gold" }, // This gold type is now only for this specific shrine event.
                   { trigger: "heal", amount: "1-4", chance: 0.5 },
@@ -1197,8 +1192,7 @@
                 title: "Narrow Passage",
                 description: "You must squeeze through this tight passage.",
                 // show me this crypt/dungeon location: (Hallway) "Narrow Passage" "You must squeeze through this tight passage." in landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt05.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt05.png",
                 effects: [
                   {
                     trigger: "trap",
@@ -1214,8 +1208,7 @@
                 description:
                   "An opened sarcophagus lies in the center. Whatever was inside is long gone.",
                 // show me this crypt/dungeon location: (Room) "Empty Sarcophagus" "An opened sarcophagus lies in the center. Whatever was inside is long gone." in landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt06.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt06.png",
                 effects: [
                   { trigger: "monster", chance: 0.2 },
                   { trigger: "treasure", chance: 0.4, itemType: "gold" }, // This gold type is now only for this specific event.
@@ -1227,8 +1220,7 @@
                 title: "Echoing Hall",
                 description: "Your footsteps echo ominously. You feel watched.",
                 // show me this crypt/dungeon location: (Hallway) "Echoing Hall" "Your footsteps echo ominously. You feel watched." in landscape orientation
-                imageUrl:
-                  "https://inf505.github.io/skeletonking/evt07.png",
+                imageUrl: "https://inf505.github.io/skeletonking/evt07.png",
                 effects: [{ trigger: "monster", chance: 0.6 }],
               },
               /* The shop event definition is now defined separately in this.shopEventCard
@@ -1943,20 +1935,15 @@
             ];
 
             this.originalGearDeck = [
+              //
+              // WEAPON
+              //
               {
                 id: "gear_wpn_worn_sword",
                 name: "Worn Sword",
                 type: "weapon",
-                baseDamage: "1-3", // Increased starting weapon damage from 1-2 to 1-4
+                baseDamage: "1-3",
                 attackMod: 0,
-                defenseMod: 0,
-                bonuses: [],
-              },
-              {
-                id: "gear_arm_patched_leather",
-                name: "Patched Leather Shirt",
-                type: "armor",
-                defenseMod: 1,
                 bonuses: [],
               },
               {
@@ -1968,35 +1955,29 @@
                 bonuses: [],
               },
               {
-                id: "gear_arm_leather_tunic",
-                name: "Leather Tunic",
-                type: "armor",
-                defenseMod: 2,
+                id: "gear_wpn_claws",
+                name: "Feral Knuckles",
+                type: "weapon",
+                baseDamage: "1-2",
+                attackMod: 10,
                 bonuses: [],
-              },
+              }, // guaranteed hit but poor damage
               {
-                id: "gear_shd_wooden_shield",
-                name: "Wooden Shield",
-                type: "shield",
-                defenseMod: 1,
+                id: "gear_wpn_sickle",
+                name: "Sickle",
+                type: "weapon",
+                baseDamage: "2-3",
+                attackMod: 0,
                 bonuses: [],
-              },
+              }, // direct upgrade to worn sword
               {
                 id: "gear_wpn_mace",
                 name: "Mace",
                 type: "weapon",
-                baseDamage: "2-4",
+                baseDamage: "2-5",
                 attackMod: 0,
                 bonuses: [],
-              },
-              {
-                id: "gear_arm_chainmail_shirt",
-                name: "Chainmail Shirt",
-                type: "armor",
-                attackMod: -1,
-                defenseMod: 4,
-                bonuses: [],
-              },
+              }, // blunt would be reasonably stronger against a predominantly bony dungeon
               {
                 id: "gear_wpn_longsword",
                 name: "Longsword",
@@ -2006,106 +1987,241 @@
                 bonuses: [],
               },
               {
-                id: "gear_shd_tower_shield",
-                name: "Tower Shield",
-                type: "shield",
-                defenseMod: 3,
-                attackMod: -1,
-                bonuses: [],
-              }, // Heavy penalty
-              {
-                id: "gear_arm_splint_mail",
-                name: "Splint Mail",
-                type: "armor",
-                defenseMod: 3,
-                bonuses: [],
-              },
-              {
-                id: "gear_wpn_battle_axe",
-                name: "Dwarven Axe",
+                id: "gear_wpn_axe",
+                name: "Labrys",
                 type: "weapon",
-                baseDamage: "1-8",
-                attackMod: 0,
-                bonuses: [],
-              },
-              {
-                id: "gear_arm_plate_armor",
-                name: "Plate Armor",
-                type: "armor",
-                defenseMod: 5,
-                attackMod: -2,
-                bonuses: [],
-              }, // Heavy penalty
-              {
-                id: "gear_shd_kite_shield",
-                name: "Kite Shield",
-                type: "shield",
-                defenseMod: 2,
+                baseDamage: "2-9",
+                attackMod: -1, // most double bladed axes are unwieldy but pack a punch
                 bonuses: [],
               },
               {
                 id: "gear_wpn_greatsword",
                 name: "Greatsword",
                 type: "weapon",
-                baseDamage: "2-10",
-                attackMod: 1,
-                bonuses: [],
-              }, // Very powerful
-              {
-                id: "gear_wpn_warhammer",
-                name: "Warhammer",
-                baseDamage: "1-8",
+                baseDamage: "2-8",
                 attackMod: 1,
                 bonuses: [],
               },
               {
-                id: "gear_arm_full_plate",
-                name: "Full Plate Armor",
+                id: "gear_wpn_gladius",
+                name: "Snake-eyed Gladius",
+                type: "weapon",
+                baseDamage: "0-10", // made as a gambler weapon, roll big or go home
+                attackMod: 0,
+                bonuses: [],
+              },
+              {
+                id: "gear_wpn_maul",
+                name: "King's Maul",
+                baseDamage: "3-10", // made as the strongest against a primarily skeleton crypt
+                attackMod: 0,
+                bonuses: [],
+              },
+              //
+              // ARMOR
+              //
+              {
+                id: "gear_arm_patchwork",
+                name: "Patchwork Shirt",
                 type: "armor",
-                defenseMod: 7,
+                defenseMod: 1,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_tunic",
+                name: "Leather Tunic",
+                type: "armor",
+                defenseMod: 2,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_robe",
+                name: "Meditation Getup",
+                type: "armor",
+                defenseMod: 0,
+                attackMod: 4,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_chainmail",
+                name: "Chainmail Shirt",
+                type: "armor",
+                defenseMod: 3,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_combatfit",
+                name: "Combat Getup",
+                type: "armor",
+                defenseMod: 3,
+                damageBonus: 2,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_splint",
+                name: "Splint Mail",
+                type: "armor",
+                defenseMod: 4,
+                attackMod: -1,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_plate",
+                name: "Platemail",
+                type: "armor",
+                defenseMod: 6,
+                attackMod: -2,
+                bonuses: [],
+              },
+              {
+                id: "gear_arm_fullplate",
+                name: "Baron's Platemail",
+                type: "armor",
+                defenseMod: 8,
                 attackMod: -3,
                 bonuses: [],
-              }, // Ultimate AC, heavy penalty
+              },
+              //
+              // OFFHAND
+              //
+              {
+                id: "gear_shd_wooden",
+                name: "Plank Shield",
+                type: "shield",
+                defenseMod: 1,
+                bonuses: [],
+              },
+              {
+                id: "gear_shd_buckler",
+                name: "Iron Buckler",
+                type: "shield",
+                defenseMod: 1,
+                attackMod: 1,
+                bonuses: [],
+              },
+              {
+                id: "gear_shd_dagger",
+                name: "Parrying Dagger",
+                type: "shield",
+                defenseMod: 0,
+                attackMod: 2,
+                bonuses: [],
+              },
+              {
+                id: "gear_shd_kite",
+                name: "Kite Shield",
+                type: "shield",
+                defenseMod: 2,
+                bonuses: [],
+              },
+              {
+                id: "gear_shd_blessing",
+                name: "Manashield Blessing",
+                type: "shield",
+                defenseMod: 4,
+                damageBonus: -1,
+                bonuses: [],
+              },
+              {
+                id: "gear_shd_tower",
+                name: "Tower Shield",
+                type: "shield",
+                defenseMod: 5,
+                attackMod: -1,
+                bonuses: [],
+              },
             ];
             this.gearDeck = [...this.originalGearDeck];
 
             this.originalGearBonusDeck = [
               {
                 id: "bonus01",
-                name: "of Sharpness",
+                name: "Sharp",
                 appliesTo: "weapon",
-                attackMod: 1,
                 damageBonus: 1,
               },
               {
                 id: "bonus02",
-                name: "of Resilience",
-                appliesTo: "armor",
-                defenseMod: 1,
-              },
-              {
-                id: "bonus03",
-                name: "of Guarding",
-                appliesTo: "shield",
-                defenseMod: 1,
-              },
-              {
-                id: "bonus04",
-                name: "of Accuracy",
+                name: "Versatile",
                 appliesTo: "weapon",
                 attackMod: 1,
               },
               {
+                id: "bonus03",
+                name: "Padded",
+                appliesTo: "armor",
+                defenseMod: 1,
+              },
+              {
+                id: "bonus04",
+                name: "Tough",
+                appliesTo: "shield",
+                defenseMod: 1,
+              },
+              {
                 id: "bonus05",
-                name: "of Might",
+                name: "Tempered",
                 appliesTo: "weapon",
                 damageBonus: 2,
               },
               {
                 id: "bonus06",
-                name: "of Protection",
+                name: "Ergonomic",
+                appliesTo: "weapon",
+                attackMod: 2,
+              },
+              {
+                id: "bonus07",
+                name: "Plated",
                 appliesTo: "armor",
                 defenseMod: 2,
+              },
+              {
+                id: "bonus08",
+                name: "Strapped",
+                appliesTo: "shield",
+                defenseMod: 2,
+              },
+              // spicy mods for rare occasions
+              {
+                id: "bonus09",
+                name: "of The Vengeful",
+                appliesTo: "weapon",
+                damageBonus: 3,
+                attackMod: 3,
+              },
+              {
+                id: "bonus10",
+                name: "of The Bulwark",
+                appliesTo: "armor",
+                defenseMod: 4,
+              },
+              {
+                id: "bonus11",
+                name: "of The Duelist",
+                appliesTo: "shield",
+                defenseMod: 4,
+              },
+              // negative mods
+              {
+                id: "bonus12",
+                name: "Flimsy",
+                appliesTo: "weapon",
+                damageBonus: -1,
+                attackMod: -1,
+              },
+              {
+                id: "bonus13",
+                name: "Sluggish",
+                appliesTo: "armor",
+                defenseMod: 2,
+                attackMod: -2,
+              },
+              {
+                id: "bonus14",
+                name: "Weak",
+                appliesTo: "shield",
+                defenseMod: -1,
               },
             ];
             this.gearBonusDeck = this.shuffleDeck([
