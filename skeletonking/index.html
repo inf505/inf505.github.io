@@ -573,7 +573,23 @@
             >{{ player.monsterDeckProgression }} defeated</span
           >
         </div>
-        <!-- Removed Stun indicator -->
+        <!-- NEW: Merchant Visits and Quiet Passages -->
+        <div class="stat-item">
+          <span class="stat-label">Merchant Visits</span>
+          <span class="stat-value">{{ merchantEventCount }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Quiet Passages</span>
+          <span class="stat-value">{{ nothingEventCount }}</span>
+        </div>
+        <!-- DEBUG -->
+
+        <div class="stat-item">
+          <span class="stat-value" style="font-size: 13px">
+            {{ lastExploredEventTitle || '...' }} - {{
+            lastExploredEventDescription || '...' }}
+          </span>
+        </div>
 
         <template v-if="player.activeCurses.length > 0">
           <div class="status-subtitle" style="margin-top: 15px">
@@ -605,6 +621,7 @@
         >
           🌑
         </div>
+
         <div class="game-field">
           <!-- Initializing State -->
           <div v-if="gameState === 'initializing'">
@@ -614,7 +631,7 @@
           <!-- Exploring State -->
           <div v-if="gameState === 'exploring'">
             <div class="game-field-label">
-              {{ lastExploredEventTitle || 'Dark Passages' }}
+              {{ lastExploredEventTitle || 'Crypt of the Skeleton King' }}
             </div>
             <p>
               {{ currentExplorationMessage || lastExploredEventDescription ||
@@ -683,7 +700,6 @@
               {{ currentGuards.length > 0 ? currentGuards[0].name :
               currentMonster.name }}
             </div>
-            <!-- Added dynamic combat message -->
             <p
               v-if="currentCombatMessage"
               style="margin-bottom: 15px; color: #facc15"
@@ -691,7 +707,6 @@
               {{ currentCombatMessage }}
             </p>
 
-            <!-- Removed Stunned message -->
             <div v-if="currentGuards.length > 0">
               <h4>Attacking Guard: {{ currentGuards[0].name }}</h4>
               <p>
@@ -710,7 +725,7 @@
               </p>
             </div>
             <div v-else-if="currentMonster">
-              <h4>{{ currentMonster.name }}</h4>
+              <!-- <h4>{{ currentMonster.name }}</h4> -->
               <p>
                 HP: {{ currentMonster.health }}/{{ currentMonster.maxHealth }},
                 AC: {{ currentMonster.ac }}
@@ -740,7 +755,7 @@
               v-if="player.healingPotionCount > 0 && player.health < player.maxHealth"
               @click="useHealingPotion"
             >
-              Use Potion ({{ player.healingPotionCount }}) (Free Action)
+              Use Potion ({{ player.healingPotionCount }})
             </button>
           </div>
 
@@ -799,9 +814,7 @@
           <!-- Trap Triggered State -->
           <div v-if="gameState === 'trap_triggered'">
             <div class="game-field-label">Trap!</div>
-            <p v-if="gameLog.length > 0 && gameLog[0].text.startsWith('Trap!')">
-              {{ gameLog[0].text.replace(/^Trap! /, '') }}
-            </p>
+            <p>{{ currentTrapMessage }}</p>
             <button @click="acknowledgeTrap">Continue</button>
           </div>
 
@@ -889,8 +902,11 @@
             currentExplorationMessage:
               "The crypt extends before you. What secrets will you uncover?", // For immediate feedback in exploring state
             currentCombatMessage: "", // For combat state message
+            currentTrapMessage: "", // NEW: For trap event message
             lastExploredEventTitle: null, // Stores the title of the last event card drawn
             lastExploredEventDescription: null, // Stores the description of the last event card drawn
+            merchantEventCount: 0, // NEW: Track merchant visits
+            nothingEventCount: 0, // NEW: Track nothing events
 
             // Decks
             eventDeck: [],
@@ -920,8 +936,8 @@
             DARKNESS_ATTACK_PENALTY: -2, // Increased attack penalty
             DARKNESS_DAMAGE_PENALTY: -1, // New: damage penalty
             GEAR_BONUS_UNLOCK_PROGRESSION: 3,
-            SHOP_UNLOCK_PROGRESSION: 10, // New: Monsters defeated required to unlock shop
-            SHOP_COOLDOWN_TURNS: 5, // New: Turns after a shop visit before it can appear again
+            SHOP_UNLOCK_PROGRESSION: 5, // New: Monsters defeated required to unlock shop
+            SHOP_COOLDOWN_TURNS: 10, // New: Turns after a shop visit before it can appear again
           };
         },
         computed: {
@@ -1066,9 +1082,9 @@
               baseAC: 10, // Initial base AC
               equippedGear: { weapon: null, armor: null, shield: null },
               gold: 0, // MODIFIED: Initial gold is now 0
-              torchCount: 3, // MODIFIED: Start with 3 torches
+              torchCount: 5, // MODIFIED: Start with 5 torches
               currentTorchDuration: 0,
-              healingPotionCount: 3, // MODIFIED: Start with 1 potion
+              healingPotionCount: 5, // MODIFIED: Start with 5 potion
               activeCurses: [],
               monsterDeckProgression: 0,
             };
@@ -1080,8 +1096,11 @@
             this.currentExplorationMessage =
               "The crypt extends before you. What secrets will you uncover?"; // Reset
             this.currentCombatMessage = ""; // Reset
+            this.currentTrapMessage = ""; // Reset
             this.lastExploredEventTitle = null; // Reset
             this.lastExploredEventDescription = null; // Reset
+            this.merchantEventCount = 0; // NEW: Reset
+            this.nothingEventCount = 0; // NEW: Reset
 
             this.initializeDecks();
             this.setupShop(); // New: setup shop items
@@ -1100,7 +1119,7 @@
               this.equipGear(JSON.parse(JSON.stringify(startingArmor))); // MODIFIED: Removed `isSilent` parameter
 
             this.logEvent(
-              "You start with a Worn Sword, Patched Leather Shirt, 3 Torches, and 1 Healing Potion."
+              "You start with a Worn Sword, Patched Leather Shirt, 5 Torches, and 5 Healing Potions."
             );
             this.gameState = "exploring";
           },
@@ -1111,9 +1130,10 @@
               type: "Shop",
               title: "Mysterious Merchant",
               description:
-                "A hooded figure offers wares in the dimly lit crypt. Their goods might be useful, for a price.",
+                "A hooded figure eyes you, gesturing to their wares.",
+              // show me this crypt/dungeon location: (Shop) "Mysterious Merchant" "A hooded figure eyes you, gesturing to their wares." in landscape orientation
               imageUrl:
-                "https://via.placeholder.com/600x400/556677/F0F0F0?text=Mysterious+Merchant", // Placeholder
+                "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt_shop.png",
               effects: [{ trigger: "shop", chance: 1.0 }], // If this card is drawn, shop is guaranteed
             };
 
@@ -1123,19 +1143,21 @@
                 type: "Hallway",
                 title: "Dusty Corridor",
                 description: "A long, dark corridor stretches ahead.",
+                // in a pixel art style show me this crypt/dungeon location: (Hallway) "Dusty Corridor" "A long, dark corridor stretches ahead." in  landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/1e293b/f1f5f9?text=Dusty+Corridor", // Placeholder
-                effects: [{ trigger: "monster", chance: 0.3 }], // Removed monsterTier
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt01.png",
+                effects: [{ trigger: "monster", chance: 0.3 }],
               },
               {
                 id: "evt02",
                 type: "Room",
                 title: "Small Antechamber",
                 description: "A square room, possibly a guard post.",
+                // show me this crypt/dungeon location: (Room) "Small Antechamber" "A square room, possibly a guard post." in landscape orientation - there are no stairs
                 imageUrl:
-                  "https://via.placeholder.com/600x400/334155/f1f5f9?text=Small+Antechamber", // Placeholder
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt02.png",
                 effects: [
-                  { trigger: "monster", chance: 0.5 }, // Removed monsterTier
+                  { trigger: "monster", chance: 0.5 },
                   { trigger: "treasure", chance: 0.3 },
                 ],
               },
@@ -1144,12 +1166,13 @@
                 type: "Hallway",
                 title: "Crumbling Passage",
                 description: "The walls here are unstable.",
+                // show me this crypt/dungeon location: (Hallway) "Crumbling Passage" "AThe walls here are unstable." in landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/2a364d/f1f5f9?text=Crumbling+Passage", // Placeholder
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt03.png",
                 effects: [
                   {
                     trigger: "trap",
-                    chance: 0.15,
+                    chance: 0.3,
                   },
                   { trigger: "treasure", chance: 0.1, itemType: "torch" },
                 ],
@@ -1160,11 +1183,12 @@
                 title: "Forgotten Shrine",
                 description:
                   "An old shrine to a forgotten deity. It feels strangely peaceful.",
+                // show me this crypt/dungeon location: (Room) "Forgotten Shrine" "An old shrine to a forgotten deity. It feels strangely peaceful." in landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/4c445c/f1f5f9?text=Forgotten+Shrine", // Placeholder
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt04.png",
                 effects: [
-                  { trigger: "treasure", chance: 0.6, itemType: "gold" }, // This gold type is now only for this specific shrine event.
-                  { trigger: "heal", amount: "1-4", chance: 0.3 },
+                  { trigger: "treasure", chance: 0.7, itemType: "gold" }, // This gold type is now only for this specific shrine event.
+                  { trigger: "heal", amount: "1-4", chance: 0.5 },
                 ],
               },
               {
@@ -1172,14 +1196,15 @@
                 type: "Hallway",
                 title: "Narrow Passage",
                 description: "You must squeeze through this tight passage.",
+                // show me this crypt/dungeon location: (Hallway) "Narrow Passage" "You must squeeze through this tight passage." in landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/18202d/f1f5f9?text=Narrow+Passage", // Placeholder
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt05.png",
                 effects: [
                   {
                     trigger: "trap",
-                    chance: 0.2,
+                    chance: 0.4,
                   },
-                  { trigger: "monster", chance: 0.1 }, // Removed monsterTier
+                  { trigger: "monster", chance: 0.1 },
                 ],
               },
               {
@@ -1188,10 +1213,11 @@
                 title: "Empty Sarcophagus",
                 description:
                   "An opened sarcophagus lies in the center. Whatever was inside is long gone.",
+                // show me this crypt/dungeon location: (Room) "Empty Sarcophagus" "An opened sarcophagus lies in the center. Whatever was inside is long gone." in landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/3a3a3a/f1f5f9?text=Empty+Sarcophagus", // Placeholder
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt06.png",
                 effects: [
-                  { trigger: "monster", chance: 0.2 }, // Removed monsterTier
+                  { trigger: "monster", chance: 0.2 },
                   { trigger: "treasure", chance: 0.4, itemType: "gold" }, // This gold type is now only for this specific event.
                 ],
               },
@@ -1200,11 +1226,10 @@
                 type: "Hallway",
                 title: "Echoing Hall",
                 description: "Your footsteps echo ominously. You feel watched.",
+                // show me this crypt/dungeon location: (Hallway) "Echoing Hall" "Your footsteps echo ominously. You feel watched." in landscape orientation
                 imageUrl:
-                  "https://via.placeholder.com/600x400/151e2b/f1f5f9?text=Echoing+Hall", // Placeholder
-                effects: [
-                  { trigger: "monster", chance: 0.6 }, // Removed monsterTier
-                ],
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt07.png",
+                effects: [{ trigger: "monster", chance: 0.6 }],
               },
               /* The shop event definition is now defined separately in this.shopEventCard
                  and no longer part of originalEventDeck to prevent early drawing. */
@@ -1225,7 +1250,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=SKEL", // Placeholder
+                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=SKEL",
               },
               {
                 id: "mon02",
@@ -1237,28 +1262,28 @@
                 damage: "1-3",
                 curseChance: 0.1,
                 curseId: "curse01",
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/004000/FFFFFF?text=ZOMB", // Placeholder
+                  "https://via.placeholder.com/100x100/004000/FFFFFF?text=ZOMB",
               },
               {
                 id: "mon03",
-                name: "Giant Rat",
+                name: "Skeleton",
                 tier: "easy",
                 health: 5,
                 ac: 11,
-                attackMod: 0,
+                attackMod: 1,
                 damage: "1-2",
                 curseChance: 0,
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/444444/FFFFFF?text=RAT", // Placeholder
+                  "https://via.placeholder.com/100x100/444444/FFFFFF?text=RAT",
               },
               {
                 id: "mon09",
-                name: "Crawling Hand",
+                name: "Crawling Claw",
                 tier: "easy",
                 health: 6,
                 ac: 10,
@@ -1269,22 +1294,21 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/600000/FFFFFF?text=HAND", // Placeholder
+                  "https://via.placeholder.com/100x100/600000/FFFFFF?text=HAND",
               },
               {
                 id: "mon10",
-                name: "Mold Horror",
+                name: "Warhorse Skeleton",
                 tier: "easy",
                 health: 9,
                 ac: 9,
                 attackMod: 0,
                 damage: "1-2",
-                curseChance: 0.1,
-                curseId: "curse03",
+                curseChance: 0,
                 gearDropCount: 0,
                 treasureDropChance: 0.0,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=MOLD", // Placeholder
+                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=MOLD",
               },
               {
                 id: "mon11",
@@ -1298,11 +1322,11 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/500000/FFFFFF?text=DOG", // Placeholder
+                  "https://via.placeholder.com/100x100/500000/FFFFFF?text=DOG",
               },
               {
                 id: "mon12",
-                name: "Goblin Scavenger",
+                name: "Shadow",
                 tier: "easy",
                 health: 8,
                 ac: 11,
@@ -1310,9 +1334,9 @@
                 damage: "1-2",
                 curseChance: 0,
                 gearDropCount: 0,
-                treasureDropChance: 0.8,
+                treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/32CD32/FFFFFF?text=GOBLIN", // Placeholder
+                  "https://via.placeholder.com/100x100/32CD32/FFFFFF?text=GOBLIN",
               },
               {
                 id: "mon13",
@@ -1324,25 +1348,25 @@
                 damage: "1-3",
                 curseChance: 0.1,
                 curseId: "curse01",
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/003300/FFFFFF?text=CORPSE", // Placeholder
+                  "https://via.placeholder.com/100x100/003300/FFFFFF?text=CORPSE",
               },
               {
                 id: "mon14",
-                name: "Giant Spider",
+                name: "Ghoul",
                 tier: "easy",
-                health: 6,
-                ac: 12,
-                attackMod: 2,
-                damage: "1-2",
+                health: 11,
+                ac: 8,
+                attackMod: 1,
+                damage: "1-3",
                 curseChance: 0.2,
-                curseId: "curse05",
-                gearDropCount: 0,
+                curseId: "curse03",
+                gearDropCount: 1,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/1a1a1a/FFFFFF?text=SPIDER", // Placeholder
+                  "https://via.placeholder.com/100x100/1a1a1a/FFFFFF?text=SPIDER",
               },
               {
                 id: "mon15",
@@ -1356,22 +1380,22 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.05,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/555555/FFFFFF?text=URCHIN", // Placeholder
+                  "https://via.placeholder.com/100x100/555555/FFFFFF?text=URCHIN",
               },
               {
                 id: "mon16",
-                name: "Corrupted Fungus",
+                name: "Specter",
                 tier: "easy",
-                health: 10,
-                ac: 8,
-                attackMod: 0,
-                damage: "1-2",
+                health: 8,
+                ac: 12,
+                attackMod: 1,
+                damage: "1-3",
                 curseChance: 0.1,
                 curseId: "curse03",
                 gearDropCount: 0,
-                treasureDropChance: 0.0,
+                treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=FUNGUS", // Placeholder
+                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=FUNGUS",
               },
             ];
 
@@ -1389,22 +1413,22 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=ARCHER", // Placeholder
+                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=ARCHER",
               },
               {
                 id: "mon05",
-                name: "Ghoul",
+                name: "Ghast",
                 tier: "medium",
-                health: 15,
-                ac: 12,
-                attackMod: 2,
-                damage: "1-4",
+                health: 18,
+                ac: 10,
+                attackMod: 1,
+                damage: "1-6",
                 curseChance: 0.3,
                 curseId: "curse03",
-                gearDropCount: 1,
+                gearDropCount: 0,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/3CB371/FFFFFF?text=GHOUL", // Placeholder
+                  "https://via.placeholder.com/100x100/3CB371/FFFFFF?text=GHOUL",
               },
               {
                 id: "mon17",
@@ -1416,16 +1440,16 @@
                 damage: "1-6",
                 curseChance: 0.1,
                 curseId: "curse01",
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/400040/FFFFFF?text=OGRE+Z", // Placeholder
+                  "https://via.placeholder.com/100x100/400040/FFFFFF?text=OGRE+Z",
               },
               {
                 id: "mon18",
-                name: "Carrion Crawler",
+                name: "Poltergeist",
                 tier: "medium",
-                health: 12,
+                health: 16,
                 ac: 14,
                 attackMod: 2,
                 damage: "1-3",
@@ -1433,22 +1457,21 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/5F9EA0/FFFFFF?text=CRAWLER", // Placeholder
+                  "https://via.placeholder.com/100x100/5F9EA0/FFFFFF?text=CRAWLER",
               },
               {
                 id: "mon19",
-                name: "Shadow",
+                name: "Will-O-Wisp",
                 tier: "medium",
-                health: 10,
+                health: 8,
                 ac: 15,
                 attackMod: 3,
-                damage: "1-2",
-                curseChance: 0.2,
-                curseId: "curse02",
+                damage: "1-4",
+                curseChance: 0,
                 gearDropCount: 0,
-                treasureDropChance: 0.7,
+                treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/000000/FFFFFF?text=SHADOW", // Placeholder
+                  "https://via.placeholder.com/100x100/000000/FFFFFF?text=SHADOW",
               },
               {
                 id: "mon20",
@@ -1463,7 +1486,7 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/222222/FFFFFF?text=BIG+SPIDER", // Placeholder
+                  "https://via.placeholder.com/100x100/222222/FFFFFF?text=BIG+SPIDER",
               },
               {
                 id: "mon21",
@@ -1477,7 +1500,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/A0A0A0/FFFFFF?text=ARMOR+SKEL", // Placeholder
+                  "https://via.placeholder.com/100x100/A0A0A0/FFFFFF?text=ARMOR+SKEL",
               },
               {
                 id: "mon22",
@@ -1491,28 +1514,28 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=STALKER", // Placeholder
+                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=STALKER",
               },
               {
                 id: "mon23",
-                name: "Flesh Golem",
+                name: "Mummy",
                 tier: "medium",
-                health: 25,
+                health: 15,
                 ac: 9,
-                attackMod: 4,
+                attackMod: 1,
                 damage: "1-8",
                 curseChance: 0,
                 gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/808000/FFFFFF?text=FLESH+G", // Placeholder
+                  "https://via.placeholder.com/100x100/808000/FFFFFF?text=FLESH+G",
               },
               {
                 id: "mon24",
                 name: "Death Dog",
                 tier: "medium",
                 health: 14,
-                ac: 13,
+                ac: 12,
                 attackMod: 3,
                 damage: "1-4",
                 curseChance: 0.2,
@@ -1520,7 +1543,7 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/4B0082/FFFFFF?text=DEATH+D", // Placeholder
+                  "https://via.placeholder.com/100x100/4B0082/FFFFFF?text=DEATH+D",
               },
               {
                 id: "mon25",
@@ -1534,52 +1557,52 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=BONE+E", // Placeholder
+                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=BONE+E",
               },
               {
                 id: "mon26",
                 name: "Goblin Necromancer",
                 tier: "medium",
-                health: 12,
+                health: 18,
                 ac: 11,
                 attackMod: 1,
                 damage: "1-2",
                 curseChance: 0.4,
                 curseId: "curse04",
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.8,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=GOBLIN+N", // Placeholder
+                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=GOBLIN+N",
               },
               {
                 id: "mon27",
-                name: "Giant Scorpion",
+                name: "Wight",
                 tier: "medium",
                 health: 16,
                 ac: 13,
                 attackMod: 3,
                 damage: "1-5",
                 curseChance: 0.3,
-                curseId: "curse05",
+                curseId: "curse01",
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=SCORPION", // Placeholder
+                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=SCORPION",
               },
               {
                 id: "mon28",
                 name: "Mummified Cultist",
                 tier: "medium",
-                health: 14,
+                health: 16,
                 ac: 10,
                 attackMod: 2,
                 damage: "1-4",
                 curseChance: 0.1,
                 curseId: "curse01",
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B4513/FFFFFF?text=CULTIST", // Placeholder
+                  "https://via.placeholder.com/100x100/8B4513/FFFFFF?text=CULTIST",
               },
               {
                 id: "mon29",
@@ -1590,16 +1613,16 @@
                 attackMod: 2,
                 damage: "1-5",
                 curseChance: 0,
-                gearDropCount: 0,
+                gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/404040/FFFFFF?text=COLLECTOR", // Placeholder
+                  "https://via.placeholder.com/100x100/404040/FFFFFF?text=COLLECTOR",
               },
               {
                 id: "mon30",
                 name: "Skeleton Guard",
                 tier: "medium",
-                health: 16,
+                health: 18,
                 ac: 13,
                 attackMod: 2,
                 damage: "1-4",
@@ -1607,42 +1630,43 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=SKEL+G", // Placeholder
+                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=SKEL+G",
               },
               {
                 id: "mon31",
-                name: "Stone Golem",
+                name: "Banshee",
                 tier: "medium",
-                health: 30,
+                health: 26,
                 ac: 16,
                 attackMod: 3,
                 damage: "1-6",
-                curseChance: 0,
+                curseChance: 0.5,
+                curseId: "curse02",
                 gearDropCount: 0,
                 treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=STONE+G", // Placeholder
+                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=STONE+G",
               },
               {
                 id: "mon32",
-                name: "Giant Ooze",
+                name: "Bone Naga",
                 tier: "medium",
-                health: 20,
-                ac: 8,
-                attackMod: 1,
+                health: 22,
+                ac: 12,
+                attackMod: 3,
                 damage: "1-3",
                 curseChance: 0.2,
-                curseId: "curse03",
-                gearDropCount: 0,
-                treasureDropChance: 0.0,
+                curseId: "curse02",
+                gearDropCount: 1,
+                treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/008080/FFFFFF?text=OOZE", // Placeholder
+                  "https://via.placeholder.com/100x100/008080/FFFFFF?text=OOZE",
               },
               {
                 id: "mon33",
-                name: "Dread Wolf",
+                name: "Flameskull",
                 tier: "medium",
-                health: 18,
+                health: 9,
                 ac: 14,
                 attackMod: 4,
                 damage: "1-5",
@@ -1650,7 +1674,7 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/2F4F4F/FFFFFF?text=WOLF", // Placeholder
+                  "https://via.placeholder.com/100x100/2F4F4F/FFFFFF?text=WOLF",
               },
               {
                 id: "mon34",
@@ -1664,7 +1688,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.9,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROBBER", // Placeholder
+                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROBBER",
               },
               {
                 id: "mon35",
@@ -1678,22 +1702,22 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=MINO", // Placeholder
+                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=MINO",
               },
               {
                 id: "mon36",
-                name: "Dark Creeper",
+                name: "Ghost",
                 tier: "medium",
-                health: 10,
+                health: 20,
                 ac: 15,
                 attackMod: 2,
-                damage: "1-3",
+                damage: "1-6",
                 curseChance: 0.3,
-                curseId: "curse02",
+                curseId: "curse01",
                 gearDropCount: 0,
-                treasureDropChance: 0.7,
+                treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=CREEPER", // Placeholder
+                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=CREEPER",
               },
             ];
 
@@ -1708,10 +1732,10 @@
                 damage: "1-8",
                 curseChance: 0.4,
                 curseId: "curse04",
-                gearDropCount: 2,
+                gearDropCount: 1,
                 treasureDropChance: 0.8,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=WRAITH", // Placeholder
+                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=WRAITH",
                 abilities: [
                   {
                     name: "Incorporeal",
@@ -1732,7 +1756,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/3CB371/FFFFFF?text=G.GHOUL", // Placeholder
+                  "https://via.placeholder.com/100x100/3CB371/FFFFFF?text=G.GHOUL",
               },
               {
                 id: "mon38",
@@ -1747,21 +1771,22 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=VAMP", // Placeholder
+                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=VAMP",
               },
               {
                 id: "mon39",
-                name: "Iron Golem",
+                name: "Vampire",
                 tier: "hard",
                 health: 40,
                 ac: 18,
                 attackMod: 5,
                 damage: "2-8",
-                curseChance: 0,
+                curseChance: 0.3,
+                curseId: "curse01",
                 gearDropCount: 2,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/778899/FFFFFF?text=IRON+G", // Placeholder
+                  "https://via.placeholder.com/100x100/778899/FFFFFF?text=IRON+G",
               },
               {
                 id: "mon40",
@@ -1775,7 +1800,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/505050/FFFFFF?text=CRYPT+O", // Placeholder
+                  "https://via.placeholder.com/100x100/505050/FFFFFF?text=CRYPT+O",
               },
               {
                 id: "mon41",
@@ -1790,7 +1815,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.8,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/111111/FFFFFF?text=S.FIEND", // Placeholder
+                  "https://via.placeholder.com/100x100/111111/FFFFFF?text=S.FIEND",
               },
               {
                 id: "mon42",
@@ -1805,7 +1830,7 @@
                 gearDropCount: 2,
                 treasureDropChance: 0.9,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=A.WRAITH", // Placeholder
+                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=A.WRAITH",
               },
               {
                 id: "mon43",
@@ -1820,7 +1845,7 @@
                 gearDropCount: 2,
                 treasureDropChance: 0.8,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/36454F/FFFFFF?text=LICH+G", // Placeholder
+                  "https://via.placeholder.com/100x100/36454F/FFFFFF?text=LICH+G",
               },
               {
                 id: "mon44",
@@ -1835,7 +1860,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/400040/FFFFFF?text=ABYSSAL", // Placeholder
+                  "https://via.placeholder.com/100x100/400040/FFFFFF?text=ABYSSAL",
               },
               {
                 id: "mon45",
@@ -1850,7 +1875,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=REV", // Placeholder
+                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=REV",
               },
               {
                 id: "mon46",
@@ -1865,7 +1890,7 @@
                 gearDropCount: 2,
                 treasureDropChance: 0.9,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/2F4F4F/FFFFFF?text=DK", // Placeholder
+                  "https://via.placeholder.com/100x100/2F4F4F/FFFFFF?text=DK",
               },
             ];
 
@@ -1873,38 +1898,38 @@
               id: "boss01",
               name: "Skeleton King",
               tier: "boss",
-              health: 60,
-              ac: 16,
+              health: 65,
+              ac: 25,
               attackMod: 5,
-              damage: "2-10",
-              curseChance: 0.5,
+              damage: "2-15",
+              curseChance: 0.8,
               curseId: "curse04",
               imageUrl:
-                "https://via.placeholder.com/100x100/800000/FFFFFF?text=KING", // Placeholder
+                "https://via.placeholder.com/100x100/800000/FFFFFF?text=KING",
               guards: [
                 {
                   id: "guard01",
                   name: "Royal Skeleton Guard",
                   tier: "hard",
-                  health: 30,
-                  ac: 14,
+                  health: 35,
+                  ac: 18,
                   attackMod: 3,
                   damage: "1-8",
                   isGuard: true,
                   imageUrl:
-                    "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G", // Placeholder
+                    "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G",
                 },
                 {
                   id: "guard02",
                   name: "Royal Skeleton Guard",
                   tier: "hard",
-                  health: 30,
-                  ac: 14,
+                  health: 35,
+                  ac: 16,
                   attackMod: 3,
                   damage: "1-8",
                   isGuard: true,
                   imageUrl:
-                    "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G", // Placeholder
+                    "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G",
                 },
               ],
             };
@@ -1922,7 +1947,7 @@
                 id: "gear_wpn_worn_sword",
                 name: "Worn Sword",
                 type: "weapon",
-                baseDamage: "1-4", // Increased starting weapon damage from 1-2 to 1-4
+                baseDamage: "1-3", // Increased starting weapon damage from 1-2 to 1-4
                 attackMod: 0,
                 defenseMod: 0,
                 bonuses: [],
@@ -1938,7 +1963,7 @@
                 id: "gear_wpn_shortsword",
                 name: "Shortsword",
                 type: "weapon",
-                baseDamage: "1-3",
+                baseDamage: "1-4",
                 attackMod: 0,
                 bonuses: [],
               },
@@ -1960,7 +1985,7 @@
                 id: "gear_wpn_mace",
                 name: "Mace",
                 type: "weapon",
-                baseDamage: "1-4",
+                baseDamage: "2-4",
                 attackMod: 0,
                 bonuses: [],
               },
@@ -1972,7 +1997,6 @@
                 defenseMod: 4,
                 bonuses: [],
               },
-              // --- 10 NEW STRONGER GEAR ITEMS ---
               {
                 id: "gear_wpn_longsword",
                 name: "Longsword",
@@ -1998,7 +2022,7 @@
               },
               {
                 id: "gear_wpn_battle_axe",
-                name: "Battle Axe",
+                name: "Dwarven Axe",
                 type: "weapon",
                 baseDamage: "1-8",
                 attackMod: 0,
@@ -2030,8 +2054,7 @@
               {
                 id: "gear_wpn_warhammer",
                 name: "Warhammer",
-                type: "weapon",
-                baseDamage: "1-7",
+                baseDamage: "1-8",
                 attackMod: 1,
                 bonuses: [],
               },
@@ -2137,47 +2160,47 @@
               {
                 id: "curse01",
                 name: "Curse of Weakness",
-                effectDescription: "-1 to Damage for 3 turns.",
+                effectDescription: "-1 to Damage for 5 turns.",
                 stat: "damage",
                 modifier: -1,
-                duration: 3,
+                duration: 5,
               },
               {
                 id: "curse02",
                 name: "Curse of Clumsiness",
-                effectDescription: "-1 to Attack for 3 turns.",
+                effectDescription: "-1 to Attack for 6 turns.",
                 stat: "attack",
                 modifier: -1,
-                duration: 3,
+                duration: 6,
               },
               {
                 id: "curse03",
                 name: "Flesh Rot",
-                effectDescription: "Take 1 damage per turn for 3 turns.",
+                effectDescription: "Take 1 damage per turn for 7 turns.",
                 stat: "health_dot",
                 modifier: -1,
-                duration: 3,
+                duration: 4,
               },
               {
                 id: "curse04",
                 name: "King's Dread",
-                effectDescription: "-2 to Attack & Defense for 5 turns.",
+                effectDescription: "-2 to Attack & Defense for 7 turns.",
                 stat: "multi",
                 modifiers: [
                   { stat: "attack", mod: -2 },
                   { stat: "defense", mod: -2 },
                 ],
-                duration: 5,
+                duration: 7,
               },
               {
                 id: "curse05",
                 name: "Poisoned",
                 effectDescription:
-                  "Take 1 initial damage. -1 to Attack for 2 turns.",
+                  "Take 2 initial damage. -1 to Attack for 5 turns.",
                 stat: "attack",
                 modifier: -1,
-                duration: 2,
-                initialDamage: 1,
+                duration: 5,
+                initialDamage: 2,
               },
             ];
           },
@@ -2321,6 +2344,24 @@
             // Clear current exploration message so the new event description can appear
             this.currentExplorationMessage = null;
 
+            if (this.nothingEventCount > 5) {
+              this.logEvent(
+                "The quiet crypt fills you with unease... a sinister presence stirs!"
+              );
+              // Create a temporary event definition that guarantees a monster
+              eventToDraw = {
+                id: "evt_forced_monster",
+                type: "Forced Encounter",
+                title: "Sinister Stirrings",
+                description:
+                  "The prolonged silence is unnerving. A guttural growl echoes from the darkness, promising an immediate confrontation.",
+                imageUrl:
+                  "https://via.placeholder.com/600x400/8B0000/F0F0F0?text=Forced+Encounter", // A grim placeholder image
+                effects: [{ trigger: "monster", chance: 1.0 }], // Guarantees a monster encounter
+              };
+              this.nothingEventCount = 0; // Reset the counter after forcing an encounter
+            }
+
             // Conditional logic for shop event
             if (
               this.player.monsterDeckProgression >=
@@ -2334,9 +2375,6 @@
                 this.player.healingPotionCount > 10
               ) {
                 shopChance = 0.02; // Reduced to 2% chance
-                this.logEvent(
-                  "You are well-stocked. The merchant seems less eager to appear."
-                );
               }
 
               if (Math.random() < shopChance) {
@@ -2346,6 +2384,7 @@
                 this.logEvent(
                   "You discover a clandestine shop hidden in the crypt!"
                 );
+                this.merchantEventCount++; // NEW: Increment merchant event count
               }
             }
 
@@ -2513,6 +2552,7 @@
             if (!this.currentEvent) return;
             this.pendingLoot = [];
             let effectTriggered = false; // Flag to track if any substantial effect occurred (other than combat/trap taking over)
+            let goldFoundOnNothing = 0; // NEW: Variable to track if gold was found in this specific "nothing" case
 
             for (const effect of this.currentEvent.effects) {
               let chance = effect.chance;
@@ -2560,11 +2600,26 @@
               this.endTurn();
             } else {
               // No substantial effects triggered, and no loot was added from previous steps.
-              const smallGold = this.rollDie(5) + 5;
-              this.pendingLoot.push({ type: "gold", amount: smallGold });
-              this.logEvent(`You search the area and find ${smallGold} gold.`);
-              this.currentExplorationMessage = `You searched the ${this.lastExploredEventTitle.toLowerCase()} and found ${smallGold} gold.`; // Update message for exploring state
-              this.gameState = "loot_found"; // Transition to loot_found to allow collecting the gold
+              // This is a true "nothing" event now.
+              // ADDED LOGIC FOR GOLD DROPS ON "NOTHING" EVENTS:
+              if (Math.random() < 0.75) {
+                // 75% chance to find a small amount of gold
+                goldFoundOnNothing = this.rollDamage("5-10");
+                this.player.gold += goldFoundOnNothing;
+                this.logEvent(
+                  `You find ${goldFoundOnNothing} gold lying on the ground.`
+                );
+                this.currentExplorationMessage = `You find ${goldFoundOnNothing} gold lying on the ground. The crypt is quiet.`;
+                this.nothingEventCount++;
+              } else {
+                this.logEvent("Nothing eventful happens. The crypt is quiet.");
+                this.currentExplorationMessage =
+                  "Nothing eventful happens. The crypt is quiet.";
+                this.nothingEventCount++; // Only increment if truly nothing happened
+              }
+              // END ADDED LOGIC
+              this.gameState = "exploring";
+              this.endTurn();
             }
           },
 
@@ -2572,16 +2627,16 @@
             if (this.gameState === "game_over" || this.gameState === "game_won")
               return;
 
-            // Passive heal (1 HP per event/turn)
-            if (this.player.health < this.player.maxHealth) {
-              this.player.health = Math.min(
-                this.player.maxHealth,
-                this.player.health + 1
-              );
-              this.logEvent(
-                `You recover 1 health naturally. HP: ${this.player.health}/${this.player.maxHealth}`
-              );
-            }
+            // Removed: Passive heal (1 HP per event/turn)
+            // if (this.player.health < this.player.maxHealth) {
+            //   this.player.health = Math.min(
+            //     this.player.maxHealth,
+            //     this.player.health + 1
+            //   );
+            //   this.logEvent(
+            //     `You recover 1 health naturally. HP: ${this.player.health}/${this.player.maxHealth}`
+            //   );
+            // }
 
             if (this.isTorchLit) {
               this.player.currentTorchDuration--;
@@ -2709,7 +2764,15 @@
             this.logEvent(
               `You drink a healing potion and recover ${healAmount} health. HP: ${this.player.health}/${this.player.maxHealth}. Potions left: ${this.player.healingPotionCount}`
             );
-            // This is a free action, does not end turn or trigger monster actions.
+            // MODIFIED: If in combat, monster gets to act.
+            if (this.gameState === "combat") {
+              this.logEvent(
+                "Using a potion takes time, costing you your turn!"
+              );
+              this.currentCombatMessage =
+                "You used a potion. Now it's the monster's turn!";
+              this.monsterTurn(); // Monster gets a turn immediately after potion use in combat
+            }
           },
 
           // Shop Actions
@@ -2803,8 +2866,8 @@
               );
               this.currentCombatMessage = `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} Royal Guard(s)! Defeat them first!`; // Update combat message
             } else {
-              this.logEvent(`A wild ${this.currentMonster.name} appears!`);
-              this.currentCombatMessage = `A wild ${this.currentMonster.name} appears!`; // Update combat message
+              this.logEvent(`A ${this.currentMonster.name} appears!`);
+              this.currentCombatMessage = `A ${this.currentMonster.name} appears!`; // Update combat message
             }
             this.gameState = "combat";
           },
@@ -2822,9 +2885,11 @@
                 : this.currentMonster;
             if (!target) return;
 
-            this.logEvent(`Player attacks ${target.name}!`);
             const attackRoll = this.rollDie(20);
             const totalAttack = attackRoll + this.totalAttackModifier;
+            this.logEvent(
+              `Player attacks ${target.name}! (Roll: ${attackRoll} + ${this.totalAttackModifier} (mod) = ${totalAttack} vs AC ${target.ac})`
+            ); // Keep this in the log!
 
             if (totalAttack >= target.ac || attackRoll === 20) {
               // Nat 20 always hits
@@ -2833,7 +2898,7 @@
               this.logEvent(
                 `Hit! You deal ${damageDealt} damage to ${target.name}. (${target.health}/${target.maxHealth} HP)`
               );
-              this.currentCombatMessage = `You attack! Hit! You deal ${damageDealt} damage to ${target.name}.`; // Update combat message (Rolls excluded)
+              this.currentCombatMessage = `You attack! Hit! You deal ${damageDealt} damage to ${target.name}.`; // Update combat message (Rolls excluded from here)
 
               if (target.health <= 0) {
                 this.logEvent(`${target.name} defeated!`);
@@ -2853,7 +2918,7 @@
               }
             } else {
               this.logEvent("Miss!");
-              this.currentCombatMessage = `You attack! You miss!`; // Update combat message (Rolls excluded)
+              this.currentCombatMessage = `You attack! You miss!`; // Update combat message (Rolls excluded from here)
             }
 
             if (
@@ -2956,9 +3021,11 @@
               ? "gets a parting shot at you"
               : "attacks";
 
-            this.logEvent(`${monster.name} ${actionText}!`);
             const attackRoll = this.rollDie(20);
             const totalAttack = attackRoll + monster.attackMod;
+            this.logEvent(
+              `${monster.name} ${actionText}! (Roll: ${attackRoll} + ${monster.attackMod} (mod) = ${totalAttack} vs Your AC ${this.totalDefense})`
+            ); // Keep this in the log!
 
             if (totalAttack >= this.totalDefense || attackRoll === 20) {
               // Nat 20 always hits
@@ -2967,7 +3034,7 @@
               this.logEvent(
                 `Hit! ${monster.name} deals ${damageDealt} damage. (${this.player.health}/${this.player.maxHealth} HP)`
               );
-              this.currentCombatMessage = `${monster.name} ${actionText}! Hits you for ${damageDealt} damage!`; // Update combat message (Rolls excluded)
+              this.currentCombatMessage = `${monster.name} ${actionText}! Hits you for ${damageDealt} damage!`; // Update combat message (Rolls excluded from here)
 
               if (
                 monster.curseChance &&
@@ -2985,13 +3052,17 @@
               }
             } else {
               this.logEvent(`${monster.name} misses!`);
-              this.currentCombatMessage = `${monster.name} ${actionText}! Misses you!`; // Update combat message (Rolls excluded)
+              this.currentCombatMessage = `${monster.name} ${actionText}! Misses you!`; // Update combat message (Rolls excluded from here)
             }
           },
 
           monsterDefeated(monster) {
             this.logEvent(`${monster.name} has been slain!`);
             this.player.monsterDeckProgression++;
+
+            // NEW: Reset the nothing event counter after a monster battle
+            this.nothingEventCount = 0;
+            this.logEvent("The quiet passages counter has been reset.");
 
             // Progression check: Every 5 monsters slain, increase player stats
             if (this.player.monsterDeckProgression % 5 === 0) {
@@ -3139,34 +3210,51 @@
           },
 
           // Gear & Items
+          // Gear & Items
           equipGear(newItem) {
-            // MODIFIED: Removed isSilent parameter
+            // Reverting to the previous, simpler logic:
+            // Gear is equipped only into its designated slot (weapon, armor, shield)
+            // and only if it provides a better score than the currently equipped item in that slot.
+
             if (!newItem || !newItem.type) return;
-            const slot = newItem.type;
+
+            const slot = newItem.type; // 'weapon', 'armor', or 'shield'
             const oldItem = this.player.equippedGear[slot];
+            const newItemScore = this.getGearScore(newItem);
+            const oldItemScore = oldItem
+              ? this.getGearScore(oldItem)
+              : -Infinity;
 
-            if (oldItem) {
-              const newItemScore = this.getGearScore(newItem);
-              const oldItemScore = this.getGearScore(oldItem);
+            let equipped = false;
+            let logMessage = "";
 
-              if (newItemScore < oldItemScore) {
-                this.logEvent(
-                  `Found ${newItem.name}, but it's worse than your equipped ${oldItem.name}. Keeping current gear.`
-                );
-                return; // Prevent equipping worse gear
-              } else if (newItemScore === oldItemScore) {
-                this.logEvent(
-                  `Found ${newItem.name}, which is equal to your equipped ${oldItem.name}. Keeping current gear.`
-                );
-                return; // Option to keep current gear if equal, or allow equipping if preferred
+            if (newItemScore > oldItemScore) {
+              // New item is better, equip it
+              this.player.equippedGear[slot] = newItem;
+              equipped = true;
+              if (oldItem) {
+                logMessage = `Replaced ${oldItem.name} with ${newItem.name}.`;
+              } else {
+                logMessage = `Equipped ${newItem.name}.`;
               }
-              this.logEvent(`Replaced ${oldItem.name} with ${newItem.name}.`);
+            } else if (newItemScore === oldItemScore && oldItem) {
+              // New item is equal, keep current gear
+              logMessage = `Found ${newItem.name}, which is equal to your equipped ${oldItem.name}. Keeping current gear.`;
             } else {
-              this.logEvent(`Equipped ${newItem.name}.`);
+              // New item is worse, keep current gear
+              logMessage = `Found ${
+                newItem.name
+              }, but it's worse than your equipped ${
+                oldItem ? oldItem.name : "nothing"
+              }. Keeping current gear.`;
             }
 
-            if (!newItem.bonuses) newItem.bonuses = [];
-            this.player.equippedGear[slot] = newItem;
+            // Always ensure the newly equipped item (if any) has a bonuses array
+            if (equipped && !newItem.bonuses) {
+              newItem.bonuses = [];
+            }
+
+            this.logEvent(logMessage);
           },
 
           applyBonusToGear(slot) {
@@ -3182,9 +3270,28 @@
               return;
             }
             if (!item.bonuses) item.bonuses = [];
-            item.bonuses.push(JSON.parse(JSON.stringify(bonus)));
 
-            this.logEvent(`Applied '${bonus.name}' to your ${item.name}.`);
+            // Find if a bonus of the same ID already exists
+            const existingBonusIndex = item.bonuses.findIndex(
+              (b) => b.id === bonus.id
+            );
+
+            if (existingBonusIndex !== -1) {
+              // If it exists, replace it with the new bonus
+              item.bonuses.splice(
+                existingBonusIndex,
+                1,
+                JSON.parse(JSON.stringify(bonus))
+              );
+              this.logEvent(
+                `Replaced existing enchantment on your ${item.name} with '${bonus.name}'.`
+              );
+            } else {
+              // Otherwise, add it as a new bonus
+              item.bonuses.push(JSON.parse(JSON.stringify(bonus)));
+              this.logEvent(`Applied '${bonus.name}' to your ${item.name}.`);
+            }
+
             this.pendingGearBonus = null;
             this.selectedGearSlotForBonus = null;
 
@@ -3230,12 +3337,21 @@
               return;
             }
 
-            this.logEvent(`Trap! ${trap.name}! ${trap.effectDescription}`);
+            // Set the trap message for display in gameplay area
+            this.currentTrapMessage = `${trap.name}! ${trap.effectDescription}`;
+            this.logEvent(`Trap! ${this.currentTrapMessage}`); // Log the full message
             this.gameState = "trap_triggered";
 
             if (trap.damage && trap.damage !== "0-0") {
               let damageTaken = this.rollDamage(trap.damage);
-              // Removed darknessBonusDamage logic as torches no longer affect trap damage.
+
+              // NEW: Double initial trap damage if torch is not lit
+              if (!this.isTorchLit) {
+                damageTaken *= 2;
+                this.logEvent(
+                  `Darkness amplifies the ${trap.name}'s effect! Damage doubled.`
+                );
+              }
 
               if (damageTaken > 0) {
                 this.player.health -= damageTaken;
@@ -3308,24 +3424,59 @@
             this.initializeGame();
           },
 
-          // NEW: Handle Spacebar input
+          // NEW: Handle Keyboard Inputs
           handleSpacebar(event) {
             if (event.code === "Space") {
               event.preventDefault(); // Prevent default spacebar scrolling
 
               if (this.gameState === "exploring") {
-                console.log("Calling exploreNextEvent."); // Debugging line
                 this.exploreNextEvent();
               } else if (this.gameState === "loot_found") {
-                console.log("Calling collectLoot."); // Debugging line
                 this.collectLoot();
               } else if (this.gameState === "combat") {
-                console.log("Calling playerAttack."); // Debugging line
-                this.playerAttack(); // Directly call the attack method
+                this.playerAttack();
+              } else if (this.gameState === "trap_triggered") {
+                this.acknowledgeTrap();
+              }
+            } else if (event.key === "t" || event.key === "T") {
+              event.preventDefault();
+              // Check if torch can be lit (not in combat or applying bonus, and have torches)
+              if (
+                this.player.torchCount > 0 &&
+                this.gameState !== "applying_bonus"
+              ) {
+                this.lightTorch();
               } else {
-                console.log(
-                  "No action triggered for spacebar in current state."
-                ); // Debugging line
+                this.logEvent(
+                  "Cannot light torch now (not allowed in current state or no torches left)."
+                );
+              }
+            } else if (event.key === "r" || event.key === "R") {
+              event.preventDefault();
+              // Check if rest is possible (exploring and not full health)
+              if (
+                this.gameState === "exploring" &&
+                this.player.health < this.player.maxHealth
+              ) {
+                this.rest();
+              } else {
+                this.logEvent(
+                  "Cannot rest now (only when exploring and not at full health)."
+                );
+              }
+            } else if (event.key === "p" || event.key === "P") {
+              event.preventDefault();
+              // Check if potion can be used (have potions, not full health, and in exploring or combat)
+              if (
+                this.player.healingPotionCount > 0 &&
+                this.player.health < this.player.maxHealth &&
+                (this.gameState === "exploring" || this.gameState === "combat")
+              ) {
+                this.useHealingPotion();
+              } else {
+                this.logEvent(
+                  "Cannot use potion now (full health or no potions)."
+                );
               }
             }
           },
