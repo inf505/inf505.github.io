@@ -1110,7 +1110,7 @@
               (g) => g.id === "gear_wpn_worn_sword"
             );
             const startingArmor = this.gearDeck.find(
-              (g) => g.id === "gear_arm_patched_leather"
+              (g) => g.id === "gear_arm_patchwork"
             );
             // Equip starting gear silently, skipping comparisons
             if (startingWeapon)
@@ -1133,7 +1133,7 @@
                 "A hooded figure eyes you, gesturing to their wares.",
               // show me this crypt/dungeon location: (Shop) "Mysterious Merchant" "A hooded figure eyes you, gesturing to their wares." in landscape orientation
               imageUrl:
-                "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/evt_shop.png",
+                "https://inf505.github.io/skeletonking/evt_shop.png",
               effects: [{ trigger: "shop", chance: 1.0 }], // If this card is drawn, shop is guaranteed
             };
 
