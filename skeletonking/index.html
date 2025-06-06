@@ -137,7 +137,7 @@
 
       .gameplay-area {
         grid-area: gameplay;
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        /* background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); */
         border: 2px solid #475569;
         border-radius: 12px;
         padding: 24px;
@@ -165,25 +165,13 @@
         pointer-events: none;
       }
 
-      /* New: Darkness Indicator */
-      .darkness-indicator {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        font-size: 3em;
-        color: rgba(255, 255, 255, 0.2);
-        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        pointer-events: none;
-        z-index: 2;
-      }
-
       .game-field {
         width: 100%;
         max-width: 600px;
         height: auto;
         min-height: 200px;
-        background: rgba(168, 85, 247, 0.05);
-        border: 1px solid rgba(168, 85, 247, 0.5);
+        background: rgba(33, 32, 37, 0.05);
+        border: 1px solid rgba(13, 13, 14, 0.5);
         border-radius: 12px;
         display: flex;
         flex-direction: column;
@@ -207,7 +195,7 @@
         font-weight: bold;
         cursor: pointer;
         transition: background-color 0.3s ease;
-        margin: 5px;
+        margin: 5px; /* Default margin for buttons */
       }
       .game-field button:hover {
         background-color: #0ea5e9;
@@ -230,7 +218,7 @@
       }
 
       .game-field-label {
-        color: #a855f7;
+        color: #e71616;
         font-weight: bold;
         font-size: 24px;
         text-transform: uppercase;
@@ -239,15 +227,34 @@
         margin-bottom: 20px;
       }
 
+      .gear-comparison-item {
+        border: 1px solid #475569;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: rgba(71, 85, 105, 0.1);
+      }
+      .gear-comparison-item h4 {
+        color: #67e8f9;
+        margin-bottom: 8px;
+      }
+      .gear-comparison-item p {
+        font-size: 0.95em;
+        margin-bottom: 5px;
+        color: #cbd5e1;
+      }
+
       .monster-info {
-        /* This background is now dynamically set for images */
-        background: rgba(168, 85, 247, 0.05); /* Fallback */
-        border: 1px solid rgba(168, 85, 247, 0.5); /* Keep border */
+        background: rgba(33, 32, 37, 0.05);
+        border: 1px solid rgba(13, 13, 14, 0.5);
         border-radius: 12px;
-        padding: 20px; /* Keep padding */
+        padding: 20px;
         text-align: center;
         width: 100%;
         max-width: 600px;
+        display: flex; /* MODIFIED: Make monster-info a flex container */
+        flex-direction: column; /* Stack children vertically */
+        align-items: center; /* Center children horizontally */
       }
       .monster-info h4,
       .monster-info h5 {
@@ -258,13 +265,36 @@
         font-size: 0.9em;
         margin-bottom: 3px;
       }
-      .monster-info > div {
+      .monster-info > div:not(.combat-actions-area) {
+        /* Exclude new button area from this rule */
         margin-bottom: 10px;
-        border-bottom: 1px solid #475569;
+        /* border-bottom: 1px solid #475569; */
         padding-bottom: 10px;
+        width: 100%; /* Ensure these divs take full width for centering */
       }
-      .monster-info > div:last-child {
+      .monster-info > div:last-child:not(.combat-actions-area) {
         border-bottom: none;
+      }
+
+      /* NEW: Styles for combat button groups */
+      .combat-actions-area {
+        margin-top: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px; /* Space between primary and utility button groups */
+        width: 100%;
+      }
+
+      .combat-primary-buttons,
+      .combat-utility-buttons {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px; /* Space between buttons within a group */
+      }
+      .combat-actions-area button {
+        margin: 0; /* Override the general .game-field button margin if using gap */
       }
 
       /* New style for equipped gear section in gameplay area */
@@ -272,13 +302,11 @@
         width: 100%;
         max-width: 600px; /* Match game-field width */
         margin-top: 20px; /* Space above */
-        background: rgba(168, 85, 247, 0.05);
-        border: 1px solid rgba(168, 85, 247, 0.5);
+
         border-radius: 12px;
         padding: 15px 20px; /* Reduced padding */
         text-align: center;
       }
-      /* Removed .equipped-gear-section .status-subtitle as per request 1 */
 
       /* Flex container for the gear items */
       .equipped-gear-items {
@@ -290,26 +318,22 @@
       }
 
       .equipped-gear-items .stat-item {
-        flex-basis: calc(
-          33.33% - 10px
-        ); /* Roughly 3 items per row, accounting for gap */
-        max-width: calc(
-          33.33% - 10px
-        ); /* Ensure max width for responsiveness */
-        margin-bottom: 0; /* Handled by gap */
-        padding: 6px 10px; /* Adjusted padding */
-        background: rgba(71, 85, 105, 0.2); /* Lighter background */
-        flex-direction: column; /* Keep content inside stat-item stacked for label/value */
-        align-items: center; /* Center label/value in their small box */
-        text-align: center; /* Center text within each item */
+        flex-basis: calc(33.33% - 10px);
+        max-width: calc(33.33% - 10px);
+        margin-bottom: 0;
+        padding: 6px 10px;
+        background: rgba(71, 85, 105, 0.2);
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
       }
       .equipped-gear-items .stat-label {
-        font-size: 13px; /* Slightly larger font */
-        margin-bottom: 4px; /* Small space between label and value */
+        font-size: 13px;
+        margin-bottom: 4px;
       }
       .equipped-gear-items .stat-value {
-        font-size: 15px; /* Slightly larger font */
-        text-align: center; /* Override default right alignment */
+        font-size: 15px;
+        text-align: center;
       }
 
       .events-log {
@@ -379,127 +403,138 @@
         background: #0ea5e9;
       }
 
+      /* NEW: Critical Health Button Flash */
+      @keyframes critical-flash-sharp-animation {
+        40.1%,
+        60% {
+          /* 'On' state - short, sharp flash */
+          background-color: #e53e3e; /* A bright, urgent red */
+          color: white;
+        }
+        /* At other times (0-40% and 60.1-100%), the button's original styles apply */
+      }
+
+      .button-flash-critical {
+        animation: critical-flash-sharp-animation 1.5s infinite;
+      }
+
       /* Responsive design */
       @media (max-width: 768px) {
         .game-container {
           grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr auto; /* Status (auto), Gameplay (flexible), Events (auto) */
+          grid-template-rows: auto 1fr auto;
           grid-template-areas:
             "status"
             "gameplay"
             "events";
-          overflow-y: auto; /* Allow overall page scroll on small screens */
-          gap: 8px; /* Slightly smaller gap on mobile */
-          padding: 8px; /* Slightly smaller padding */
+          overflow-y: auto;
+          gap: 8px;
+          padding: 8px;
         }
 
         .status-panel {
-          padding: 12px; /* Reduced padding */
-          max-height: 120px; /* MODIFIED: Even smaller max-height for mobile status panel */
-          display: flex; /* Enable flexbox for horizontal layout */
-          flex-wrap: wrap; /* Allow items to wrap to the next line */
-          justify-content: space-around; /* Distribute items more evenly */
-          align-content: flex-start; /* Items start from the top */
-          overflow-y: auto; /* Keep scrolling if content overflows */
+          padding: 12px;
+          max-height: 120px;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-around;
+          align-content: flex-start;
+          overflow-y: auto;
         }
 
         .events-log {
-          max-height: 150px; /* NEW: Constrain events log height on mobile */
+          max-height: 150px;
         }
 
         .status-title,
         .status-subtitle {
-          width: 100%; /* Ensure titles take full width */
-          margin-bottom: 8px; /* Reduced margin */
-          font-size: 14px; /* Slightly smaller font for titles */
+          width: 100%;
+          margin-bottom: 8px;
+          font-size: 14px;
         }
         .status-subtitle {
-          margin-top: 10px; /* Adjusted margin */
-          margin-bottom: 5px; /* Adjusted margin */
-          font-size: 12px; /* Slightly smaller font for subtitles */
+          margin-top: 10px;
+          margin-bottom: 5px;
+          font-size: 12px;
         }
 
         .stat-item {
-          min-width: 130px; /* Reduced min-width to allow more items per row */
-          margin-bottom: 6px; /* Reduced margin */
-          padding: 6px; /* Reduced padding */
-          flex-grow: 1; /* Allow items to grow to fill space */
-          flex-basis: auto; /* Allow content to dictate initial size, then grow */
+          min-width: 130px;
+          margin-bottom: 6px;
+          padding: 6px;
+          flex-grow: 1;
+          flex-basis: auto;
         }
 
         .stat-label {
-          font-size: 11px; /* Adjusted stat label font size */
+          font-size: 11px;
         }
 
         .stat-value {
-          font-size: 12px; /* Adjusted stat value font size */
+          font-size: 12px;
         }
 
         .stat-value button {
-          padding: 1px 4px !important; /* Make buttons even smaller in stat-value */
-          font-size: 9px !important; /* Smaller font for buttons */
+          padding: 1px 4px !important;
+          font-size: 9px !important;
         }
 
         .stat-item.column-layout {
-          /* For curses list, ensure it still stacks vertically */
           flex-direction: column;
           align-items: flex-start;
-          min-width: unset; /* Remove min-width for column layout */
-          width: 100%; /* Take full width */
+          min-width: unset;
+          width: 100%;
         }
 
         .stat-value ul {
-          margin-top: 2px; /* Reduced margin for curse list */
+          margin-top: 2px;
         }
         .stat-value li {
-          font-size: 10px; /* Even smaller for curse list items */
-          margin-bottom: 2px; /* Reduced margin */
+          font-size: 10px;
+          margin-bottom: 2px;
         }
 
         .gameplay-area {
-          min-height: 250px; /* Can be reduced further if status panel is very small */
-          padding: 16px; /* Reduced padding */
+          min-height: 250px;
+          padding: 16px;
         }
         .game-field {
-          padding: 15px; /* Reduced padding */
+          padding: 15px;
         }
         .game-field p {
-          font-size: 14px; /* Smaller font for paragraph text */
-          margin-bottom: 10px; /* Reduced margin */
+          font-size: 14px;
+          margin-bottom: 10px;
         }
         .game-field-label {
-          font-size: 20px; /* Smaller font for game field label */
-          margin-bottom: 15px; /* Reduced margin */
+          font-size: 20px;
+          margin-bottom: 15px;
         }
         .game-field button {
-          padding: 8px 15px; /* Smaller buttons */
-          font-size: 12px; /* Smaller button text */
-          margin: 3px; /* Smaller button margin */
+          padding: 8px 15px;
+          font-size: 12px;
+          margin: 3px;
+        }
+        .combat-actions-area button {
+          /* Ensure responsive combat buttons still use gap */
+          margin: 0;
         }
 
         .equipped-gear-section {
-          padding: 10px 15px; /* Tighter padding for mobile */
-          margin-top: 15px; /* Adjusted margin */
+          padding: 10px 15px;
+          margin-top: 15px;
         }
         .equipped-gear-items {
-          justify-content: space-evenly; /* Keep 2 per row if possible */
-          gap: 8px; /* Slightly smaller gap */
+          justify-content: space-evenly;
+          gap: 8px;
         }
         .equipped-gear-items .stat-item {
-          flex-basis: calc(50% - 8px); /* 2 items per row */
+          flex-basis: calc(50% - 8px);
           max-width: calc(50% - 8px);
-          padding: 5px 8px; /* Further reduced padding */
+          padding: 5px 8px;
         }
         .equipped-gear-items .stat-label,
         .equipped-gear-items .stat-value {
-          font-size: 11px; /* Smaller font sizes */
-        }
-
-        /* Responsive darkness indicator */
-        .darkness-indicator {
-          top: 10px;
-          right: 10px;
-          font-size: 2em;
+          font-size: 11px;
         }
       }
     </style>
@@ -528,7 +563,7 @@
               >(Lit: {{ player.currentTorchDuration }})</template
             >
             <template
-              v-else-if="player.torchCount > 0 && gameState !== 'combat' && gameState !== 'applying_bonus'"
+              v-else-if="player.torchCount > 0 && gameState !== 'combat' && gameState !== 'applying_bonus' && gameState !== 'gear_choice'"
             >
               <button
                 @click="lightTorch"
@@ -543,11 +578,10 @@
           <span class="stat-label">Healing Potions</span>
           <span class="stat-value potions">
             {{ player.healingPotionCount }}
-            <template
-              v-if="player.healingPotionCount > 0 && player.health < player.maxHealth && (gameState === 'exploring' || gameState === 'combat')"
-            >
+            <template v-if="canUsePotionInStatusPanel">
               <button
                 @click="useHealingPotion"
+                :class="{ 'button-flash-critical': shouldFlashStatusPotionButton }"
                 style="padding: 2px 5px; font-size: 10px; margin-left: 5px"
               >
                 Use
@@ -570,10 +604,10 @@
         <div class="stat-item">
           <span class="stat-label">Progress</span>
           <span class="stat-value"
-            >{{ player.monsterDeckProgression }} defeated</span
+            >{{ player.monsterDeckProgression }} / {{ initialMonsterDeckSize }}
+            defeated ({{ monsterDeckProgressPercentage }}%)</span
           >
         </div>
-        <!-- NEW: Merchant Visits and Quiet Passages -->
         <div class="stat-item">
           <span class="stat-label">Merchant Visits</span>
           <span class="stat-value">{{ merchantEventCount }}</span>
@@ -582,15 +616,21 @@
           <span class="stat-label">Quiet Passages</span>
           <span class="stat-value">{{ nothingEventCount }}</span>
         </div>
-        <!-- DEBUG -->
+
+        <!-- In the Status Panel HTML -->
+        <div class="stat-item">
+          <span class="stat-label">Danger Level</span>
+          <span class="stat-value" :style="{ color: dangerLevelColor }"
+            >{{ currentMonsterDeckTier ? currentMonsterDeckTier.toUpperCase() :
+            'Unknown' }}</span
+          >
+        </div>
 
         <div class="stat-item">
           <span class="stat-value" style="font-size: 13px">
-            {{ lastExploredEventTitle || '...' }} - {{
-            lastExploredEventDescription || '...' }}
+            {{ gameState }}
           </span>
         </div>
-
         <template v-if="player.activeCurses.length > 0">
           <div class="status-subtitle" style="margin-top: 15px">
             Active Curses
@@ -614,14 +654,6 @@
 
       <!-- Main Gameplay Area -->
       <div class="gameplay-area" :style="gameplayAreaBackgroundStyle">
-        <div
-          v-if="!isTorchLit"
-          class="darkness-indicator"
-          title="Darkness! Attack and Damage Penalties Active"
-        >
-          🌑
-        </div>
-
         <div class="game-field">
           <!-- Initializing State -->
           <div v-if="gameState === 'initializing'">
@@ -640,8 +672,12 @@
             <button @click="exploreNextEvent" ref="exploreButton">
               Explore Deeper
             </button>
-            <button v-if="player.health < player.maxHealth" @click="rest">
-              Rest (Heal 2-5)
+            <button
+              v-if="canRestGameplay"
+              @click="rest"
+              :class="{ 'button-flash-critical': shouldFlashRestButton }"
+            >
+              Rest
             </button>
             <button
               v-if="!isTorchLit && player.torchCount > 0"
@@ -652,12 +688,12 @@
             <button v-else-if="isTorchLit" disabled>
               Torch Lit ({{ player.currentTorchDuration }} turns)
             </button>
-            <!-- Healing Potion button in main gameplay area (redundant but explicit for player control) -->
             <button
-              v-if="player.healingPotionCount > 0 && player.health < player.maxHealth"
+              v-if="canUsePotionInExploringGameplay"
               @click="useHealingPotion"
+              :class="{ 'button-flash-critical': shouldFlashExploringPotionButton }"
             >
-              Use Potion ({{ player.healingPotionCount }})
+              Potion ({{ player.healingPotionCount }})
             </button>
           </div>
 
@@ -725,7 +761,6 @@
               </p>
             </div>
             <div v-else-if="currentMonster">
-              <!-- <h4>{{ currentMonster.name }}</h4> -->
               <p>
                 HP: {{ currentMonster.health }}/{{ currentMonster.maxHealth }},
                 AC: {{ currentMonster.ac }}
@@ -735,43 +770,79 @@
                 {{currentMonster.damage}}
               </p>
             </div>
-            <button
-              @click="playerAttack"
-              :disabled="gameState !== 'combat'"
-              ref="attackButton"
-            >
-              Attack
-            </button>
-            <button @click="playerFlee" :disabled="gameState !== 'combat'">
-              Flee
-            </button>
-            <button
-              v-if="!isTorchLit && player.torchCount > 0"
-              @click="lightTorch"
-            >
-              Light Torch (Free Action)
-            </button>
-            <button
-              v-if="player.healingPotionCount > 0 && player.health < player.maxHealth"
-              @click="useHealingPotion"
-            >
-              Use Potion ({{ player.healingPotionCount }})
-            </button>
+
+            <!-- NEW Combat Button Structure -->
+            <div class="combat-actions-area">
+              <div class="combat-primary-buttons">
+                <button
+                  @click="playerAttack"
+                  :disabled="gameState !== 'combat'"
+                  ref="attackButton"
+                >
+                  Attack
+                </button>
+                <button @click="playerFlee" :disabled="gameState !== 'combat'">
+                  Flee
+                </button>
+              </div>
+              <div
+                class="combat-utility-buttons"
+                v-if="showUtilityCombatButtons"
+              >
+                <button
+                  v-if="!isTorchLit && player.torchCount > 0"
+                  @click="lightTorch"
+                >
+                  Light Torch (Free Action)
+                </button>
+                <button
+                  v-if="canUsePotionInCombatGameplay"
+                  @click="useHealingPotion"
+                  :class="{ 'button-flash-critical': shouldFlashCombatPotionButton }"
+                >
+                  Potion ({{ player.healingPotionCount }})
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Loot Found State -->
           <div v-if="gameState === 'loot_found' && pendingLoot.length > 0">
-            <div class="game-field-label">Treasure Found!</div>
-            <ul>
-              <li v-for="(item, index) in pendingLoot" :key="'loot'+index">
-                <span v-if="item.type === 'gold'">{{ item.amount }} Gold</span>
-                <span v-if="item.type === 'item'"
-                  >{{ item.item.name }} ({{ item.item.isBonus ? 'Enchantment' :
-                  (item.item.type || 'Item') }})</span
-                >
-              </li>
-            </ul>
-            <button @click="collectLoot" ref="takeAllButton">Take All</button>
+            <div class="game-field-label">Processing Loot...</div>
+            <p>Automatically processing loot items one by one.</p>
+          </div>
+
+          <!-- Gear Choice State -->
+          <div v-if="gameState === 'gear_choice' && pendingGearChoice">
+            <div class="game-field-label">Gear Choice</div>
+            <p>You found a new piece of gear! Decide what to do.</p>
+
+            <div class="gear-comparison-item">
+              <h4>New Item: {{ pendingGearChoice.newItem.name }}</h4>
+              <p>Type: {{ pendingGearChoice.newItem.type }}</p>
+              <p>Stats: {{ getGearStats(pendingGearChoice.newItem) }}</p>
+            </div>
+            <button @click="confirmEquipNewGear">
+              Equip {{ pendingGearChoice.newItem.name }}
+            </button>
+
+            <div
+              v-if="pendingGearChoice.currentItem"
+              class="gear-comparison-item"
+              style="margin-top: 15px"
+            >
+              <h4>Current Item: {{ pendingGearChoice.currentItem.name }}</h4>
+              <p>Type: {{ pendingGearChoice.currentItem.type }}</p>
+              <p>Stats: {{ getGearStats(pendingGearChoice.currentItem) }}</p>
+              <button @click="confirmKeepCurrentGear" style="margin-top: 10px">
+                Keep {{ pendingGearChoice.currentItem.name }}
+              </button>
+            </div>
+            <div v-else>
+              <button @click="discardNewFoundGear">
+                Discard {{ pendingGearChoice.newItem.name }}
+              </button>
+            </div>
           </div>
 
           <!-- Applying Bonus State -->
@@ -832,9 +903,7 @@
           </div>
         </div>
 
-        <!-- Equipped Gear Section - MOVED HERE -->
         <div class="equipped-gear-section">
-          <!-- Removed: <div class="status-subtitle">Equipped Gear</div> -->
           <div class="equipped-gear-items">
             <div class="stat-item">
               <span class="stat-label">Weapon</span>
@@ -877,41 +946,38 @@
       const app = createApp({
         data() {
           return {
-            // Player Data
             player: {
               health: 20,
               maxHealth: 20,
-              baseAttack: 0, // Added base attack stat
-              baseAC: 10, // Added base AC stat
+              baseAttack: 0,
+              baseAC: 10,
               equippedGear: {
                 weapon: null,
                 armor: null,
                 shield: null,
               },
-              gold: 0, // MODIFIED: Initial gold is now 0
-              torchCount: 3, // MODIFIED: Start with 3 torches
+              gold: 0,
+              torchCount: 0,
               currentTorchDuration: 0,
-              healingPotionCount: 3, // MODIFIED: Start with 1 potion
+              healingPotionCount: 0,
               activeCurses: [],
               monsterDeckProgression: 0,
             },
-
-            // Game State
+            currentMonsterDeckTier: null, // track current monster tier
             gameState: "initializing",
             gameLog: [],
             currentExplorationMessage:
-              "The crypt extends before you. What secrets will you uncover?", // For immediate feedback in exploring state
-            currentCombatMessage: "", // For combat state message
-            currentTrapMessage: "", // NEW: For trap event message
-            lastExploredEventTitle: null, // Stores the title of the last event card drawn
-            lastExploredEventDescription: null, // Stores the description of the last event card drawn
-            merchantEventCount: 0, // NEW: Track merchant visits
-            nothingEventCount: 0, // NEW: Track nothing events
-
-            // Decks
+              "The crypt extends before you. What secrets will you uncover?",
+            currentCombatMessage: "",
+            currentTrapMessage: "",
+            lastExploredEventTitle: null,
+            lastExploredEventDescription: null,
+            merchantEventCount: 0,
+            nothingEventCount: 0,
             eventDeck: [],
             originalEventDeck: [],
-            monsterDeck: [], // This will be the sorted monster deck
+            monsterDeck: [],
+            initialMonsterDeckSize: 0, // Added to store initial monster count
             gearDeck: [],
             originalGearDeck: [],
             gearBonusDeck: [],
@@ -919,33 +985,104 @@
             trapDeck: [],
             originalTrapDeck: [],
             curseDeck: [],
-
-            // Current Game Elements
             currentEvent: null,
             currentMonster: null,
             currentGuards: [],
             pendingLoot: [],
             pendingGearBonus: null,
+            pendingGearChoice: null,
             selectedGearSlotForBonus: null,
-            shopItems: [], // New: items available in the shop
-            shopEventCard: null, // Stores the shop event definition
-            shopCooldown: 0, // Cooldown in turns before shop can appear again
-
-            // Constants
+            shopItems: [],
+            shopEventCard: null,
+            shopCooldown: 0,
             TORCH_DURATION: 5,
-            DARKNESS_ATTACK_PENALTY: -2, // Increased attack penalty
-            DARKNESS_DAMAGE_PENALTY: -1, // New: damage penalty
+            DARKNESS_ATTACK_PENALTY: -2,
+            DARKNESS_DAMAGE_PENALTY: -1,
             GEAR_BONUS_UNLOCK_PROGRESSION: 3,
-            SHOP_UNLOCK_PROGRESSION: 5, // New: Monsters defeated required to unlock shop
-            SHOP_COOLDOWN_TURNS: 10, // New: Turns after a shop visit before it can appear again
+            SHOP_UNLOCK_PROGRESSION: 5,
+            SHOP_COOLDOWN_TURNS: 10,
           };
         },
         computed: {
           isTorchLit() {
             return this.player.currentTorchDuration > 0;
           },
+          showUtilityCombatButtons() {
+            return (
+              (!this.isTorchLit && this.player.torchCount > 0) ||
+              (this.player.healingPotionCount > 0 &&
+                this.player.health < this.player.maxHealth)
+            );
+          },
+          isHealthCriticallyLow() {
+            if (
+              !this.player ||
+              typeof this.player.maxHealth === "undefined" ||
+              this.player.maxHealth === 0
+            ) {
+              return false;
+            }
+            return this.player.health <= this.player.maxHealth * 0.2; // 20% threshold
+          },
+          canUsePotionInStatusPanel() {
+            return (
+              this.player.healingPotionCount > 0 &&
+              this.player.health < this.player.maxHealth &&
+              (this.gameState === "exploring" || this.gameState === "combat")
+            );
+          },
+          canUsePotionInExploringGameplay() {
+            return (
+              this.gameState === "exploring" &&
+              this.player.healingPotionCount > 0 &&
+              this.player.health < this.player.maxHealth
+            );
+          },
+          canUsePotionInCombatGameplay() {
+            return (
+              this.gameState === "combat" &&
+              // Check conditions for potion button in combat utility area specifically
+              this.player.healingPotionCount > 0 &&
+              this.player.health < this.player.maxHealth
+            );
+          },
+          canRestGameplay() {
+            return (
+              this.gameState === "exploring" &&
+              this.player.health < this.player.maxHealth
+            );
+          },
+          shouldFlashStatusPotionButton() {
+            return this.isHealthCriticallyLow && this.canUsePotionInStatusPanel;
+          },
+          shouldFlashExploringPotionButton() {
+            return (
+              this.isHealthCriticallyLow && this.canUsePotionInExploringGameplay
+            );
+          },
+          shouldFlashCombatPotionButton() {
+            return (
+              this.isHealthCriticallyLow &&
+              this.canUsePotionInCombatGameplay &&
+              this.showUtilityCombatButtons
+            );
+          },
+          shouldFlashRestButton() {
+            if (!this.isHealthCriticallyLow || !this.canRestGameplay) {
+              return false;
+            }
+            // Don't flash rest if a potion option is available and would be flashing instead in exploring context
+            if (
+              this.canUsePotionInStatusPanel &&
+              this.gameState === "exploring"
+            )
+              return false;
+            if (this.canUsePotionInExploringGameplay) return false;
+
+            return true;
+          },
           totalAttackModifier() {
-            let mod = this.player.baseAttack; // Start with base attack
+            let mod = this.player.baseAttack;
             if (this.player.equippedGear.weapon) {
               mod += this.player.equippedGear.weapon.attackMod || 0;
               if (this.player.equippedGear.weapon.bonuses)
@@ -977,7 +1114,7 @@
                 });
             });
             if (!this.isTorchLit) {
-              mod += this.DARKNESS_ATTACK_PENALTY; // Apply attack penalty from darkness
+              mod += this.DARKNESS_ATTACK_PENALTY;
             }
             return mod;
           },
@@ -994,6 +1131,19 @@
                 (b) => (damageBonus += b.damageBonus || 0)
               );
 
+            if (
+              this.player.equippedGear.armor &&
+              this.player.equippedGear.armor.damageBonus
+            ) {
+              damageBonus += this.player.equippedGear.armor.damageBonus || 0;
+            }
+            if (
+              this.player.equippedGear.shield &&
+              this.player.equippedGear.shield.damageBonus
+            ) {
+              damageBonus += this.player.equippedGear.shield.damageBonus || 0;
+            }
+
             this.player.activeCurses.forEach((curse) => {
               if (curse.stat === "damage") damageBonus += curse.modifier;
               if (curse.stat === "multi" && curse.modifiers)
@@ -1002,7 +1152,6 @@
                 });
             });
 
-            // Apply darkness damage penalty
             if (!this.isTorchLit) {
               damageBonus += this.DARKNESS_DAMAGE_PENALTY;
             }
@@ -1018,7 +1167,7 @@
             return `${minDamage}-${maxDamage}`;
           },
           totalDefense() {
-            let defense = this.player.baseAC; // Start with base AC
+            let defense = this.player.baseAC;
             if (this.player.equippedGear.armor) {
               defense += this.player.equippedGear.armor.defenseMod || 0;
               if (this.player.equippedGear.armor.bonuses)
@@ -1037,23 +1186,72 @@
               if (curse.stat === "defense") defense += curse.modifier;
               if (curse.stat === "multi" && curse.modifiers)
                 curse.modifiers.forEach((m) => {
-                  if (m.stat === "defense") defense += m.mod; // Corrected 'mod' to 'defense' here
+                  if (m.stat === "defense") defense += m.mod;
                 });
             });
             return defense;
           },
-          gameplayAreaBackgroundStyle() {
-            if (this.currentEvent && this.currentEvent.imageUrl) {
-              return {
-                backgroundImage: `url(${this.currentEvent.imageUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                transition: "background-image 0.5s ease-in-out", // Smooth transition
-              };
+          monsterDeckProgressPercentage() {
+            if (this.initialMonsterDeckSize === 0) {
+              return 0;
             }
-            return {}; // No background if no image
+            const percentage =
+              (this.player.monsterDeckProgression /
+                this.initialMonsterDeckSize) *
+              100;
+            return Math.min(100, percentage).toFixed(0); // Cap at 100%, whole number
           },
+          gameplayAreaBackgroundStyle() {
+            let style = {};
+            let currentBgImage = null;
+
+            // 1. Determine base background image based on game state (your existing logic)
+            if (this.gameState === "initializing") {
+              currentBgImage = `url('https://inf505.github.io/skeletonking/entrance.png')`;
+            } else if (this.currentEvent && this.currentEvent.imageUrl) {
+              currentBgImage = `url(${this.currentEvent.imageUrl})`;
+            } else if (this.gameState === "exploring") {
+              currentBgImage = `url('https://inf505.github.io/skeletonking/entrance.png')`;
+            }
+            // ... (any other conditions you have for setting currentBgImage)
+
+            // 2. Apply common image styles if a base image is set
+            if (currentBgImage) {
+              style.backgroundSize = "cover";
+              style.backgroundPosition = "center";
+              style.backgroundRepeat = "no-repeat";
+            }
+
+            // 3. Apply darkening layer if torch is NOT lit
+            if (!this.isTorchLit) {
+              const darkeningLayer =
+                "linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25))";
+              if (currentBgImage) {
+                // If there's already a background image, layer the darkening effect on top
+                style.backgroundImage = `${darkeningLayer}, ${currentBgImage}`;
+              } else {
+                // If no specific game state image, just apply the darkening layer
+                // This will darken whatever the default CSS background of .gameplay-area is,
+                // or the body background if .gameplay-area is transparent.
+                style.backgroundImage = darkeningLayer;
+                // Ensure the gradient covers the area if it's the sole background
+                style.backgroundSize = "cover";
+                style.backgroundPosition = "center";
+                style.backgroundRepeat = "no-repeat";
+              }
+            } else {
+              // Torch IS lit
+              if (currentBgImage) {
+                style.backgroundImage = currentBgImage;
+              }
+              // If no currentBgImage and torch is lit, style will be mostly empty (e.g., {}),
+              // relying on existing CSS for .gameplay-area.
+              // The .gameplay-area by default might be transparent or have its own CSS background.
+              // The ::before pseudo-element also contributes to its look.
+            }
+            return style;
+          },
+
           monsterInfoBackgroundStyle() {
             let monster =
               this.currentGuards.length > 0
@@ -1062,49 +1260,65 @@
             if (monster && monster.imageUrl) {
               return {
                 backgroundImage: `url(${monster.imageUrl})`,
-                backgroundSize: "contain", // or 'auto' if small image
-                backgroundPosition: "top left", // Align to top left
+                backgroundSize: "contain",
+                backgroundPosition: "top left",
                 backgroundRepeat: "no-repeat",
-                backgroundColor: "rgba(0, 0, 0, 0.2)", // Slightly darken if image is too bright or has transparency
+                backgroundColor: "rgba(0, 0, 0, 0.5)", // black
               };
             }
             return {};
           },
+          dangerLevelColor() {
+            switch (this.currentMonsterDeckTier) {
+              case "easy":
+                return "#67e8f9"; // Light blue
+              case "medium":
+                return "#facc15"; // Yellow
+              case "hard":
+                return "#f97316"; // Orange
+              case "boss":
+                return "#ef4444"; // Red
+              default:
+                return "#cbd5e1"; // Default
+            }
+          },
         },
         methods: {
-          // Initialization
           initializeGame() {
             this.logEvent("Welcome to the Crypt of the Skeleton King!");
             this.player = {
               health: 20,
               maxHealth: 20,
-              baseAttack: 0, // Initial base attack
-              baseAC: 10, // Initial base AC
+              baseAttack: 0,
+              baseAC: 10,
               equippedGear: { weapon: null, armor: null, shield: null },
-              gold: 0, // MODIFIED: Initial gold is now 0
-              torchCount: 5, // MODIFIED: Start with 5 torches
+              gold: 50,
+              torchCount: 10,
               currentTorchDuration: 0,
-              healingPotionCount: 5, // MODIFIED: Start with 5 potion
+              healingPotionCount: 10,
               activeCurses: [],
               monsterDeckProgression: 0,
             };
+            this.currentMonsterDeckTier = null;
             this.currentEvent = null;
             this.currentMonster = null;
             this.currentGuards = [];
             this.pendingLoot = [];
             this.pendingGearBonus = null;
+            this.pendingGearChoice = null;
             this.currentExplorationMessage =
-              "The crypt extends before you. What secrets will you uncover?"; // Reset
-            this.currentCombatMessage = ""; // Reset
-            this.currentTrapMessage = ""; // Reset
-            this.lastExploredEventTitle = null; // Reset
-            this.lastExploredEventDescription = null; // Reset
-            this.merchantEventCount = 0; // NEW: Reset
-            this.nothingEventCount = 0; // NEW: Reset
+              "The crypt extends before you. Are you ready to enter?";
+            this.currentCombatMessage = "";
+            this.currentTrapMessage = "";
+            this.lastExploredEventTitle = null;
+            this.lastExploredEventDescription = null;
+            this.merchantEventCount = 0;
+            this.nothingEventCount = 0;
+            this.initialMonsterDeckSize = 0; // Reset for new game
 
             this.initializeDecks();
-            this.setupShop(); // New: setup shop items
-            this.shopCooldown = 0; // Reset shop cooldown on new game
+            this.setupShop();
+            this.shopCooldown = 0;
 
             const startingWeapon = this.gearDeck.find(
               (g) => g.id === "gear_wpn_worn_sword"
@@ -1112,28 +1326,42 @@
             const startingArmor = this.gearDeck.find(
               (g) => g.id === "gear_arm_patchwork"
             );
-            // Equip starting gear silently, skipping comparisons
-            if (startingWeapon)
-              this.equipGear(JSON.parse(JSON.stringify(startingWeapon))); // MODIFIED: Removed `isSilent` parameter
-            if (startingArmor)
-              this.equipGear(JSON.parse(JSON.stringify(startingArmor))); // MODIFIED: Removed `isSilent` parameter
+
+            if (startingWeapon) {
+              this.player.equippedGear.weapon = JSON.parse(
+                JSON.stringify(startingWeapon)
+              );
+              if (!this.player.equippedGear.weapon.bonuses)
+                this.player.equippedGear.weapon.bonuses = [];
+            }
+            if (startingArmor) {
+              this.player.equippedGear.armor = JSON.parse(
+                JSON.stringify(startingArmor)
+              );
+              if (!this.player.equippedGear.armor.bonuses)
+                this.player.equippedGear.armor.bonuses = [];
+            }
 
             this.logEvent(
-              "You start with a Worn Sword, Patchwork Shirt, 5 Torches, and 5 Healing Potions."
+              `You start with a ${
+                startingWeapon ? startingWeapon.name : "nothing"
+              }, ${startingArmor ? startingArmor.name : "nothing"}, ${
+                this.player.torchCount
+              } Torches, and ${
+                this.player.healingPotionCount
+              } Healing Potion(s).`
             );
             this.gameState = "exploring";
           },
           initializeDecks() {
-            // Define the shop event separately, as it's conditionally added
             this.shopEventCard = {
               id: "evt_shop",
               type: "Shop",
               title: "Mysterious Merchant",
               description:
                 "A hooded figure eyes you, gesturing to their wares.",
-              // show me this crypt/dungeon location: (Shop) "Mysterious Merchant" "A hooded figure eyes you, gesturing to their wares." in landscape orientation
               imageUrl: "https://inf505.github.io/skeletonking/evt_shop.png",
-              effects: [{ trigger: "shop", chance: 1.0 }], // If this card is drawn, shop is guaranteed
+              effects: [{ trigger: "shop", chance: 1.0 }],
             };
 
             this.originalEventDeck = [
@@ -1142,16 +1370,14 @@
                 type: "Hallway",
                 title: "Dusty Corridor",
                 description: "A long, dark corridor stretches ahead.",
-                // in a pixel art style show me this crypt/dungeon location: (Hallway) "Dusty Corridor" "A long, dark corridor stretches ahead." in  landscape orientation
                 imageUrl: "https://inf505.github.io/skeletonking/evt01.png",
-                effects: [{ trigger: "monster", chance: 0.3 }],
+                effects: [{ trigger: "monster", chance: 0.4 }],
               },
               {
                 id: "evt02",
                 type: "Room",
                 title: "Small Antechamber",
                 description: "A square room, possibly a guard post.",
-                // show me this crypt/dungeon location: (Room) "Small Antechamber" "A square room, possibly a guard post." in landscape orientation - there are no stairs
                 imageUrl: "https://inf505.github.io/skeletonking/evt02.png",
                 effects: [
                   { trigger: "monster", chance: 0.5 },
@@ -1163,12 +1389,11 @@
                 type: "Hallway",
                 title: "Crumbling Passage",
                 description: "The walls here are unstable.",
-                // show me this crypt/dungeon location: (Hallway) "Crumbling Passage" "AThe walls here are unstable." in landscape orientation
                 imageUrl: "https://inf505.github.io/skeletonking/evt03.png",
                 effects: [
                   {
                     trigger: "trap",
-                    chance: 0.3,
+                    chance: 0.6,
                   },
                   { trigger: "treasure", chance: 0.1, itemType: "torch" },
                 ],
@@ -1179,11 +1404,10 @@
                 title: "Forgotten Shrine",
                 description:
                   "An old shrine to a forgotten deity. It feels strangely peaceful.",
-                // show me this crypt/dungeon location: (Room) "Forgotten Shrine" "An old shrine to a forgotten deity. It feels strangely peaceful." in landscape orientation
                 imageUrl: "https://inf505.github.io/skeletonking/evt04.png",
                 effects: [
-                  { trigger: "treasure", chance: 0.7, itemType: "gold" }, // This gold type is now only for this specific shrine event.
-                  { trigger: "heal", amount: "1-4", chance: 0.5 },
+                  { trigger: "treasure", chance: 0.7, itemType: "gold" },
+                  { trigger: "heal", amount: "2-6", chance: 0.6 },
                 ],
               },
               {
@@ -1191,12 +1415,11 @@
                 type: "Hallway",
                 title: "Narrow Passage",
                 description: "You must squeeze through this tight passage.",
-                // show me this crypt/dungeon location: (Hallway) "Narrow Passage" "You must squeeze through this tight passage." in landscape orientation
                 imageUrl: "https://inf505.github.io/skeletonking/evt05.png",
                 effects: [
                   {
                     trigger: "trap",
-                    chance: 0.4,
+                    chance: 0.7,
                   },
                   { trigger: "monster", chance: 0.1 },
                 ],
@@ -1207,26 +1430,24 @@
                 title: "Empty Sarcophagus",
                 description:
                   "An opened sarcophagus lies in the center. Whatever was inside is long gone.",
-                // show me this crypt/dungeon location: (Room) "Empty Sarcophagus" "An opened sarcophagus lies in the center. Whatever was inside is long gone." in landscape orientation
                 imageUrl: "https://inf505.github.io/skeletonking/evt06.png",
                 effects: [
-                  { trigger: "monster", chance: 0.2 },
-                  { trigger: "treasure", chance: 0.4, itemType: "gold" }, // This gold type is now only for this specific event.
+                  { trigger: "monster", chance: 0.5 },
+                  { trigger: "treasure", chance: 0.6, itemType: "gold" },
                 ],
               },
               {
                 id: "evt07",
                 type: "Hallway",
                 title: "Echoing Hall",
-                description: "Your footsteps echo ominously. You feel watched.",
-                // show me this crypt/dungeon location: (Hallway) "Echoing Hall" "Your footsteps echo ominously. You feel watched." in landscape orientation
+                description: "Your footsteps echo ominously.",
                 imageUrl: "https://inf505.github.io/skeletonking/evt07.png",
-                effects: [{ trigger: "monster", chance: 0.6 }],
+                effects: [
+                  { trigger: "monster", chance: 0.7 },
+                  { trigger: "trap", chance: 0.3 },
+                ],
               },
-              /* The shop event definition is now defined separately in this.shopEventCard
-                 and no longer part of originalEventDeck to prevent early drawing. */
             ];
-            // The event deck is initialized without the shop event initially
             this.eventDeck = this.shuffleDeck([...this.originalEventDeck]);
 
             const easyMonsters = [
@@ -1242,7 +1463,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=SKEL",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon01t.png",
               },
               {
                 id: "mon02",
@@ -1257,7 +1478,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/004000/FFFFFF?text=ZOMB",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon02t.png",
               },
               {
                 id: "mon03",
@@ -1271,22 +1492,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/444444/FFFFFF?text=RAT",
-              },
-              {
-                id: "mon09",
-                name: "Crawling Claw",
-                tier: "easy",
-                health: 6,
-                ac: 10,
-                attackMod: 1,
-                damage: "1-2",
-                curseChance: 0.05,
-                curseId: "curse05",
-                gearDropCount: 0,
-                treasureDropChance: 0.1,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/600000/FFFFFF?text=HAND",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon03t.png",
               },
               {
                 id: "mon10",
@@ -1295,40 +1501,26 @@
                 health: 9,
                 ac: 9,
                 attackMod: 0,
-                damage: "1-2",
+                damage: "1-3",
                 curseChance: 0,
                 gearDropCount: 0,
                 treasureDropChance: 0.0,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=MOLD",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon10t.png",
               },
               {
                 id: "mon11",
                 name: "Skeletal Dog",
                 tier: "easy",
                 health: 7,
-                ac: 12,
-                attackMod: 2,
+                ac: 10,
+                attackMod: 1,
                 damage: "1-3",
                 curseChance: 0,
                 gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/500000/FFFFFF?text=DOG",
-              },
-              {
-                id: "mon12",
-                name: "Shadow",
-                tier: "easy",
-                health: 8,
-                ac: 11,
-                attackMod: 1,
-                damage: "1-2",
-                curseChance: 0,
-                gearDropCount: 0,
-                treasureDropChance: 0.4,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/32CD32/FFFFFF?text=GOBLIN",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon11t.png",
               },
               {
                 id: "mon13",
@@ -1340,10 +1532,10 @@
                 damage: "1-3",
                 curseChance: 0.1,
                 curseId: "curse01",
-                gearDropCount: 1,
+                gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/003300/FFFFFF?text=CORPSE",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon13t.png",
               },
               {
                 id: "mon14",
@@ -1355,39 +1547,25 @@
                 damage: "1-3",
                 curseChance: 0.2,
                 curseId: "curse03",
-                gearDropCount: 1,
+                gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/1a1a1a/FFFFFF?text=SPIDER",
-              },
-              {
-                id: "mon15",
-                name: "Crypt Urchin",
-                tier: "easy",
-                health: 4,
-                ac: 10,
-                attackMod: 0,
-                damage: "1-1",
-                curseChance: 0,
-                gearDropCount: 0,
-                treasureDropChance: 0.05,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/555555/FFFFFF?text=URCHIN",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon14t.png",
               },
               {
                 id: "mon16",
                 name: "Specter",
                 tier: "easy",
                 health: 8,
-                ac: 12,
+                ac: 11,
                 attackMod: 1,
                 damage: "1-3",
                 curseChance: 0.1,
-                curseId: "curse03",
+                curseId: "curse01",
                 gearDropCount: 0,
                 treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/6A5ACD/FFFFFF?text=FUNGUS",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon16t.png",
               },
             ];
 
@@ -1397,7 +1575,7 @@
                 name: "Skeletal Archer",
                 tier: "medium",
                 health: 10,
-                ac: 13,
+                ac: 15,
                 attackMod: 3,
                 damage: "1-6",
                 curseChance: 0.1,
@@ -1405,14 +1583,14 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=ARCHER",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon04t.png",
               },
               {
                 id: "mon05",
                 name: "Ghast",
                 tier: "medium",
                 health: 18,
-                ac: 10,
+                ac: 14,
                 attackMod: 1,
                 damage: "1-6",
                 curseChance: 0.3,
@@ -1420,57 +1598,28 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/3CB371/FFFFFF?text=GHOUL",
-              },
-              {
-                id: "mon17",
-                name: "Ogre Zombie",
-                tier: "medium",
-                health: 20,
-                ac: 10,
-                attackMod: 2,
-                damage: "1-6",
-                curseChance: 0.1,
-                curseId: "curse01",
-                gearDropCount: 1,
-                treasureDropChance: 0.6,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/400040/FFFFFF?text=OGRE+Z",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon05bt.png",
               },
               {
                 id: "mon18",
                 name: "Poltergeist",
                 tier: "medium",
                 health: 16,
-                ac: 14,
+                ac: 16,
                 attackMod: 2,
                 damage: "1-3",
                 curseChance: 0,
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/5F9EA0/FFFFFF?text=CRAWLER",
-              },
-              {
-                id: "mon19",
-                name: "Will-O-Wisp",
-                tier: "medium",
-                health: 8,
-                ac: 15,
-                attackMod: 3,
-                damage: "1-4",
-                curseChance: 0,
-                gearDropCount: 0,
-                treasureDropChance: 0.1,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/000000/FFFFFF?text=SHADOW",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon18t.png",
               },
               {
                 id: "mon20",
                 name: "Giant Crypt Spider",
                 tier: "medium",
                 health: 10,
-                ac: 12,
+                ac: 16,
                 attackMod: 2,
                 damage: "1-3",
                 curseChance: 0.3,
@@ -1478,13 +1627,13 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/222222/FFFFFF?text=BIG+SPIDER",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon20t.png",
               },
               {
                 id: "mon21",
                 name: "Armored Skeleton",
                 tier: "medium",
-                health: 15,
+                health: 20,
                 ac: 14,
                 attackMod: 2,
                 damage: "1-4",
@@ -1492,7 +1641,7 @@
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/A0A0A0/FFFFFF?text=ARMOR+SKEL",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon21t.png",
               },
               {
                 id: "mon22",
@@ -1506,7 +1655,7 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.6,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=STALKER",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon22t.png",
               },
               {
                 id: "mon23",
@@ -1520,66 +1669,37 @@
                 gearDropCount: 0,
                 treasureDropChance: 0.3,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/808000/FFFFFF?text=FLESH+G",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon23t.png",
               },
               {
                 id: "mon24",
                 name: "Death Dog",
                 tier: "medium",
                 health: 14,
-                ac: 12,
-                attackMod: 3,
-                damage: "1-4",
+                ac: 14,
+                attackMod: 2,
+                damage: "1-8",
                 curseChance: 0.2,
                 curseId: "curse03",
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/4B0082/FFFFFF?text=DEATH+D",
-              },
-              {
-                id: "mon25",
-                name: "Bone Elemental",
-                tier: "medium",
-                health: 20,
-                ac: 12,
-                attackMod: 2,
-                damage: "1-6",
-                curseChance: 0,
-                gearDropCount: 0,
-                treasureDropChance: 0.3,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=BONE+E",
-              },
-              {
-                id: "mon26",
-                name: "Goblin Necromancer",
-                tier: "medium",
-                health: 18,
-                ac: 11,
-                attackMod: 1,
-                damage: "1-2",
-                curseChance: 0.4,
-                curseId: "curse04",
-                gearDropCount: 1,
-                treasureDropChance: 0.8,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/228B22/FFFFFF?text=GOBLIN+N",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon24bt.png",
               },
               {
                 id: "mon27",
                 name: "Wight",
                 tier: "medium",
                 health: 16,
-                ac: 13,
+                ac: 14,
                 attackMod: 3,
-                damage: "1-5",
+                damage: "1-4",
                 curseChance: 0.3,
                 curseId: "curse01",
                 gearDropCount: 0,
                 treasureDropChance: 0.4,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B0000/FFFFFF?text=SCORPION",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon27t.png",
               },
               {
                 id: "mon28",
@@ -1588,13 +1708,13 @@
                 health: 16,
                 ac: 10,
                 attackMod: 2,
-                damage: "1-4",
+                damage: "1-6",
                 curseChance: 0.1,
                 curseId: "curse01",
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/8B4513/FFFFFF?text=CULTIST",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon28t.png",
               },
               {
                 id: "mon29",
@@ -1603,70 +1723,56 @@
                 health: 22,
                 ac: 10,
                 attackMod: 2,
-                damage: "1-5",
+                damage: "1-6",
                 curseChance: 0,
                 gearDropCount: 1,
                 treasureDropChance: 0.7,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/404040/FFFFFF?text=COLLECTOR",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon29t.png",
               },
               {
                 id: "mon30",
                 name: "Skeleton Guard",
                 tier: "medium",
-                health: 18,
+                health: 30,
                 ac: 13,
                 attackMod: 2,
-                damage: "1-4",
+                damage: "1-6",
                 curseChance: 0,
                 gearDropCount: 1,
                 treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=SKEL+G",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon30t.png",
               },
               {
                 id: "mon31",
                 name: "Banshee",
                 tier: "medium",
-                health: 26,
+                health: 20,
                 ac: 16,
                 attackMod: 3,
                 damage: "1-6",
                 curseChance: 0.5,
                 curseId: "curse02",
                 gearDropCount: 0,
-                treasureDropChance: 0.1,
+                treasureDropChance: 0.5,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/696969/FFFFFF?text=STONE+G",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon31t.png",
               },
               {
                 id: "mon32",
                 name: "Bone Naga",
                 tier: "medium",
-                health: 22,
+                health: 28,
                 ac: 12,
                 attackMod: 3,
-                damage: "1-3",
+                damage: "1-6",
                 curseChance: 0.2,
                 curseId: "curse02",
-                gearDropCount: 1,
+                gearDropCount: 0,
                 treasureDropChance: 0.1,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/008080/FFFFFF?text=OOZE",
-              },
-              {
-                id: "mon33",
-                name: "Flameskull",
-                tier: "medium",
-                health: 9,
-                ac: 14,
-                attackMod: 4,
-                damage: "1-5",
-                curseChance: 0,
-                gearDropCount: 0,
-                treasureDropChance: 0.4,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/2F4F4F/FFFFFF?text=WOLF",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon32t.png",
               },
               {
                 id: "mon34",
@@ -1675,41 +1781,12 @@
                 health: 15,
                 ac: 12,
                 attackMod: 2,
-                damage: "1-4",
+                damage: "1-8",
                 curseChance: 0,
                 gearDropCount: 1,
                 treasureDropChance: 0.9,
                 imageUrl:
-                  "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROBBER",
-              },
-              {
-                id: "mon35",
-                name: "Minotaur Skeleton",
-                tier: "medium",
-                health: 25,
-                ac: 14,
-                attackMod: 4,
-                damage: "1-7",
-                curseChance: 0,
-                gearDropCount: 1,
-                treasureDropChance: 0.6,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/800000/FFFFFF?text=MINO",
-              },
-              {
-                id: "mon36",
-                name: "Ghost",
-                tier: "medium",
-                health: 20,
-                ac: 15,
-                attackMod: 2,
-                damage: "1-6",
-                curseChance: 0.3,
-                curseId: "curse01",
-                gearDropCount: 0,
-                treasureDropChance: 0.1,
-                imageUrl:
-                  "https://via.placeholder.com/100x100/1C1C1C/FFFFFF?text=CREEPER",
+                  "https://raw.githubusercontent.com/inf505/inf505.github.io/refs/heads/main/skeletonking/mon34t.png",
               },
             ];
 
@@ -1875,8 +1952,8 @@
                 tier: "hard",
                 health: 45,
                 ac: 17,
-                attackMod: 6,
-                damage: "2-12",
+                attackMod: 5,
+                damage: "2-10",
                 curseChance: 0.5,
                 curseId: "curse04",
                 gearDropCount: 2,
@@ -1890,10 +1967,10 @@
               id: "boss01",
               name: "Skeleton King",
               tier: "boss",
-              health: 65,
-              ac: 25,
-              attackMod: 5,
-              damage: "2-15",
+              health: 65, // Base, will be scaled
+              ac: 25, // Base, will be scaled
+              attackMod: 8,
+              damage: "2-18",
               curseChance: 0.8,
               curseId: "curse04",
               imageUrl:
@@ -1902,11 +1979,11 @@
                 {
                   id: "guard01",
                   name: "Royal Skeleton Guard",
-                  tier: "hard",
-                  health: 35,
-                  ac: 18,
-                  attackMod: 3,
-                  damage: "1-8",
+                  tier: "hard", // Tier for reference, stats will scale
+                  health: 35, // Base, will be scaled
+                  ac: 20, // Base, will be scaled
+                  attackMod: 7,
+                  damage: "2-10",
                   isGuard: true,
                   imageUrl:
                     "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G",
@@ -1914,11 +1991,11 @@
                 {
                   id: "guard02",
                   name: "Royal Skeleton Guard",
-                  tier: "hard",
-                  health: 35,
-                  ac: 16,
-                  attackMod: 3,
-                  damage: "1-8",
+                  tier: "hard", // Tier for reference, stats will scale
+                  health: 35, // Base, will be scaled
+                  ac: 20, // Base, will be scaled
+                  attackMod: 7,
+                  damage: "2-10",
                   isGuard: true,
                   imageUrl:
                     "https://via.placeholder.com/100x100/708090/FFFFFF?text=ROYAL+G",
@@ -1926,24 +2003,22 @@
               ],
             };
 
-            // Construct the main monster deck by shuffling within tiers and then concatenating
             this.monsterDeck = [
               ...this.shuffleDeck(easyMonsters),
               ...this.shuffleDeck(mediumMonsters),
               ...this.shuffleDeck(hardMonsters),
-              skeletonKing, // The boss is always the final encounter
+              skeletonKing,
             ];
+            this.initialMonsterDeckSize = this.monsterDeck.length; // Store total monster count
 
             this.originalGearDeck = [
-              //
-              // WEAPON
-              //
               {
                 id: "gear_wpn_worn_sword",
                 name: "Worn Sword",
                 type: "weapon",
                 baseDamage: "1-3",
                 attackMod: 0,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -1952,38 +2027,43 @@
                 type: "weapon",
                 baseDamage: "1-4",
                 attackMod: 0,
+                tier: "easy",
                 bonuses: [],
               },
               {
                 id: "gear_wpn_claws",
                 name: "Feral Knuckles",
                 type: "weapon",
-                baseDamage: "1-2",
+                baseDamage: "1-3",
                 attackMod: 10,
+                tier: "easy",
                 bonuses: [],
-              }, // guaranteed hit but poor damage
+              },
               {
                 id: "gear_wpn_sickle",
                 name: "Sickle",
                 type: "weapon",
                 baseDamage: "2-3",
                 attackMod: 0,
+                tier: "easy",
                 bonuses: [],
-              }, // direct upgrade to worn sword
+              },
               {
                 id: "gear_wpn_mace",
                 name: "Mace",
                 type: "weapon",
                 baseDamage: "2-5",
                 attackMod: 0,
+                tier: "medium",
                 bonuses: [],
-              }, // blunt would be reasonably stronger against a predominantly bony dungeon
+              },
               {
                 id: "gear_wpn_longsword",
                 name: "Longsword",
                 type: "weapon",
                 baseDamage: "1-6",
                 attackMod: 1,
+                tier: "medium",
                 bonuses: [],
               },
               {
@@ -1991,7 +2071,8 @@
                 name: "Labrys",
                 type: "weapon",
                 baseDamage: "2-9",
-                attackMod: -1, // most double bladed axes are unwieldy but pack a punch
+                attackMod: -1,
+                tier: "hard",
                 bonuses: [],
               },
               {
@@ -2000,31 +2081,33 @@
                 type: "weapon",
                 baseDamage: "2-8",
                 attackMod: 1,
+                tier: "hard",
                 bonuses: [],
               },
               {
                 id: "gear_wpn_gladius",
                 name: "Snake-eyed Gladius",
                 type: "weapon",
-                baseDamage: "0-10", // made as a gambler weapon, roll big or go home
+                baseDamage: "0-10",
                 attackMod: 0,
+                tier: "hard",
                 bonuses: [],
               },
               {
                 id: "gear_wpn_maul",
                 name: "King's Maul",
-                baseDamage: "3-10", // made as the strongest against a primarily skeleton crypt
+                baseDamage: "3-10",
+                type: "weapon",
                 attackMod: 0,
+                tier: "hard",
                 bonuses: [],
               },
-              //
-              // ARMOR
-              //
               {
                 id: "gear_arm_patchwork",
                 name: "Patchwork Shirt",
                 type: "armor",
                 defenseMod: 1,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -2032,6 +2115,7 @@
                 name: "Leather Tunic",
                 type: "armor",
                 defenseMod: 2,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -2039,7 +2123,7 @@
                 name: "Meditation Getup",
                 type: "armor",
                 defenseMod: 0,
-                attackMod: 4,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -2047,6 +2131,7 @@
                 name: "Chainmail Shirt",
                 type: "armor",
                 defenseMod: 3,
+                tier: "medium",
                 bonuses: [],
               },
               {
@@ -2054,7 +2139,8 @@
                 name: "Combat Getup",
                 type: "armor",
                 defenseMod: 3,
-                damageBonus: 2,
+                attackMod: 1,
+                tier: "medium",
                 bonuses: [],
               },
               {
@@ -2063,6 +2149,7 @@
                 type: "armor",
                 defenseMod: 4,
                 attackMod: -1,
+                tier: "hard",
                 bonuses: [],
               },
               {
@@ -2071,6 +2158,7 @@
                 type: "armor",
                 defenseMod: 6,
                 attackMod: -2,
+                tier: "hard",
                 bonuses: [],
               },
               {
@@ -2079,16 +2167,15 @@
                 type: "armor",
                 defenseMod: 8,
                 attackMod: -3,
+                tier: "hard",
                 bonuses: [],
               },
-              //
-              // OFFHAND
-              //
               {
                 id: "gear_shd_wooden",
                 name: "Plank Shield",
                 type: "shield",
                 defenseMod: 1,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -2097,6 +2184,7 @@
                 type: "shield",
                 defenseMod: 1,
                 attackMod: 1,
+                tier: "easy",
                 bonuses: [],
               },
               {
@@ -2105,6 +2193,7 @@
                 type: "shield",
                 defenseMod: 0,
                 attackMod: 2,
+                tier: "medium",
                 bonuses: [],
               },
               {
@@ -2112,6 +2201,7 @@
                 name: "Kite Shield",
                 type: "shield",
                 defenseMod: 2,
+                tier: "medium",
                 bonuses: [],
               },
               {
@@ -2119,7 +2209,7 @@
                 name: "Manashield Blessing",
                 type: "shield",
                 defenseMod: 4,
-                damageBonus: -1,
+                tier: "hard",
                 bonuses: [],
               },
               {
@@ -2128,6 +2218,7 @@
                 type: "shield",
                 defenseMod: 5,
                 attackMod: -1,
+                tier: "hard",
                 bonuses: [],
               },
             ];
@@ -2182,7 +2273,6 @@
                 appliesTo: "shield",
                 defenseMod: 2,
               },
-              // spicy mods for rare occasions
               {
                 id: "bonus09",
                 name: "of The Vengeful",
@@ -2202,7 +2292,6 @@
                 appliesTo: "shield",
                 defenseMod: 4,
               },
-              // negative mods
               {
                 id: "bonus12",
                 name: "Flimsy",
@@ -2232,14 +2321,14 @@
               {
                 id: "trap01",
                 name: "Spike Pit",
-                effectDescription: "Take 1-3 damage.",
+                effectDescription: "Take damage.",
                 damage: "1-3",
                 isCursed: false,
               },
               {
                 id: "trap02",
                 name: "Poison Dart",
-                effectDescription: "Take 1 damage and become Poisoned.",
+                effectDescription: "Take damage and become Poisoned.",
                 damage: "1-1",
                 isCursed: true,
                 curseId: "curse05",
@@ -2248,7 +2337,7 @@
               {
                 id: "trap03",
                 name: "Swinging Axe",
-                effectDescription: "Take 1-6 damage.",
+                effectDescription: "Take damage.",
                 damage: "1-6",
                 isCursed: false,
               },
@@ -2263,8 +2352,7 @@
               {
                 id: "trap05",
                 name: "Gas Cloud",
-                effectDescription:
-                  "Choking gas fills the air. -1 Attack for 2 turns.",
+                effectDescription: "Choking gas fills the air.",
                 isCursed: true,
                 curseId: "curse02",
                 curseChance: 1.0,
@@ -2276,7 +2364,7 @@
               {
                 id: "curse01",
                 name: "Curse of Weakness",
-                effectDescription: "-1 to Damage for 5 turns.",
+                effectDescription: "-1 to Damage.",
                 stat: "damage",
                 modifier: -1,
                 duration: 5,
@@ -2284,7 +2372,7 @@
               {
                 id: "curse02",
                 name: "Curse of Clumsiness",
-                effectDescription: "-1 to Attack for 6 turns.",
+                effectDescription: "-1 to Attack.",
                 stat: "attack",
                 modifier: -1,
                 duration: 6,
@@ -2292,7 +2380,7 @@
               {
                 id: "curse03",
                 name: "Flesh Rot",
-                effectDescription: "Take 1 damage per turn for 7 turns.",
+                effectDescription: "Take 1 damage per turn.",
                 stat: "health_dot",
                 modifier: -1,
                 duration: 4,
@@ -2300,7 +2388,7 @@
               {
                 id: "curse04",
                 name: "King's Dread",
-                effectDescription: "-2 to Attack & Defense for 7 turns.",
+                effectDescription: "-2 to Attack & Defense.",
                 stat: "multi",
                 modifiers: [
                   { stat: "attack", mod: -2 },
@@ -2311,8 +2399,7 @@
               {
                 id: "curse05",
                 name: "Poisoned",
-                effectDescription:
-                  "Take 2 initial damage. -1 to Attack for 5 turns.",
+                effectDescription: "Take 2 initial damage. -1 to Attack.",
                 stat: "attack",
                 modifier: -1,
                 duration: 5,
@@ -2321,7 +2408,6 @@
             ];
           },
 
-          // Utility
           shuffleDeck(deck) {
             let newDeck = [...deck];
             for (let i = newDeck.length - 1; i > 0; i--) {
@@ -2331,9 +2417,6 @@
             return newDeck;
           },
           drawCard(deckProperty, originalDeckProperty) {
-            // This method is now primarily for event, gear, trap, and bonus decks.
-            // Monster deck is directly shifted from (pre-sorted).
-            // Treasure logic is handled by findTreasure directly.
             if (this[deckProperty] && this[deckProperty].length > 0) {
               return this[deckProperty].shift();
             }
@@ -2354,6 +2437,40 @@
             }
             return null;
           },
+          drawTierAppropriateGear() {
+            const maxAttempts = 10;
+            let attempts = 0;
+            const drawnUnsuitableCards = [];
+
+            const targetMonsterTier = this.currentMonsterDeckTier || "easy";
+
+            while (attempts < maxAttempts) {
+              let gearItem = this.drawCard("gearDeck", "originalGearDeck");
+
+              if (!gearItem) {
+                break;
+              }
+
+              const itemTier = gearItem.tier || "easy";
+
+              if (itemTier === targetMonsterTier) {
+                if (drawnUnsuitableCards.length > 0) {
+                  this.gearDeck.push(...drawnUnsuitableCards);
+                  this.gearDeck = this.shuffleDeck(this.gearDeck);
+                }
+                return gearItem;
+              } else {
+                drawnUnsuitableCards.push(gearItem);
+              }
+              attempts++;
+            }
+
+            if (drawnUnsuitableCards.length > 0) {
+              this.gearDeck.push(...drawnUnsuitableCards);
+              this.gearDeck = this.shuffleDeck(this.gearDeck);
+            }
+            return null;
+          },
           logEvent(message) {
             const timestamp = new Date().toLocaleTimeString("en-US", {
               hour12: false,
@@ -2362,7 +2479,6 @@
             });
             this.gameLog.unshift({ time: timestamp, text: message });
             if (this.gameLog.length > 50) {
-              // Increased log length
               this.gameLog.pop();
             }
           },
@@ -2374,33 +2490,85 @@
             return damageStr.split("-").map(Number);
           },
           rollDamage(damageStr) {
-            const [min, max] = this.parseDamageString(damageStr);
-            if (min < 0) min = 0;
+            const [parsedMin, parsedMax] = this.parseDamageString(damageStr);
+            let min = Math.max(0, parsedMin);
+            let max = parsedMax;
+
             if (max < min) return Math.max(0, min);
             return Math.max(
               0,
               Math.floor(Math.random() * (max - min + 1)) + min
             );
           },
-          // MODIFIED: Calculate a numerical score for a gear item to compare its quality
-          getGearScore(gearItem) {
-            if (!gearItem) return -Infinity; // If no item, its score is very low
-
-            let score = 0;
-            if (gearItem.type === "weapon") {
-              const [minDmg, maxDmg] = this.parseDamageString(
-                gearItem.baseDamage
-              );
-              score += (minDmg + maxDmg) / 2; // Only base damage contributes to weapon score
-            } else if (
-              gearItem.type === "armor" ||
-              gearItem.type === "shield"
-            ) {
-              score += gearItem.defenseMod || 0; // Only defense contributes to armor/shield score
+          getGearStats(gear) {
+            if (!gear) return "None";
+            let stats = [];
+            if (gear.type === "weapon") {
+              stats.push(`Dmg: ${gear.baseDamage || "N/A"}`);
+              if (gear.attackMod !== undefined && gear.attackMod !== 0)
+                stats.push(
+                  `Atk: ${gear.attackMod > 0 ? "+" : ""}${gear.attackMod}`
+                );
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                stats.push(
+                  `Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                    gear.damageBonus
+                  }`
+                );
+            } else if (gear.type === "armor") {
+              if (gear.defenseMod !== undefined)
+                stats.push(`Def: ${gear.defenseMod}`);
+              if (gear.attackMod !== undefined && gear.attackMod !== 0)
+                stats.push(
+                  `Atk: ${gear.attackMod > 0 ? "+" : ""}${gear.attackMod}`
+                );
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                stats.push(
+                  `Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                    gear.damageBonus
+                  }`
+                );
+            } else if (gear.type === "shield") {
+              if (gear.defenseMod !== undefined)
+                stats.push(`Def: ${gear.defenseMod}`);
+              if (gear.attackMod !== undefined && gear.attackMod !== 0)
+                stats.push(
+                  `Atk: ${gear.attackMod > 0 ? "+" : ""}${gear.attackMod}`
+                );
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                stats.push(
+                  `Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                    gear.damageBonus
+                  }`
+                );
             }
-            return score;
+
+            if (gear.bonuses && gear.bonuses.length > 0) {
+              let bonusTexts = [];
+              const sortedBonuses = gear.bonuses
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id));
+              sortedBonuses.forEach((b) => {
+                let bEffects = [];
+                if (b.attackMod)
+                  bEffects.push(
+                    `Atk${b.attackMod > 0 ? "+" : ""}${b.attackMod}`
+                  );
+                if (b.damageBonus)
+                  bEffects.push(
+                    `Dmg${b.damageBonus > 0 ? "+" : ""}${b.damageBonus}`
+                  );
+                if (b.defenseMod)
+                  bEffects.push(
+                    `Def${b.defenseMod > 0 ? "+" : ""}${b.defenseMod}`
+                  );
+                bonusTexts.push(`${b.name} (${bEffects.join(", ")})`);
+              });
+              if (bonusTexts.length > 0)
+                stats.push(`Enchants: ${bonusTexts.join("; ")}`);
+            }
+            return stats.join(" | ") || "No special stats";
           },
-          // NEW: Generate a detailed tooltip for gear items
           getGearDetails(slot) {
             const gear = this.player.equippedGear[slot];
             if (!gear) return "No item equipped";
@@ -2412,18 +2580,40 @@
                 details += ` | Attack: ${gear.attackMod > 0 ? "+" : ""}${
                   gear.attackMod
                 }`;
-            } else if (gear.type === "armor" || gear.type === "shield") {
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                details += ` | Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                  gear.damageBonus
+                }`;
+            } else if (gear.type === "armor") {
               if (gear.defenseMod !== undefined && gear.defenseMod !== 0)
-                details += `Defense: +${gear.defenseMod}`;
+                details += `Defense: ${gear.defenseMod}`;
               if (gear.attackMod !== undefined && gear.attackMod !== 0)
                 details += ` | Attack: ${gear.attackMod > 0 ? "+" : ""}${
                   gear.attackMod
+                }`;
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                details += ` | Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                  gear.damageBonus
+                }`;
+            } else if (gear.type === "shield") {
+              if (gear.defenseMod !== undefined && gear.defenseMod !== 0)
+                details += `Defense: ${gear.defenseMod}`;
+              if (gear.attackMod !== undefined && gear.attackMod !== 0)
+                details += ` | Attack: ${gear.attackMod > 0 ? "+" : ""}${
+                  gear.attackMod
+                }`;
+              if (gear.damageBonus !== undefined && gear.damageBonus !== 0)
+                details += ` | Bonus Dmg: ${gear.damageBonus > 0 ? "+" : ""}${
+                  gear.damageBonus
                 }`;
             }
 
             if (gear.bonuses && gear.bonuses.length > 0) {
               details += "\n--- Enchantments ---";
-              gear.bonuses.forEach((bonus) => {
+              const sortedBonuses = gear.bonuses
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id));
+              sortedBonuses.forEach((bonus) => {
                 details += `\n${bonus.name}: `;
                 const bonusEffects = [];
                 if (bonus.attackMod !== undefined && bonus.attackMod !== 0)
@@ -2444,67 +2634,58 @@
             return details;
           },
 
-          // Game Flow
           exploreNextEvent() {
             if (
               this.gameState === "game_over" ||
               this.gameState === "game_won" ||
               this.gameState === "combat" ||
-              this.gameState === "trap_triggered" || // Prevent action if trap still active
-              this.gameState === "applying_bonus" || // Prevent action if applying bonus
-              this.gameState === "shop" // Prevent action if in shop
+              this.gameState === "trap_triggered" ||
+              this.gameState === "applying_bonus" ||
+              this.gameState === "gear_choice" ||
+              this.gameState === "shop"
             )
               return;
 
             let eventToDraw = null;
-            // Clear current exploration message so the new event description can appear
             this.currentExplorationMessage = null;
 
             if (this.nothingEventCount > 5) {
               this.logEvent(
                 "The quiet crypt fills you with unease... a sinister presence stirs!"
               );
-              // Create a temporary event definition that guarantees a monster
               eventToDraw = {
                 id: "evt_forced_monster",
                 type: "Forced Encounter",
                 title: "Sinister Stirrings",
                 description:
-                  "The prolonged silence is unnerving. A guttural growl echoes from the darkness, promising an immediate confrontation.",
-                imageUrl:
-                  "https://via.placeholder.com/600x400/8B0000/F0F0F0?text=Forced+Encounter", // A grim placeholder image
-                effects: [{ trigger: "monster", chance: 1.0 }], // Guarantees a monster encounter
+                  "A guttural growl echoes from the darkness, promising an immediate confrontation.",
+                imageUrl: "https://inf505.github.io/skeletonking/forced.png",
+                effects: [{ trigger: "monster", chance: 1.0 }],
               };
-              this.nothingEventCount = 0; // Reset the counter after forcing an encounter
-            }
-
-            // Conditional logic for shop event
-            if (
+              this.nothingEventCount = 0;
+            } else if (
               this.player.monsterDeckProgression >=
                 this.SHOP_UNLOCK_PROGRESSION &&
               this.shopCooldown <= 0
             ) {
               let shopChance = 0.2;
-              // MODIFIED: Merchant event far less likely if well-stocked
               if (
                 this.player.torchCount > 10 &&
                 this.player.healingPotionCount > 10
               ) {
-                shopChance = 0.02; // Reduced to 2% chance
+                shopChance = 0.02;
               }
 
               if (Math.random() < shopChance) {
-                // 20% chance to find a shop once unlocked and not on cooldown
                 eventToDraw = this.shopEventCard;
-                this.shopCooldown = this.SHOP_COOLDOWN_TURNS; // Set cooldown
+                this.shopCooldown = this.SHOP_COOLDOWN_TURNS;
                 this.logEvent(
                   "You discover a clandestine shop hidden in the crypt!"
                 );
-                this.merchantEventCount++; // NEW: Increment merchant event count
+                this.merchantEventCount++;
               }
             }
 
-            // If no shop event was selected, draw from the regular event deck
             if (!eventToDraw) {
               eventToDraw = this.drawCard("eventDeck", "originalEventDeck");
             }
@@ -2512,7 +2693,6 @@
             this.currentEvent = eventToDraw;
 
             if (!this.currentEvent) {
-              // If event deck is empty, check if only boss remains in monster deck
               if (
                 this.monsterDeck.length === 1 &&
                 this.monsterDeck[0].tier === "boss" &&
@@ -2521,34 +2701,31 @@
                 this.logEvent(
                   "A chilling presence signals the Skeleton King's Lair! The final battle awaits!"
                 );
-                this.startCombat(); // Start combat with the boss
+                this.startCombat();
                 return;
               } else if (
                 this.monsterDeck.length === 0 &&
                 !this.currentMonster
               ) {
-                // All monsters defeated, including boss (or boss skipped by some bug)
                 this.winGame("You've cleared the crypt of all threats!");
                 return;
               }
-              // If event deck is empty but monsters remain (not just boss)
               this.logEvent(
                 "The crypt seems quiet for now... but danger still lurks."
               );
               this.currentExplorationMessage =
-                "The crypt seems quiet for now... but danger still lurks."; // Update message
-              this.lastExploredEventTitle = "Quiet Passage"; // NEW: Default title for quiet exploration
+                "The crypt seems quiet for now... but danger still lurks.";
+              this.lastExploredEventTitle = "Quiet Passage";
               this.lastExploredEventDescription =
-                "You find nothing immediately apparent."; // NEW: Default description
+                "You find nothing immediately apparent.";
               this.gameState = "exploring";
-              this.endTurn(); // A "turn" happens even if nothing drawn
+              this.endTurn();
               return;
             }
 
             this.logEvent(
               `Event: ${this.currentEvent.title} - ${this.currentEvent.description}`
             );
-            // NEW: Store the event's title and description for display in exploring state
             this.lastExploredEventTitle = this.currentEvent.title;
             this.lastExploredEventDescription = this.currentEvent.description;
 
@@ -2560,49 +2737,50 @@
             this.pendingLoot = this.pendingLoot || [];
 
             let baseGoldAmount = 5;
-            // Adjust base gold for monster defeats
             if (context === "monster") {
-              // Gold scaling based on monster progression
               baseGoldAmount = Math.max(
                 5,
                 10 + Math.floor(this.player.monsterDeckProgression / 2) * 5
               );
             }
 
-            // Define base weights for each treasure type
-            // These are relative weights. Higher number = more likely.
             const weights = {
-              gold: baseGoldAmount / 5, // Gold weight scales with its potential amount
+              gold: baseGoldAmount / 5,
               torch: 2,
               healing_potion: 2,
             };
 
-            // Rule: Gold only drops from monster kills for main treasure logic
             if (context === "event") {
               weights.gold = 0;
             }
 
-            // Adjust weights based on player inventory caps
             if (this.player.torchCount === 0) {
-              weights.torch += 5; // Significantly increase chance if player has no torches
+              weights.torch += 15;
               this.logEvent("Torch drop chance boosted (no torches).");
-            } else if (this.player.torchCount >= 10) {
-              // Changed condition to >= 10
-              weights.torch = 0; // Stop dropping if player has 10 or more torches
-              this.logEvent("Torch drop chance stopped (10+ torches).");
-            } else if (this.player.torchCount > 5) {
-              weights.torch = 0.5; // Reduced drop chance if player has more than 5 but less than 10
-              this.logEvent("Torch drop chance reduced (plenty of torches).");
+            } else if (this.player.torchCount >= 50) {
+              weights.torch = 0;
+              this.logEvent("Torch drop chance stopped (50+ torches).");
+            } else if (this.player.torchCount > 25) {
+              weights.torch = 0.5;
+              this.logEvent(
+                "Torch drop chance reduced (plenty of torches, 25+)."
+              );
             }
 
-            // If a specific itemType is requested by an event effect, prioritize it
+            if (this.player.healingPotionCount === 0) {
+              weights.healing_potion += 25;
+              this.logEvent(
+                "Healing Potion drop chance significantly boosted (0 potions)."
+              );
+            }
+
             if (itemType) {
               for (const key in weights) {
                 if (key !== itemType && weights[key] > 0) {
-                  weights[key] /= 2; // Halve chances of other items
-                  if (weights[key] < 0.1) weights[key] = 0; // Or make it 0 if very low
+                  weights[key] /= 2;
+                  if (weights[key] < 0.1) weights[key] = 0;
                 } else if (key === itemType) {
-                  weights[key] *= 3; // Triple the chance of the requested item
+                  weights[key] *= 3;
                 }
               }
             }
@@ -2613,7 +2791,6 @@
             }
 
             if (totalWeight <= 0) {
-              // Safety check if all weights sum to zero
               this.logEvent("You found no discernible treasure.");
               return false;
             }
@@ -2666,9 +2843,9 @@
 
           resolveCurrentEvent() {
             if (!this.currentEvent) return;
-            this.pendingLoot = [];
-            let effectTriggered = false; // Flag to track if any substantial effect occurred (other than combat/trap taking over)
-            let goldFoundOnNothing = 0; // NEW: Variable to track if gold was found in this specific "nothing" case
+            this.pendingLoot = this.pendingLoot || [];
+            let effectTriggered = false;
+            let goldFoundOnNothing = this.rollDamage("5-10");
 
             for (const effect of this.currentEvent.effects) {
               let chance = effect.chance;
@@ -2676,14 +2853,14 @@
               if (Math.random() < chance) {
                 switch (effect.trigger) {
                   case "monster":
-                    this.startCombat(); // Call without tier; monster deck is pre-sorted
-                    return; // Combat immediately takes over the state
+                    this.startCombat();
+                    return;
                   case "trap":
                     this.triggerTrap();
-                    return; // Trap immediately takes over the state
+                    return;
                   case "treasure":
-                    this.findTreasure(effect.itemType || null, "event"); // Call the new findTreasure
-                    effectTriggered = true; // Mark as true if treasure effect was attempted
+                    this.findTreasure(effect.itemType || null, "event");
+                    effectTriggered = true;
                     break;
                   case "heal":
                     const healAmount = this.rollDamage(effect.amount);
@@ -2694,32 +2871,25 @@
                     this.logEvent(
                       `You find a moment of respite and heal for ${healAmount} HP.`
                     );
-                    effectTriggered = true; // Mark as true if heal occurred
+                    effectTriggered = true;
                     break;
-                  case "shop": // New: Handle shop trigger
+                  case "shop":
                     this.enterShop();
-                    return; // Shop immediately takes over the state
+                    return;
                 }
               }
             }
 
-            // Final state transition logic:
             if (this.pendingLoot.length > 0) {
               this.gameState = "loot_found";
+              this.collectLoot();
             } else if (effectTriggered) {
-              // An effect (heal/treasure) *did* trigger, but didn't result in loot,
-              // or monster/trap didn't take over (because their triggers return early).
-              // Set the currentExplorationMessage to the original event description
               this.currentExplorationMessage =
                 this.lastExploredEventDescription;
               this.gameState = "exploring";
               this.endTurn();
             } else {
-              // No substantial effects triggered, and no loot was added from previous steps.
-              // This is a true "nothing" event now.
-              // ADDED LOGIC FOR GOLD DROPS ON "NOTHING" EVENTS:
               if (Math.random() < 0.75) {
-                // 75% chance to find a small amount of gold
                 goldFoundOnNothing = this.rollDamage("5-10");
                 this.player.gold += goldFoundOnNothing;
                 this.logEvent(
@@ -2731,28 +2901,65 @@
                 this.logEvent("Nothing eventful happens. The crypt is quiet.");
                 this.currentExplorationMessage =
                   "Nothing eventful happens. The crypt is quiet.";
-                this.nothingEventCount++; // Only increment if truly nothing happened
+                this.nothingEventCount++;
               }
-              // END ADDED LOGIC
               this.gameState = "exploring";
               this.endTurn();
+            }
+          },
+
+          progressCombatCurses() {
+            // Only process if in combat and player is alive before curse ticks
+            if (this.gameState !== "combat" || this.player.health <= 0) {
+              return;
+            }
+
+            const activeCursesNext = [];
+            let gameShouldEndDueToCurse = false;
+            let curseThatKilledPlayer = null;
+
+            this.player.activeCurses.forEach((curse) => {
+              if (gameShouldEndDueToCurse) return; // Stop processing if a curse already killed the player in this tick
+
+              let currentCurse = JSON.parse(JSON.stringify(curse));
+
+              if (currentCurse.stat === "health_dot") {
+                const dotDamage = Math.abs(currentCurse.modifier);
+                this.player.health -= dotDamage;
+                this.logEvent(
+                  `${currentCurse.name} ticks, dealing ${dotDamage} damage during combat. HP: ${this.player.health}/${this.player.maxHealth}`
+                );
+                if (this.player.health <= 0) {
+                  gameShouldEndDueToCurse = true;
+                  curseThatKilledPlayer = currentCurse.name;
+                }
+              }
+
+              currentCurse.duration--;
+
+              if (currentCurse.duration > 0) {
+                activeCursesNext.push(currentCurse);
+              } else {
+                this.logEvent(
+                  `${currentCurse.name} has worn off during combat.`
+                );
+              }
+            });
+
+            this.player.activeCurses = activeCursesNext;
+
+            if (gameShouldEndDueToCurse) {
+              this.gameOver(
+                `You succumbed to ${
+                  curseThatKilledPlayer || "a curse"
+                }'s effects during combat.`
+              );
             }
           },
 
           endTurn() {
             if (this.gameState === "game_over" || this.gameState === "game_won")
               return;
-
-            // Removed: Passive heal (1 HP per event/turn)
-            // if (this.player.health < this.player.maxHealth) {
-            //   this.player.health = Math.min(
-            //     this.player.maxHealth,
-            //     this.player.health + 1
-            //   );
-            //   this.logEvent(
-            //     `You recover 1 health naturally. HP: ${this.player.health}/${this.player.maxHealth}`
-            //   );
-            // }
 
             if (this.isTorchLit) {
               this.player.currentTorchDuration--;
@@ -2767,30 +2974,8 @@
               }
             }
 
-            const activeCursesNext = [];
-            this.player.activeCurses.forEach((curse) => {
-              let currentCurse = JSON.parse(JSON.stringify(curse));
-              if (currentCurse.stat === "health_dot") {
-                const dotDamage = Math.abs(currentCurse.modifier);
-                this.player.health -= dotDamage;
-                this.logEvent(
-                  `${currentCurse.name} deals you ${dotDamage} damage.`
-                );
-                if (this.player.health <= 0) {
-                  this.gameOver("You succumbed to a curse.");
-                  return;
-                }
-              }
-              currentCurse.duration--;
-              if (currentCurse.duration > 0) {
-                activeCursesNext.push(currentCurse);
-              } else {
-                this.logEvent(`${currentCurse.name} has worn off.`);
-              }
-            });
-            this.player.activeCurses = activeCursesNext;
+            // Curse duration and DoT are now handled by progressCombatCurses() during combat.
 
-            // Decrement shop cooldown
             if (this.shopCooldown > 0) {
               this.shopCooldown--;
             }
@@ -2805,13 +2990,11 @@
               this.player.torchCount--;
               this.player.currentTorchDuration = this.TORCH_DURATION;
               this.logEvent("You light a new torch.");
-              // This is a free action, does not end turn or trigger monster actions.
             } else {
               this.logEvent("You have no torches left!");
             }
           },
 
-          // Rest Action
           rest() {
             if (
               this.gameState !== "exploring" ||
@@ -2824,7 +3007,15 @@
             }
 
             this.logEvent("You find a safe spot to rest and recover...");
-            const healAmount = this.rollDamage("2-5"); // Increased heal during rest
+
+            const minRestHealPercentage = 0.1;
+            const maxRestHealPercentage = 0.25;
+            const healPercentage =
+              minRestHealPercentage +
+              Math.random() * (maxRestHealPercentage - minRestHealPercentage);
+            let healAmount = Math.floor(this.player.maxHealth * healPercentage);
+            healAmount = Math.max(1, healAmount);
+
             this.player.health = Math.min(
               this.player.maxHealth,
               this.player.health + healAmount
@@ -2833,28 +3024,62 @@
               `You recover ${healAmount} health. HP: ${this.player.health}/${this.player.maxHealth}`
             );
 
-            // Small chance of monster ambush during rest
-            let ambushChance = 0.25; // Base 25% chance of ambush
-            // MODIFIED: Resting in darkness increases ambush chance
-            if (!this.isTorchLit) {
-              ambushChance = 0.75; // 75% chance in darkness
-              this.logEvent("Resting in darkness feels dangerous...");
+            let baseAmbushChance = 0.1;
+            const maxProgressionBonusAmbush = 0.35;
+            const darknessAmbushPenalty = 0.25;
+            const absoluteMaxAmbushChance = 0.9;
+
+            let progressionFactor = 0;
+            if (this.initialMonsterDeckSize > 0) {
+              const effectiveDeckSize = this.monsterDeck.some(
+                (m) => m.tier === "boss"
+              )
+                ? Math.max(1, this.initialMonsterDeckSize - 1)
+                : this.initialMonsterDeckSize;
+              progressionFactor = Math.min(
+                1,
+                this.player.monsterDeckProgression / effectiveDeckSize
+              );
             }
 
-            if (Math.random() < ambushChance) {
+            let currentAmbushChance =
+              baseAmbushChance + progressionFactor * maxProgressionBonusAmbush;
+
+            if (!this.isTorchLit) {
+              currentAmbushChance += darknessAmbushPenalty;
+              if (progressionFactor > 0.3) {
+                this.logEvent(
+                  "Resting in darkness in these deeper, more dangerous parts feels exceptionally risky..."
+                );
+              } else {
+                this.logEvent("Resting in darkness feels dangerous...");
+              }
+            } else {
+              if (progressionFactor > 0.5) {
+                this.logEvent(
+                  "The increasing danger of the crypt makes even lit resting spots feel less secure..."
+                );
+              }
+            }
+
+            currentAmbushChance = Math.min(
+              currentAmbushChance,
+              absoluteMaxAmbushChance
+            );
+            currentAmbushChance = Math.max(0, currentAmbushChance);
+
+            if (Math.random() < currentAmbushChance) {
               this.logEvent("Suddenly, you are ambushed while resting!");
               this.currentExplorationMessage =
-                "You were ambushed during your rest!"; // Update message
-              this.startCombat(); // Call without tier; monster deck is pre-sorted
+                "You were ambushed during your rest!";
+              this.startCombat();
             } else {
               this.logEvent("Your rest is undisturbed.");
               this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
-              this.endTurn(); // Resting uses a turn
+                this.lastExploredEventDescription;
+              this.endTurn();
             }
           },
-
-          // Use Healing Potion Action
           useHealingPotion() {
             if (this.player.healingPotionCount <= 0) {
               this.logEvent("You don't have any healing potions!");
@@ -2866,12 +3091,16 @@
             }
 
             this.player.healingPotionCount--;
-            // Healing amount scales with monster progression
-            const baseHeal = this.rollDamage("2-5");
-            const progressionBonus = Math.floor(
-              this.player.monsterDeckProgression / 3
-            );
-            const healAmount = baseHeal + progressionBonus;
+
+            const minHealPercentage = 0.2;
+            const maxHealPercentage = 0.4;
+
+            const healPercentage =
+              minHealPercentage +
+              Math.random() * (maxHealPercentage - minHealPercentage);
+
+            let healAmount = Math.floor(this.player.maxHealth * healPercentage);
+            healAmount = Math.max(1, healAmount);
 
             this.player.health = Math.min(
               this.player.maxHealth,
@@ -2880,21 +3109,22 @@
             this.logEvent(
               `You drink a healing potion and recover ${healAmount} health. HP: ${this.player.health}/${this.player.maxHealth}. Potions left: ${this.player.healingPotionCount}`
             );
-            // MODIFIED: If in combat, monster gets to act.
             if (this.gameState === "combat") {
               this.logEvent(
                 "Using a potion takes time, costing you your turn!"
               );
               this.currentCombatMessage =
                 "You used a potion. Now it's the monster's turn!";
-              this.monsterTurn(); // Monster gets a turn immediately after potion use in combat
+              this.progressCombatCurses();
+              if (this.player.health <= 0 && this.gameState === "game_over")
+                return;
+              this.monsterTurn();
             }
           },
 
-          // Shop Actions
           setupShop() {
             this.shopItems = [
-              { name: "Torch", type: "torch", cost: 10 }, // MODIFIED: Torch cost changed to 10
+              { name: "Torch", type: "torch", cost: 10 },
               { name: "Healing Potion", type: "healing_potion", cost: 15 },
               { name: "Curse Removal", type: "curse_removal", cost: 30 },
             ];
@@ -2912,12 +3142,10 @@
             }
 
             if (itemType === "torch") {
-              // No longer checks for max count to buy
               this.player.gold -= cost;
               this.player.torchCount++;
               this.logEvent(`Bought a Torch for ${cost} gold.`);
             } else if (itemType === "healing_potion") {
-              // No longer checks for max count to buy
               this.player.gold -= cost;
               this.player.healingPotionCount++;
               this.logEvent(`Bought a Healing Potion for ${cost} gold.`);
@@ -2934,7 +3162,6 @@
             }
 
             this.player.gold -= cost;
-            // For simplicity, remove the first curse. Could implement selection later.
             const removedCurse = this.player.activeCurses.shift();
             this.logEvent(
               `Paid ${cost} gold to remove the '${removedCurse.name}' curse.`
@@ -2942,48 +3169,120 @@
           },
           exitShop() {
             this.logEvent("You leave the Mysterious Merchant's shop.");
-            this.currentExplorationMessage = this.lastExploredEventDescription; // Revert to event description
+            this.currentExplorationMessage = this.lastExploredEventDescription;
             this.gameState = "exploring";
             this.endTurn();
           },
 
-          // Combat
           startCombat() {
-            // No parameter needed
-            const monsterToFight = this.monsterDeck.shift(); // Always take from top
+            const monsterToFight = this.monsterDeck.shift();
             if (!monsterToFight) {
-              // This case should ideally only be reached if player wins or encounters a bug
               this.winGame(
                 "You have vanquished all known threats in the crypt!"
               );
               return;
             }
 
+            if (this.currentMonsterDeckTier === null) {
+              this.currentMonsterDeckTier = monsterToFight.tier;
+              this.logEvent(
+                `You begin encountering ${this.currentMonsterDeckTier}-tier threats.`
+              );
+            } else if (this.currentMonsterDeckTier !== monsterToFight.tier) {
+              const oldTier = this.currentMonsterDeckTier;
+              this.currentMonsterDeckTier = monsterToFight.tier;
+              this.logEvent(
+                `The threats intensify! You've moved from ${oldTier}-tier to ${this.currentMonsterDeckTier}-tier monsters.`
+              );
+
+              if (this.currentMonsterDeckTier === "medium") {
+                this.logEvent("The passages seem more menacing now.");
+              } else if (this.currentMonsterDeckTier === "hard") {
+                this.logEvent(
+                  "A chilling aura permeates the air. Only the truly brave (or foolish) press on."
+                );
+              } else if (this.currentMonsterDeckTier === "boss") {
+                this.logEvent(
+                  "An overwhelming sense of dread washes over you... the master of this crypt must be near!"
+                );
+              }
+            }
+
+            // Initialize currentMonster with base stats from the deck
             this.currentMonster = {
               ...monsterToFight,
               health: monsterToFight.health,
               maxHealth: monsterToFight.health,
             };
-            this.currentCombatMessage = ""; // Reset combat message
+            this.currentCombatMessage = "";
+            this.currentGuards = []; // Reset guards
 
-            if (
-              this.currentMonster.tier === "boss" &&
-              this.currentMonster.guards &&
-              this.currentMonster.guards.length > 0
-            ) {
-              this.currentGuards = this.currentMonster.guards.map((g) => ({
-                ...g,
-                health: g.health,
-                maxHealth: g.health,
-                imageUrl: g.imageUrl || monsterToFight.imageUrl, // Guards inherit image from boss if not specified
-              }));
-              this.logEvent(
-                `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} Royal Guard(s)! Defeat them first!`
+            if (this.currentMonster.tier === "boss") {
+              // Dynamically scale the Skeleton King
+              this.currentMonster.maxHealth = Math.round(
+                this.player.maxHealth * 1.5
               );
-              this.currentCombatMessage = `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} Royal Guard(s)! Defeat them first!`; // Update combat message
+              this.currentMonster.health = this.currentMonster.maxHealth;
+              this.currentMonster.ac = Math.round(this.totalDefense); // Use player's total AC
+              this.logEvent(
+                `The ${this.currentMonster.name}'s power scales with yours! HP: ${this.currentMonster.health}, AC: ${this.currentMonster.ac}`
+              );
+
+              if (
+                this.currentMonster.guards &&
+                this.currentMonster.guards.length > 0
+              ) {
+                this.currentGuards = this.currentMonster.guards.map(
+                  (guardDefinition) => {
+                    const dynamicGuard = {
+                      ...guardDefinition, // Spread original guard definition (name, id, etc.)
+                      maxHealth: this.player.maxHealth,
+                      health: this.player.maxHealth,
+                      ac: Math.round(this.totalDefense),
+                      imageUrl:
+                        guardDefinition.imageUrl || monsterToFight.imageUrl,
+                    };
+                    this.logEvent(
+                      `${dynamicGuard.name} (Guard) scales with the player! HP: ${dynamicGuard.health}, AC: ${dynamicGuard.ac}`
+                    );
+                    return dynamicGuard;
+                  }
+                );
+                this.logEvent(
+                  `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} dynamically scaled Royal Guard(s)! Defeat them first!`
+                );
+                this.currentCombatMessage = `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} dynamically scaled Royal Guard(s)! Defeat them first!`;
+              } else {
+                // Boss, but no guards defined or array is empty
+                this.logEvent(
+                  `The mighty ${this.currentMonster.name} (scaled) stands before you!`
+                );
+                this.currentCombatMessage = `The mighty ${this.currentMonster.name} (scaled) stands before you!`;
+              }
             } else {
-              this.logEvent(`A ${this.currentMonster.name} appears!`);
-              this.currentCombatMessage = `A ${this.currentMonster.name} appears!`; // Update combat message
+              // Not a boss
+              if (
+                this.currentMonster.guards &&
+                this.currentMonster.guards.length > 0
+              ) {
+                // For non-boss monsters with guards, use their deck-defined stats (no dynamic scaling here)
+                this.currentGuards = this.currentMonster.guards.map(
+                  (g_def) => ({
+                    ...g_def,
+                    health: g_def.health,
+                    maxHealth: g_def.health,
+                    imageUrl: g_def.imageUrl || monsterToFight.imageUrl,
+                  })
+                );
+                this.logEvent(
+                  `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} guard(s)!`
+                );
+                this.currentCombatMessage = `The ${this.currentMonster.name} appears, flanked by ${this.currentGuards.length} guard(s)!`;
+              } else {
+                // Non-boss without guards
+                this.logEvent(`A ${this.currentMonster.name} appears!`);
+                this.currentCombatMessage = `A ${this.currentMonster.name} appears!`;
+              }
             }
             this.gameState = "combat";
           },
@@ -3005,38 +3304,49 @@
             const totalAttack = attackRoll + this.totalAttackModifier;
             this.logEvent(
               `Player attacks ${target.name}! (Roll: ${attackRoll} + ${this.totalAttackModifier} (mod) = ${totalAttack} vs AC ${target.ac})`
-            ); // Keep this in the log!
+            );
 
             if (totalAttack >= target.ac || attackRoll === 20) {
-              // Nat 20 always hits
               const damageDealt = this.rollDamage(this.totalDamageRange);
               target.health -= damageDealt;
               this.logEvent(
                 `Hit! You deal ${damageDealt} damage to ${target.name}. (${target.health}/${target.maxHealth} HP)`
               );
-              this.currentCombatMessage = `You attack! Hit! You deal ${damageDealt} damage to ${target.name}.`; // Update combat message (Rolls excluded from here)
+              this.currentCombatMessage = `You attack! Hit! You deal ${damageDealt} damage to ${target.name}.`;
 
               if (target.health <= 0) {
                 this.logEvent(`${target.name} defeated!`);
+                this.progressCombatCurses();
+                if (this.player.health <= 0 && this.gameState === "game_over")
+                  return;
+
                 if (target.isGuard) {
                   this.currentGuards.shift();
                   if (this.currentGuards.length === 0) {
                     this.logEvent("All guards defeated! Now for the King!");
                     this.currentCombatMessage =
-                      "All guards defeated! Now for the King!"; // Update combat message
+                      "All guards defeated! Now for the King!";
+                    // No automatic monsterTurn() here, player gets to act against the King next if they wish
                   } else {
-                    this.currentCombatMessage = `${target.name} defeated! ${this.currentGuards.length} guard(s) remain.`; // Update combat message
+                    this.currentCombatMessage = `${target.name} defeated! ${this.currentGuards.length} guard(s) remain.`;
+                    // No automatic monsterTurn() here, player gets to act against the next guard
                   }
+                  return; // Player turn continues or ends based on if they took an action
                 } else {
                   this.monsterDefeated(this.currentMonster);
-                  return;
+                  return; // monsterDefeated handles state change
                 }
               }
             } else {
               this.logEvent("Miss!");
-              this.currentCombatMessage = `You attack! You miss!`; // Update combat message (Rolls excluded from here)
+              this.currentCombatMessage = `You attack! You miss!`;
             }
 
+            this.progressCombatCurses();
+            if (this.player.health <= 0 && this.gameState === "game_over")
+              return;
+
+            // If the attack didn't end combat (e.g. monster/guard still alive)
             if (
               this.gameState === "combat" &&
               ((this.currentMonster && this.currentMonster.health > 0) ||
@@ -3066,43 +3376,94 @@
             this.logEvent(
               `You attempt to flee from ${fleeingFromTarget.name}!`
             );
-            this.currentCombatMessage = `You attempt to flee from ${fleeingFromTarget.name}!`; // Update combat message
+            this.currentCombatMessage = `You attempt to flee from ${fleeingFromTarget.name}!`;
 
-            // Monster/Guard gets a parting shot
+            this.progressCombatCurses();
+            if (this.player.health <= 0 && this.gameState === "game_over")
+              return;
+
             this.logEvent(`${fleeingFromTarget.name} gets a parting shot!`);
-            this.performMonsterAttackLogic(fleeingFromTarget, true); // Pass true to indicate parting shot
+            this.performMonsterAttackLogic(fleeingFromTarget, true); // isPartingShot = true
 
-            if (this.player.health <= 0) {
-              // Game over is handled by performMonsterAttackLogic
+            if (this.player.health <= 0 && this.gameState === "game_over") {
+              // Game over handled by performMonsterAttackLogic
               return;
             }
 
-            // Flee success chance logic
-            let fleeSuccessChance = 70; // Base 70% chance to flee
-
-            // Adjust chance based on monster tier
-            if (fleeingFromTarget.tier === "easy") {
-              // fleeSuccessChance += 0; // No change for easy
-            } else if (fleeingFromTarget.tier === "medium") {
-              fleeSuccessChance -= 20; // 50% for medium
-            } else if (fleeingFromTarget.tier === "hard") {
-              fleeSuccessChance -= 40; // 30% for hard
-            } else if (fleeingFromTarget.tier === "boss") {
-              fleeSuccessChance -= 60; // 10% for boss
+            // Check if monster is still alive for flee attempt (could be defeated by reflected damage, etc. if added later)
+            // For now, assume monster is alive after parting shot if player is.
+            if (fleeingFromTarget.health <= 0 && !fleeingFromTarget.isGuard) {
+              // If it was the main monster and it died
+              this.logEvent("The monster collapses before you can flee!");
+              // monsterDefeated will be called via playerAttack or similar if it was a direct kill.
+              // If it died from a curse/DoT during this turn, that's complex.
+              // For simplicity here, if the target is dead, flee is moot.
+              // This path is unlikely with current mechanics but good for robustness.
+              this.monsterDefeated(this.currentMonster); // Assuming currentMonster was the target
+              return;
+            }
+            if (fleeingFromTarget.health <= 0 && fleeingFromTarget.isGuard) {
+              this.logEvent(
+                `${fleeingFromTarget.name} collapses before you can flee!`
+              );
+              this.currentGuards.shift();
+              if (
+                this.currentGuards.length === 0 &&
+                this.currentMonster &&
+                this.currentMonster.tier === "boss"
+              ) {
+                this.logEvent("All guards defeated! Now for the King!");
+                this.currentCombatMessage =
+                  "All guards defeated! Now for the King!";
+              } else if (this.currentGuards.length > 0) {
+                this.currentCombatMessage = `${fleeingFromTarget.name} defeated! ${this.currentGuards.length} guard(s) remain.`;
+              } else {
+                // No more guards, and not the boss (or boss already defeated)
+                this.gameState = "exploring"; // Or proceed to boss if applicable
+                this.endTurn();
+              }
+              return;
             }
 
-            const fleeRoll = this.rollDie(100); // Roll a d100
+            let fleeSuccessChance = 70; // Base flee chance
+            // Boss and its guards are harder to flee from
+            if (
+              fleeingFromTarget.tier === "boss" ||
+              (fleeingFromTarget.isGuard &&
+                this.currentMonster &&
+                this.currentMonster.tier === "boss")
+            ) {
+              fleeSuccessChance = 10; // Very hard to flee the final encounter
+            } else if (fleeingFromTarget.tier === "hard") {
+              fleeSuccessChance -= 40;
+            } else if (fleeingFromTarget.tier === "medium") {
+              fleeSuccessChance -= 20;
+            }
+            fleeSuccessChance = Math.max(0, fleeSuccessChance);
+
+            const fleeRoll = this.rollDie(100);
             if (fleeRoll <= fleeSuccessChance) {
               this.logEvent(`You successfully fled from the encounter!`);
               this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
-              // NEW: Put the current monster (or boss) back at the front of the deck
-              if (this.currentMonster) {
-                this.monsterDeck.unshift(this.currentMonster);
+                this.lastExploredEventDescription ||
+                "You catch your breath after fleeing.";
+
+              // Put the main monster back if it's not defeated and not a guard
+              if (
+                this.currentMonster &&
+                this.currentMonster.health > 0 &&
+                !fleeingFromTarget.isGuard
+              ) {
+                this.monsterDeck.unshift(
+                  JSON.parse(JSON.stringify(this.currentMonster))
+                ); // Put a copy back
                 this.logEvent(
-                  `${this.currentMonster.name} is now the next monster in the dungeon.`
+                  `${this.currentMonster.name} returns to the shadows, for now.`
                 );
               }
+              // If fleeing from guards, the main boss (if any) remains.
+              // If fleeing from the boss itself, it goes back to the deck.
+
               this.currentMonster = null;
               this.currentGuards = [];
               this.gameState = "exploring";
@@ -3111,9 +3472,26 @@
               this.logEvent(
                 `You failed to flee! The ${fleeingFromTarget.name} blocks your escape.`
               );
-              this.currentCombatMessage = `You failed to flee! The ${fleeingFromTarget.name} blocks your escape.`; // Update combat message
-              // Player remains in combat, and it is now the monster's turn.
-              this.monsterTurn();
+              this.currentCombatMessage = `You failed to flee! The ${fleeingFromTarget.name} blocks your escape. Now it's their turn!`;
+              // Monster already took its parting shot. If flee fails, their "normal" turn happens.
+              // However, a parting shot *is* their action for the flee attempt.
+              // So, if flee fails, it's player's turn again.
+              // No, the monsterTurn() should happen if flee fails.
+              // Let's re-evaluate: Flee is an action. If it fails, monster attacks.
+              // The parting shot logic for flee might be too generous.
+              // Standard: Player tries to flee. Monster gets an attack of opportunity. If player survives, roll to flee.
+              // Current: Player tries to flee. Monster gets parting shot. THEN roll to flee. If fails, monster turn.
+              // Let's stick to: Parting shot, then roll. If flee fails, it's monster's proper turn.
+              // The parting shot was ALREADY the monster's action for this round essentially.
+              // So if flee fails, it should be player's turn again, or monster gets another attack.
+              // Let's simplify: Flee takes your turn. Monster attacks. If you survive, roll. If fail, it's monster's next turn.
+              // The current `performMonsterAttackLogic(fleeingFromTarget, true)` is the "attack of opportunity".
+              // If flee fails, it should then be the monster's *regular* turn.
+              // This means `monsterTurn()` should be called if flee fails *and player is alive*.
+              if (this.player.health > 0) {
+                // Ensure player is still alive
+                this.monsterTurn(); // Now the monster takes its proper turn after failed flee
+              }
             }
           },
 
@@ -3121,14 +3499,12 @@
             if (this.player.health <= 0 || this.gameState !== "combat") return;
 
             if (this.currentGuards.length > 0) {
-              // Only the first guard attacks per monster turn for simplicity, or iterate if you want all guards
               if (this.player.health > 0)
+                // Redundant check, but safe
                 this.performMonsterAttackLogic(this.currentGuards[0]);
             } else if (this.currentMonster && this.currentMonster.health > 0) {
               this.performMonsterAttackLogic(this.currentMonster);
             }
-
-            // Removed: this.logEvent("Your turn.");
           },
 
           performMonsterAttackLogic(monster, isPartingShot = false) {
@@ -3141,16 +3517,15 @@
             const totalAttack = attackRoll + monster.attackMod;
             this.logEvent(
               `${monster.name} ${actionText}! (Roll: ${attackRoll} + ${monster.attackMod} (mod) = ${totalAttack} vs Your AC ${this.totalDefense})`
-            ); // Keep this in the log!
+            );
 
             if (totalAttack >= this.totalDefense || attackRoll === 20) {
-              // Nat 20 always hits
               const damageDealt = this.rollDamage(monster.damage);
               this.player.health -= damageDealt;
               this.logEvent(
                 `Hit! ${monster.name} deals ${damageDealt} damage. (${this.player.health}/${this.player.maxHealth} HP)`
               );
-              this.currentCombatMessage = `${monster.name} ${actionText}! Hits you for ${damageDealt} damage!`; // Update combat message (Rolls excluded from here)
+              this.currentCombatMessage = `${monster.name} ${actionText}! Hits you for ${damageDealt} damage!`;
 
               if (
                 monster.curseChance &&
@@ -3164,11 +3539,23 @@
               }
               if (this.player.health <= 0) {
                 this.gameOver(`Defeated by ${monster.name}.`);
-                return;
+                return; // Explicit return after game over
               }
             } else {
               this.logEvent(`${monster.name} misses!`);
-              this.currentCombatMessage = `${monster.name} ${actionText}! Misses you!`; // Update combat message (Rolls excluded from here)
+              this.currentCombatMessage = `${monster.name} ${actionText}! Misses you!`;
+            }
+
+            // Only progress curses if not a parting shot, as parting shot is part of player's flee action
+            // And if player is still in combat and alive.
+            if (
+              !isPartingShot &&
+              this.player.health > 0 &&
+              this.gameState === "combat"
+            ) {
+              this.progressCombatCurses();
+              if (this.player.health <= 0 && this.gameState === "game_over")
+                return; // Check again after curse tick
             }
           },
 
@@ -3176,14 +3563,11 @@
             this.logEvent(`${monster.name} has been slain!`);
             this.player.monsterDeckProgression++;
 
-            // NEW: Reset the nothing event counter after a monster battle
             this.nothingEventCount = 0;
             this.logEvent("The quiet passages counter has been reset.");
 
-            // Progression check: Every 5 monsters slain, increase player stats
             if (this.player.monsterDeckProgression % 5 === 0) {
               this.player.maxHealth += 5;
-              // Ensure current health increases along with max health
               this.player.health = Math.min(
                 this.player.health + 5,
                 this.player.maxHealth
@@ -3205,7 +3589,7 @@
             this.pendingLoot = [];
             if (monster.gearDropCount > 0) {
               for (let i = 0; i < monster.gearDropCount; i++) {
-                const gearItem = this.drawCard("gearDeck", "originalGearDeck");
+                const gearItem = this.drawTierAppropriateGear();
                 if (gearItem) {
                   this.pendingLoot.push({
                     type: "item",
@@ -3214,7 +3598,17 @@
                       isGear: true,
                     },
                   });
-                  this.logEvent(`Dropped: ${gearItem.name}!`);
+                  this.logEvent(
+                    `Dropped: ${gearItem.name}! (Tier: ${
+                      gearItem.tier || "N/A"
+                    })`
+                  );
+                } else {
+                  this.logEvent(
+                    `No suitable ${
+                      this.currentMonsterDeckTier || "easy"
+                    }-tier gear found for this drop.`
+                  );
                 }
               }
             }
@@ -3222,8 +3616,7 @@
               monster.treasureDropChance &&
               Math.random() < monster.treasureDropChance
             ) {
-              // Gold from monster kills
-              this.findTreasure(null, "monster"); // Call the new findTreasure for monster drops
+              this.findTreasure(null, "monster");
             }
 
             if (
@@ -3247,130 +3640,171 @@
               }
             }
 
-            this.currentMonster = null;
+            this.currentMonster = null; // Monster is defeated
             if (this.pendingLoot.length > 0) {
               this.gameState = "loot_found";
+              this.collectLoot(); // This will handle the next state transition
             } else {
               this.logEvent("The monster left nothing of value.");
               this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
+                this.lastExploredEventDescription || "The area is now clear.";
               this.gameState = "exploring";
               this.endTurn();
             }
           },
 
           collectLoot() {
-            if (this.gameState !== "loot_found") return;
-            let hasBonus = false;
-
-            // Clear pending loot after collecting (except for bonus items, handled separately)
-            const remainingLootAfterCollection = [];
-
-            this.pendingLoot.forEach((loot) => {
-              if (loot.type === "gold") {
-                this.player.gold += loot.amount;
-                this.logEvent(
-                  `Collected ${loot.amount} gold. Total: ${this.player.gold}`
-                );
-              } else if (loot.type === "item") {
-                if (loot.item.type === "torch") {
-                  this.player.torchCount++;
-                  this.logEvent(
-                    `Picked up a Torch. You now have ${this.player.torchCount}.`
-                  );
-                } else if (loot.item.type === "healing_potion") {
-                  // Collect healing potions
-                  this.player.healingPotionCount++;
-                  this.logEvent(
-                    `Picked up a Healing Potion. You now have ${this.player.healingPotionCount}.`
-                  );
-                } else if (loot.item.isGear) {
-                  this.logEvent(`Found: ${loot.item.name}.`);
-                  this.equipGear(loot.item);
-                } else if (loot.item.isBonus) {
-                  // Only set pendingGearBonus if we haven't already processed one
-                  if (!this.pendingGearBonus) {
-                    this.logEvent(`Found enchantment: ${loot.item.name}.`);
-                    this.pendingGearBonus = loot.item;
-                    this.gameState = "applying_bonus";
-                    hasBonus = true;
-                  } else {
-                    // If another bonus is already pending, just add this one to remaining.
-                    remainingLootAfterCollection.push(loot);
-                  }
-                }
-              }
-            });
-
-            // Filter out the collected loot, keep only bonuses if any.
-            // If a bonus was picked, it will be the only item in pendingLoot
-            if (hasBonus) {
-              this.pendingLoot = [
-                this.pendingGearBonus
-                  ? { type: "item", item: this.pendingGearBonus }
-                  : null,
-                ...remainingLootAfterCollection,
-              ].filter(Boolean);
-            } else {
-              this.pendingLoot = remainingLootAfterCollection; // Should be empty if no bonuses were picked up
-            }
-
-            if (!hasBonus) {
-              this.pendingLoot = []; // Ensure it's clear
+            if (this.pendingLoot.length === 0) {
+              this.pendingGearBonus = null;
+              this.pendingGearChoice = null;
               this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
+                this.lastExploredEventDescription ||
+                "You move on after collecting your spoils.";
               this.gameState = "exploring";
               this.endTurn();
+              return;
             }
-            // If hasBonus is true, the state is already set to 'applying_bonus'
+
+            const loot = this.pendingLoot[0]; // Peek at the first loot item
+
+            if (loot.type === "gold") {
+              this.player.gold += loot.amount;
+              this.logEvent(
+                `Collected ${loot.amount} gold. Total: ${this.player.gold}`
+              );
+              this.pendingLoot.shift(); // Remove processed loot
+              this.collectLoot(); // Process next loot item
+            } else if (loot.type === "item") {
+              if (loot.item.type === "torch") {
+                this.player.torchCount++;
+                this.logEvent(
+                  `Picked up a Torch. You now have ${this.player.torchCount}.`
+                );
+                this.pendingLoot.shift();
+                this.collectLoot();
+              } else if (loot.item.type === "healing_potion") {
+                this.player.healingPotionCount++;
+                this.logEvent(
+                  `Picked up a Healing Potion. You now have ${this.player.healingPotionCount}.`
+                );
+                this.pendingLoot.shift();
+                this.collectLoot();
+              } else if (loot.item.isGear) {
+                const newItem = loot.item;
+                const slot = newItem.type; // e.g., "weapon", "armor", "shield"
+                const currentItem = this.player.equippedGear[slot];
+
+                // Auto-discard identical items to prevent clutter, unless it's an empty slot
+                if (currentItem && currentItem.id === newItem.id) {
+                  const currentBonusesString = JSON.stringify(
+                    (currentItem.bonuses || [])
+                      .slice()
+                      .sort((a, b) => a.id.localeCompare(b.id))
+                  );
+                  const newBonusesString = JSON.stringify(
+                    (newItem.bonuses || [])
+                      .slice()
+                      .sort((a, b) => a.id.localeCompare(b.id))
+                  );
+
+                  if (currentBonusesString === newBonusesString) {
+                    this.logEvent(
+                      `Found an identical ${newItem.name} to your currently equipped one. Discarding the new find.`
+                    );
+                    this.pendingLoot.shift();
+                    this.collectLoot();
+                    return;
+                  }
+                }
+
+                this.logEvent(
+                  `Found: ${newItem.name}. You need to decide whether to equip it.`
+                );
+                this.pendingGearChoice = {
+                  newItem: newItem,
+                  currentItem: currentItem, // Could be null if slot is empty
+                  slot: slot,
+                };
+                this.gameState = "gear_choice";
+                // Don't shift loot yet, decision will handle it
+              } else if (loot.item.isBonus) {
+                this.logEvent(
+                  `Found enchantment: ${loot.item.name}. You need to decide where to apply it.`
+                );
+                this.pendingGearBonus = loot.item;
+                this.gameState = "applying_bonus";
+                // Don't shift loot yet, decision will handle it
+              } else {
+                this.logEvent(
+                  `Unknown item type found: ${loot.item.name}. Discarding.`
+                );
+                this.pendingLoot.shift();
+                this.collectLoot();
+              }
+            } else {
+              this.logEvent(
+                `Unknown loot structure: ${JSON.stringify(loot)}. Discarding.`
+              );
+              this.pendingLoot.shift();
+              this.collectLoot();
+            }
           },
 
-          // Gear & Items
-          // Gear & Items
-          equipGear(newItem) {
-            // Reverting to the previous, simpler logic:
-            // Gear is equipped only into its designated slot (weapon, armor, shield)
-            // and only if it provides a better score than the currently equipped item in that slot.
-
-            if (!newItem || !newItem.type) return;
-
-            const slot = newItem.type; // 'weapon', 'armor', or 'shield'
+          _performActualEquip(itemToEquip, slot) {
             const oldItem = this.player.equippedGear[slot];
-            const newItemScore = this.getGearScore(newItem);
-            const oldItemScore = oldItem
-              ? this.getGearScore(oldItem)
-              : -Infinity;
-
-            let equipped = false;
-            let logMessage = "";
-
-            if (newItemScore > oldItemScore) {
-              // New item is better, equip it
-              this.player.equippedGear[slot] = newItem;
-              equipped = true;
-              if (oldItem) {
-                logMessage = `Replaced ${oldItem.name} with ${newItem.name}.`;
-              } else {
-                logMessage = `Equipped ${newItem.name}.`;
-              }
-            } else if (newItemScore === oldItemScore && oldItem) {
-              // New item is equal, keep current gear
-              logMessage = `Found ${newItem.name}, which is equal to your equipped ${oldItem.name}. Keeping current gear.`;
+            this.player.equippedGear[slot] = JSON.parse(
+              JSON.stringify(itemToEquip) // Deep copy
+            );
+            if (!this.player.equippedGear[slot].bonuses) {
+              // Ensure bonuses array exists
+              this.player.equippedGear[slot].bonuses = [];
+            }
+            if (oldItem) {
+              this.logEvent(
+                `Replaced ${oldItem.name} with ${itemToEquip.name}.`
+              );
             } else {
-              // New item is worse, keep current gear
-              logMessage = `Found ${
-                newItem.name
-              }, but it's worse than your equipped ${
-                oldItem ? oldItem.name : "nothing"
-              }. Keeping current gear.`;
+              this.logEvent(`Equipped ${itemToEquip.name}.`);
             }
+          },
 
-            // Always ensure the newly equipped item (if any) has a bonuses array
-            if (equipped && !newItem.bonuses) {
-              newItem.bonuses = [];
+          confirmEquipNewGear() {
+            if (!this.pendingGearChoice) return;
+            this._performActualEquip(
+              this.pendingGearChoice.newItem,
+              this.pendingGearChoice.slot
+            );
+            this.processPostGearChoice();
+          },
+
+          confirmKeepCurrentGear() {
+            if (!this.pendingGearChoice || !this.pendingGearChoice.currentItem)
+              return; // Should not happen if button is shown
+            this.logEvent(
+              `Kept equipped ${this.pendingGearChoice.currentItem.name} instead of ${this.pendingGearChoice.newItem.name}.`
+            );
+            this.processPostGearChoice();
+          },
+
+          discardNewFoundGear() {
+            // This case is typically for when there's no current item (empty slot) but player still wants to discard
+            if (!this.pendingGearChoice || this.pendingGearChoice.currentItem)
+              return;
+            this.logEvent(`Discarded ${this.pendingGearChoice.newItem.name}.`);
+            this.processPostGearChoice();
+          },
+
+          processPostGearChoice() {
+            this.pendingGearChoice = null;
+            // Remove the gear item from pendingLoot as it has been decided upon
+            if (
+              this.pendingLoot.length > 0 &&
+              this.pendingLoot[0].item &&
+              this.pendingLoot[0].item.isGear
+            ) {
+              this.pendingLoot.shift();
             }
-
-            this.logEvent(logMessage);
+            this.collectLoot(); // Continue processing any remaining loot
           },
 
           applyBonusToGear(slot) {
@@ -3383,17 +3817,17 @@
               this.logEvent(
                 `'${bonus.name}' cannot be applied to a ${item.type}.`
               );
+              // Do not consume the bonus if misclicked, allow another choice or skip
               return;
             }
             if (!item.bonuses) item.bonuses = [];
 
-            // Find if a bonus of the same ID already exists
             const existingBonusIndex = item.bonuses.findIndex(
               (b) => b.id === bonus.id
             );
 
             if (existingBonusIndex !== -1) {
-              // If it exists, replace it with the new bonus
+              // Replace existing bonus of the same type
               item.bonuses.splice(
                 existingBonusIndex,
                 1,
@@ -3403,130 +3837,151 @@
                 `Replaced existing enchantment on your ${item.name} with '${bonus.name}'.`
               );
             } else {
-              // Otherwise, add it as a new bonus
-              item.bonuses.push(JSON.parse(JSON.stringify(bonus)));
+              item.bonuses.push(JSON.parse(JSON.stringify(bonus))); // Deep copy
               this.logEvent(`Applied '${bonus.name}' to your ${item.name}.`);
             }
 
             this.pendingGearBonus = null;
-            this.selectedGearSlotForBonus = null;
+            this.selectedGearSlotForBonus = null; // Reset if used
 
-            this.pendingLoot = this.pendingLoot.filter(
-              (loot) => !loot.item || !loot.item.isBonus
-            ); // Remove the just-applied bonus
-            if (this.pendingLoot.length > 0) {
-              this.collectLoot(); // If there are other loot items (including other bonuses), process them
-            } else {
-              this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
-              this.gameState = "exploring";
-              this.endTurn();
+            // Remove the bonus item from pendingLoot
+            if (
+              this.pendingLoot.length > 0 &&
+              this.pendingLoot[0].item &&
+              this.pendingLoot[0].item.isBonus
+            ) {
+              this.pendingLoot.shift();
             }
+            this.collectLoot(); // Continue processing any remaining loot
           },
           cancelApplyBonus() {
             this.logEvent(
               `Skipped applying '${this.pendingGearBonus.name}'. The enchantment fades away.`
             );
             this.pendingGearBonus = null;
-            this.pendingLoot = this.pendingLoot.filter(
-              (loot) => loot.item && !loot.item.isBonus
-            );
-            if (this.pendingLoot.length > 0) {
-              this.collectLoot(); // Process any other remaining loot
-            } else {
-              this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
-              this.gameState = "exploring";
-              this.endTurn();
+            // Remove the bonus item from pendingLoot
+            if (
+              this.pendingLoot.length > 0 &&
+              this.pendingLoot[0].item &&
+              this.pendingLoot[0].item.isBonus
+            ) {
+              this.pendingLoot.shift();
             }
+            this.collectLoot(); // Continue processing any remaining loot
           },
 
-          // Traps & Curses
           triggerTrap() {
             const trap = this.drawCard("trapDeck", "originalTrapDeck");
             if (!trap) {
               this.logEvent("You carefully check for traps but find none.");
               this.currentExplorationMessage =
-                this.lastExploredEventDescription; // Revert to event description
+                this.lastExploredEventDescription ||
+                "The area is clear of traps.";
               this.gameState = "exploring";
               this.endTurn();
               return;
             }
 
-            // Set the trap message for display in gameplay area
             this.currentTrapMessage = `${trap.name}! ${trap.effectDescription}`;
-            this.logEvent(`Trap! ${this.currentTrapMessage}`); // Log the full message
+            this.logEvent(`Trap! ${this.currentTrapMessage}`);
             this.gameState = "trap_triggered";
 
             if (trap.damage && trap.damage !== "0-0") {
-              let damageTaken = this.rollDamage(trap.damage);
-
-              // NEW: Double initial trap damage if torch is not lit
-              if (!this.isTorchLit) {
-                damageTaken *= 2;
-                this.logEvent(
-                  `Darkness amplifies the ${trap.name}'s effect! Damage doubled.`
-                );
-              }
+              let damageTaken = this.rollDamage(trap.damage); // Base trap damage
 
               if (damageTaken > 0) {
+                // Only apply modifiers if base damage > 0
+                // Progression scaling for trap damage
+                damageTaken =
+                  damageTaken +
+                  Math.floor(this.player.monsterDeckProgression / 3); // Scaled by 1 per 3 monsters defeated
+
+                if (!this.isTorchLit) {
+                  damageTaken = Math.max(1, Math.floor(damageTaken * 1.5)); // 50% more damage in darkness, min 1
+                  this.logEvent(
+                    `Darkness amplifies the ${trap.name}'s effect! Damage increased.`
+                  );
+                }
+                damageTaken = Math.max(1, damageTaken); // Ensure at least 1 damage if any was rolled
+
                 this.player.health -= damageTaken;
                 this.logEvent(
                   `You take ${damageTaken} damage. HP: ${this.player.health}/${this.player.maxHealth}`
                 );
                 if (this.player.health <= 0) {
                   this.gameOver(`Killed by a ${trap.name}.`);
-                  return;
+                  return; // Game over, stop further processing
                 }
+              } else {
+                this.logEvent(
+                  `The ${trap.name} clicks harmlessly or you avoid direct impact.`
+                );
               }
             }
             if (
               trap.isCursed &&
               trap.curseId &&
-              (trap.curseChance === 1.0 ||
-                Math.random() < (trap.curseChance || 0))
+              (trap.curseChance === 1.0 || // Always apply if chance is 1.0
+                Math.random() < (trap.curseChance || 0)) // Otherwise, roll against chance
             ) {
               const curse = this.curseDeck.find((c) => c.id === trap.curseId);
-              if (curse) this.applyCurse(JSON.parse(JSON.stringify(curse)));
+              if (curse) this.applyCurse(JSON.parse(JSON.stringify(curse))); // Apply a deep copy
             }
           },
           acknowledgeTrap() {
-            if (this.gameState === "game_over") return;
-            this.currentExplorationMessage = this.lastExploredEventDescription; // Revert to event description
+            if (this.gameState === "game_over") return; // Don't proceed if game ended due to trap
+            this.currentExplorationMessage =
+              this.lastExploredEventDescription ||
+              "You recover from the trap and press on.";
             this.gameState = "exploring";
             this.endTurn();
           },
           applyCurse(curseCard) {
-            const existingCurse = this.player.activeCurses.find(
-              (c) => c.id === curseCard.id
-            );
-            if (existingCurse) {
-              existingCurse.duration = Math.max(
-                existingCurse.duration,
-                curseCard.duration
-              ); // Refresh/extend
-              this.logEvent(
-                `Curse ${curseCard.name} duration extended/refreshed.`
-              );
-            } else {
-              this.player.activeCurses.push(curseCard);
-              this.logEvent(
-                `Afflicted by ${curseCard.name}! ${curseCard.effectDescription}`
+            // curseCard should be a deep copy
+            let progressionBonusDuration = 0;
+            if (this.player.monsterDeckProgression > 0) {
+              // Corrected 'player' to 'this.player'
+              progressionBonusDuration = Math.floor(
+                this.player.monsterDeckProgression / 2
               );
             }
+
+            curseCard.duration += progressionBonusDuration;
+
+            const existingCurseIndex = this.player.activeCurses.findIndex(
+              (c) => c.id === curseCard.id
+            );
+            if (existingCurseIndex !== -1) {
+              // Refresh duration if new duration is longer or it's a re-application
+              this.player.activeCurses[existingCurseIndex].duration = Math.max(
+                this.player.activeCurses[existingCurseIndex].duration,
+                curseCard.duration
+              );
+              // Re-apply initial damage if the curse has it and is re-applied (optional rule, current is just refresh)
+              // For now, just refreshing duration is fine. If initial damage should re-trigger, add logic here.
+              this.logEvent(
+                `Curse ${curseCard.name} duration extended/refreshed to ${this.player.activeCurses[existingCurseIndex].duration} turns.`
+              );
+            } else {
+              this.player.activeCurses.push(curseCard); // curseCard is already a deep copy
+              this.logEvent(
+                `Afflicted by ${curseCard.name}! (${curseCard.effectDescription}). Duration: ${curseCard.duration} turns.`
+              );
+            }
+
             if (curseCard.initialDamage) {
-              // Apply initial damage if any
               this.player.health -= curseCard.initialDamage;
               this.logEvent(
-                `Curse deals initial ${curseCard.initialDamage} damage. HP: ${this.player.health}/${this.player.maxHealth}`
+                `${curseCard.name} deals initial ${curseCard.initialDamage} damage. HP: ${this.player.health}/${this.player.maxHealth}`
               );
               if (this.player.health <= 0) {
-                this.gameOver(`Succumbed to ${curseCard.name}.`);
+                this.gameOver(
+                  `Succumbed to the initial effects of ${curseCard.name}.`
+                );
               }
             }
           },
 
-          // Win/Loss
           gameOver(message) {
             this.logEvent(`Game Over: ${message}`);
             this.gameState = "game_over";
@@ -3540,58 +3995,117 @@
             this.initializeGame();
           },
 
-          // NEW: Handle Keyboard Inputs
           handleSpacebar(event) {
             if (event.code === "Space") {
-              event.preventDefault(); // Prevent default spacebar scrolling
+              event.preventDefault(); // Prevent page scroll
 
+              if (
+                this.$refs.exploreButton &&
+                document.activeElement !== this.$refs.exploreButton &&
+                this.gameState === "exploring"
+              ) {
+                // If space is pressed and explore button is not focused, simulate click
+                // This helps if another button was focused (e.g. Light Torch)
+                this.exploreNextEvent();
+                return;
+              }
+              if (
+                this.$refs.attackButton &&
+                document.activeElement !== this.$refs.attackButton &&
+                this.gameState === "combat"
+              ) {
+                this.playerAttack();
+                return;
+              }
+
+              // Default behavior if specific refs aren't an issue or for other states
               if (this.gameState === "exploring") {
                 this.exploreNextEvent();
               } else if (this.gameState === "loot_found") {
-                this.collectLoot();
+                // Loot is auto-processed, spacebar might not be needed here
+                // or could be used to speed up if delays were added.
+                // For now, no action.
               } else if (this.gameState === "combat") {
                 this.playerAttack();
               } else if (this.gameState === "trap_triggered") {
                 this.acknowledgeTrap();
               }
+              // Add other states if spacebar should trigger their primary action
+              // e.g., gameState === 'game_over' || gameState === 'game_won' -> restartGame()
+              // e.g., gameState === 'shop' -> exitShop() (or a "next item" if browsing)
             } else if (event.key === "t" || event.key === "T") {
+              if (
+                this.gameState === "shop" ||
+                this.gameState === "gear_choice" ||
+                this.gameState === "applying_bonus"
+              ) {
+                // Typing 't' in an input field or similar should not trigger game actions
+                if (
+                  event.target.tagName === "INPUT" ||
+                  event.target.tagName === "TEXTAREA"
+                )
+                  return;
+              }
               event.preventDefault();
-              // Check if torch can be lit (not in combat or applying bonus, and have torches)
               if (
                 this.player.torchCount > 0 &&
-                this.gameState !== "applying_bonus"
+                !this.isTorchLit && // only if not already lit
+                this.gameState !== "applying_bonus" &&
+                this.gameState !== "gear_choice" &&
+                this.gameState !== "shop" // Can't light torch in shop, gear choice, bonus application
               ) {
                 this.lightTorch();
+              } else if (this.isTorchLit) {
+                this.logEvent("Torch is already lit.");
+              } else if (this.player.torchCount <= 0) {
+                this.logEvent("No torches left to light.");
               } else {
-                this.logEvent(
-                  "Cannot light torch now (not allowed in current state or no torches left)."
-                );
+                this.logEvent("Cannot light torch in the current situation.");
               }
             } else if (event.key === "r" || event.key === "R") {
-              event.preventDefault();
-              // Check if rest is possible (exploring and not full health)
               if (
-                this.gameState === "exploring" &&
-                this.player.health < this.player.maxHealth
+                this.gameState === "shop" ||
+                this.gameState === "gear_choice" ||
+                this.gameState === "applying_bonus"
               ) {
+                if (
+                  event.target.tagName === "INPUT" ||
+                  event.target.tagName === "TEXTAREA"
+                )
+                  return;
+              }
+              event.preventDefault();
+              if (this.canRestGameplay) {
+                // Use the computed property
                 this.rest();
               } else {
                 this.logEvent(
-                  "Cannot rest now (only when exploring and not at full health)."
+                  "Cannot rest now (not exploring, or at full health, or otherwise unable)."
                 );
               }
             } else if (event.key === "p" || event.key === "P") {
-              event.preventDefault();
-              // Check if potion can be used (have potions, not full health, and in exploring or combat)
               if (
-                this.player.healingPotionCount > 0 &&
-                this.player.health < this.player.maxHealth &&
-                (this.gameState === "exploring" || this.gameState === "combat")
+                this.gameState === "shop" ||
+                this.gameState === "gear_choice" ||
+                this.gameState === "applying_bonus"
+              ) {
+                if (
+                  event.target.tagName === "INPUT" ||
+                  event.target.tagName === "TEXTAREA"
+                )
+                  return;
+              }
+              event.preventDefault();
+              if (
+                (this.canUsePotionInExploringGameplay &&
+                  this.gameState === "exploring") ||
+                (this.canUsePotionInCombatGameplay &&
+                  this.gameState === "combat")
               ) {
                 this.useHealingPotion();
               } else {
                 this.logEvent(
-                  "Cannot use potion now (full health or no potions)."
+                  "Cannot use potion now (full health, no potions, or wrong game state)."
                 );
               }
             }
@@ -3599,10 +4113,8 @@
         },
         mounted() {
           this.initializeGame();
-          // Add event listener for spacebar
           window.addEventListener("keydown", this.handleSpacebar);
         },
-        // Remove event listener when component is unmounted
         beforeUnmount() {
           window.removeEventListener("keydown", this.handleSpacebar);
         },
