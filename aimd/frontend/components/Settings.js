@@ -85,7 +85,7 @@ export default {
                 Get your API Key from Google AI Studio.
               </a>
               Click the blue <strong>Create API key</strong> button. Then paste (Control-V) into the box above.
-              <br>Your key is stored locally in your browser and is never sent anywhere else except to Google's API.
+              <br><em>Your key is stored locally in your browser and is never sent anywhere else except to Google's API.</em>
             </p>
           </div>
 
