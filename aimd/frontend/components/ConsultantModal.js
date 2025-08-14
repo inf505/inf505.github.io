@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useGameStore } from "../stores/useGameStore.js";
 import { useUiStore } from "../stores/useUiStore.js";
-
+import { API_BASE_URL } from "../config.js";
 export default {
   name: "ConsultantModal",
   setup() {

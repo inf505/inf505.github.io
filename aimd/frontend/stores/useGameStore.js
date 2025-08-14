@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useCharacterCreationStore } from "./useCharacterCreationStore.js";
 import { formatNarrative } from "../utils/formatters.js";
+import { API_BASE_URL } from "../config.js";
 
 const GAME_SESSION_KEY = "ai-md-saved-game";
 
