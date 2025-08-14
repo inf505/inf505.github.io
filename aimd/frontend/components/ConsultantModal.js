@@ -33,15 +33,18 @@ export default {
       uiStore.clearError();
 
       try {
-        const response = await fetch("/api/consultants/transact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: gameStore.session.sessionId,
-            action: "buy", // The only action is to acquire services/items
-            itemName,
-          }),
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/api/consultants/transact`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: gameStore.session.sessionId,
+              action: "buy", // The only action is to acquire services/items
+              itemName,
+            }),
+          }
+        );
 
         const data = await response.json();
 

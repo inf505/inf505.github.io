@@ -28,7 +28,9 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       const gameStore = useGameStore();
 
       try {
-        const response = await fetch("/api/character/disciplines");
+        const response = await fetch(
+          `${API_BASE_URL}/api/character/disciplines`
+        );
         if (!response.ok)
           throw new Error("Failed to fetch character disciplines.");
 
@@ -59,7 +61,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       gameStore.setGameState("specialization-selection");
       try {
         const response = await fetch(
-          `/api/character/discipline-data/${disciplineData.name}`
+          `${API_BASE_URL}/api/character/discipline-data/${disciplineData.name}`
         );
         if (!response.ok)
           throw new Error(
@@ -115,7 +117,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       uiStore.setLoadingTask("character-finalize");
 
       try {
-        const response = await fetch("/api/character/finalize", {
+        const response = await fetch(`${API_BASE_URL}/api/character/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

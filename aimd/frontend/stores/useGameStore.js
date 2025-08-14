@@ -365,7 +365,7 @@ export const useGameStore = defineStore("game", {
 
       try {
         const rollResponse = await this._fetchWithTimeout(
-          "/api/generate/roll",
+          `${API_BASE_URL}/api/generate/roll`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -394,11 +394,14 @@ export const useGameStore = defineStore("game", {
           chosenSuggestionType: chosenSuggestionType,
         };
 
-        const generateResponse = await this._fetchWithTimeout("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+        const generateResponse = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/generate`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        );
 
         const data = await generateResponse.json();
         if (!generateResponse.ok) throw data;
@@ -462,7 +465,7 @@ export const useGameStore = defineStore("game", {
 
     async fetchStats() {
       try {
-        const response = await fetch("/api/data/stats");
+        const response = await fetch(`${API_BASE_URL}/api/data/stats`);
         if (!response.ok) {
           console.warn(
             "Failed to load stat definitions, abbreviations may not work."
@@ -532,7 +535,7 @@ export const useGameStore = defineStore("game", {
       );
 
       if (this.session?.sessionId) {
-        fetch("/api/session", {
+        fetch(`${API_BASE_URL}/api/session`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -567,7 +570,9 @@ export const useGameStore = defineStore("game", {
     async fetchGameConstants() {
       try {
         if (!this.session?.state?.character?.maxEnergy) {
-          const energyResponse = await fetch("/api/data/energy-constants");
+          const energyResponse = await fetch(
+            `${API_BASE_URL}/api/data/energy-constants`
+          );
           if (!energyResponse.ok) {
             console.warn("Failed to load energy constants, using default.");
           } else {
@@ -621,11 +626,14 @@ export const useGameStore = defineStore("game", {
           userInput: userInput,
         };
 
-        const response = await this._fetchWithTimeout("/api/tutor/get-advice", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/tutor/get-advice`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          }
+        );
 
         const data = await response.json();
         if (!response.ok) throw data;
@@ -650,14 +658,17 @@ export const useGameStore = defineStore("game", {
       const uiStore = useUiStore();
       uiStore.setLoadingTask("debug-health-change");
       try {
-        const response = await this._fetchWithTimeout("/api/debug/set-health", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: this.session.sessionId,
-            newHealth: newHealth,
-          }),
-        });
+        const response = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/debug/set-health`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: this.session.sessionId,
+              newHealth: newHealth,
+            }),
+          }
+        );
         const data = await response.json();
         if (!response.ok) throw data;
 
@@ -678,14 +689,17 @@ export const useGameStore = defineStore("game", {
       const uiStore = useUiStore();
       uiStore.setLoadingTask("debug-energy-change");
       try {
-        const response = await this._fetchWithTimeout("/api/debug/set-energy", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: this.session.sessionId,
-            newEnergy: newEnergy,
-          }),
-        });
+        const response = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/debug/set-energy`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: this.session.sessionId,
+              newEnergy: newEnergy,
+            }),
+          }
+        );
         const data = await response.json();
         if (!response.ok) throw data;
 
@@ -707,7 +721,7 @@ export const useGameStore = defineStore("game", {
       uiStore.setLoadingTask("debug-reputation-change");
       try {
         const response = await this._fetchWithTimeout(
-          "/api/debug/set-reputation",
+          `${API_BASE_URL}/api/debug/set-reputation`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -746,15 +760,18 @@ export const useGameStore = defineStore("game", {
     async rehydrateSessionOnServer(loadedState) {
       const uiStore = useUiStore();
       uiStore.setLoadingTask("session-rehydrate");
-      const response = await this._fetchWithTimeout("/api/session/rehydrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          state: loadedState,
-          apiKey: this.apiKey,
-          models: this.models,
-        }),
-      });
+      const response = await this._fetchWithTimeout(
+        `${API_BASE_URL}/api/session/rehydrate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            state: loadedState,
+            apiKey: this.apiKey,
+            models: this.models,
+          }),
+        }
+      );
 
       const data = await response.json();
       if (!response.ok) {
@@ -830,11 +847,14 @@ export const useGameStore = defineStore("game", {
           requestBody.forceLocation = this.lastCaseLocation;
         }
 
-        const caseResponse = await this._fetchWithTimeout("/api/cases", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
+        const caseResponse = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/cases`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          }
+        );
 
         const caseData = await caseResponse.json();
         if (!caseResponse.ok) throw caseData;
@@ -899,7 +919,7 @@ export const useGameStore = defineStore("game", {
       uiStore.setLoadingTask("compacting world memories...");
       try {
         const response = await this._fetchWithTimeout(
-          "/api/worldstate/summarize",
+          `${API_BASE_URL}/api/worldstate/summarize`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -970,18 +990,21 @@ export const useGameStore = defineStore("game", {
 
       uiStore.setLoadingTask("session-start");
       try {
-        const response = await this._fetchWithTimeout("/api/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            apiKey: this.apiKey,
-            models: this.models,
-            temperature: this.temperature,
-            character: characterForSession,
-            case: caseForSession,
-            sessionId: this.session?.sessionId || null,
-          }),
-        });
+        const response = await this._fetchWithTimeout(
+          `${API_BASE_URL}/api/session`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              apiKey: this.apiKey,
+              models: this.models,
+              temperature: this.temperature,
+              character: characterForSession,
+              case: caseForSession,
+              sessionId: this.session?.sessionId || null,
+            }),
+          }
+        );
         const sessionData = await response.json();
         if (!response.ok) throw sessionData;
 
