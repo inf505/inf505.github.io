@@ -1,22 +1,25 @@
 // frontend/components/App.js
 import { computed, onMounted, ref, watch } from "vue";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
-import NotificationContainer from "/components/NotificationContainer.js";
-import SidebarDashboard from "/components/SidebarDashboard.js";
-import CaseSetup from "/components/CaseSetup.js";
-import MedicalSimChatWindow from "/components/ChatWindow.js";
-import DisciplineSelection from "/components/DisciplineSelection.js";
-import SpecializationSelection from "/components/SpecializationSelection.js";
-import LoadingSpinner from "/components/LoadingSpinner.js";
-import ErrorMessage from "/components/ErrorMessage.js";
-import ChatInput from "/components/ChatInput.js";
-import Settings from "/components/Settings.js";
-import CaseComplete from "/components/CaseComplete.js";
-import InfoPopover from "/components/InfoPopover.js";
-import MobileStatusHud from "/components/MobileStatusHud.js";
-import { locationThemes } from "/data/location_themes.js";
+
+import { useUiStore } from "../stores/useUiStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
+
+import NotificationContainer from "./NotificationContainer.js";
+import SidebarDashboard from "./SidebarDashboard.js";
+import CaseSetup from "./CaseSetup.js";
+import MedicalSimChatWindow from "./ChatWindow.js";
+import DisciplineSelection from "./DisciplineSelection.js";
+import SpecializationSelection from "./SpecializationSelection.js";
+import LoadingSpinner from "./LoadingSpinner.js";
+import ErrorMessage from "./ErrorMessage.js";
+import ChatInput from "./ChatInput.js";
+import Settings from "./Settings.js";
+import CaseComplete from "./CaseComplete.js";
+import InfoPopover from "./InfoPopover.js";
+import MobileStatusHud from "./MobileStatusHud.js";
+
+import { locationThemes } from "../data/location_themes.js";
 
 export default {
   name: "App",
