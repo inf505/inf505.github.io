@@ -1,6 +1,6 @@
 // frontend/components/MobileStatusHud.js
 import { computed } from "vue";
-import { useGameStore } from "/stores/useGameStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
 
 export default {
   name: "MobileStatusHud",

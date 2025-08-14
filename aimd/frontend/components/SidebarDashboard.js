@@ -1,8 +1,8 @@
 // frontend/components/SidebarDashboard.js
 import { ref, computed } from "vue";
-import { useGameStore } from "/stores/useGameStore.js";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "SidebarDashboard",

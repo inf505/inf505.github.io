@@ -1,7 +1,7 @@
 // frontend/components/NotificationContainer.js
 
 import { onMounted } from "vue";
-import { useUiStore } from "/stores/useUiStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "NotificationContainer",

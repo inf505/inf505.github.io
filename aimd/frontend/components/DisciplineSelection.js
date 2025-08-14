@@ -1,6 +1,6 @@
 // frontend/components/DisciplineSelection.js
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
 
 export default {
   name: "DisciplineSelection",

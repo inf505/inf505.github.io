@@ -1,7 +1,7 @@
 // frontend/components/InfoPopover.js
 import { ref, computed, watch, nextTick } from "vue";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
 
 export default {
   name: "InfoPopover",
