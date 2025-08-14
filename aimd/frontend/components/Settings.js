@@ -83,7 +83,9 @@ export default {
             <p class="help-text">
               <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
                 Get your API Key from Google AI Studio.
-              </a> Your key is stored locally in your browser and is never sent anywhere else except to Google's API.
+              </a>
+              Click the blue <strong>Create API key</strong> button. Then paste (Control-V) into the box above.
+              <br>Your key is stored locally in your browser and is never sent anywhere else except to Google's API.
             </p>
           </div>
 
