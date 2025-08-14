@@ -1,8 +1,8 @@
 // frontend/stores/useGameStore.js
 import { defineStore } from "pinia";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { formatNarrative } from "/utils/formatters.js";
+import { useUiStore } from "./useUiStore.js";
+import { useCharacterCreationStore } from "./useCharacterCreationStore.js";
+import { formatNarrative } from "../utils/formatters.js";
 
 const GAME_SESSION_KEY = "ai-md-saved-game";
 

@@ -1,7 +1,7 @@
 // frontend/stores/useCharacterCreationStore.js
 import { defineStore } from "pinia";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
+import { useUiStore } from "./useUiStore.js";
+import { useGameStore } from "./useGameStore.js";
 
 export const useCharacterCreationStore = defineStore("characterCreation", {
   state: () => ({
