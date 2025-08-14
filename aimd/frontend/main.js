@@ -5,7 +5,7 @@ import { createApp } from "vue";
 import { createPinia } from "pinia";
 
 // 2. Import the root component
-import App from "/components/App.js";
+import App from "./components/App.js";
 
 // 3. Create the Pinia instance
 const pinia = createPinia();
