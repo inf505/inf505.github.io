@@ -2,6 +2,7 @@
 import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useGameStore } from "./useGameStore.js";
+import { API_BASE_URL } from "../config.js";
 
 export const useCharacterCreationStore = defineStore("characterCreation", {
   state: () => ({
