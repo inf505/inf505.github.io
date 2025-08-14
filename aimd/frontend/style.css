@@ -2374,7 +2374,7 @@ footer .btn.text-lg {
   background-color: transparent; /* Remove the solid background */
   border: none; /* Remove the border */
   box-shadow: none; /* Remove the shadow */
-  background-image: url("/images/d20-graphic.png"); /* Path to your D20 image */
+  background-image: url("./images/d20-graphic.png"); /* Path to your D20 image */
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;

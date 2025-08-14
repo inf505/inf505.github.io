@@ -40,7 +40,7 @@ export default {
           :key="disciplineItem.name"
           class="discipline-selection__card"
           @click="handleSelectDiscipline(disciplineItem)"
-          :style="{ '--bg-image-url': 'url(/images/' + disciplineItem.image + ')' }"
+          :style="{ '--bg-image-url': 'url(./images/' + disciplineItem.image + ')' }"
         >
           <div class="discipline-selection__text-content">
             <div>

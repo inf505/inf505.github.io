@@ -44,7 +44,7 @@ export default {
         useCharacterCreationStore().disciplines.find(
           (d) => d.name === character.value.discipline
         ) || {};
-      const imageUrl = `/images/${disciplineData.image}`;
+      const imageUrl = `./images/${disciplineData.image}`;
       return { "--bg-image-url": `url('${imageUrl}')` };
     });
 
