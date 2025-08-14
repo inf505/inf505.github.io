@@ -1,3 +1,4 @@
 // frontend/config.js
 
-export const API_BASE_URL = "http://146.190.168.226:3000";
+export const API_BASE_URL =
+  "http://inf505.duckdns.org:3000/api/data/stats:3000";
