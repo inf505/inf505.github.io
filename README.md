@@ -1,4 +1,4 @@
-Playing around with some web games. 
+Some web games
 
 [Scoundrel](https://inf505.github.io/scoundrel/)  is an actual game that uses a normal deck of playing cards. 
 
