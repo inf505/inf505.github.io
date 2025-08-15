@@ -1,21 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My web games | inf505.github.io</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Games Collection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@500&display=swap" rel="stylesheet">
 </head>
-  <body>
-    <h1>My web games</h1>
-    <ul>
-    <li><a href="/scoundrel">Scoundrel</a> is an actual game that uses a normal deck of playing cards.</li>
-    <li><a href="/skeletonking">Skeletonking</a> is from an idea Scoundrel gave me... events, gear, monsters all coming from shuffled decks of cards.</li>
-    <li><a href="/aimd/frontend">AIMD</a> is a LLM assisted Medical Diagnosis game. Play as one of the 77 different specialities. (Some play better than others)</li>
-    </ul>
-  </body>
+<body>
+
+    <header class="site-header">
+        <h1>A Collection of Web Games</h1>
+        <p>Explore three unique worlds, from card-based dungeon crawlers to an AI-powered medical simulation.</p>
+    </header>
+
+    <main class="game-gallery">
+
+        <!-- Game 1: Scoundrel -->
+        <div class="game-card">
+            <a href="/scoundrel" class="card-image-link">
+                <img src="scoundrel.png" alt="Screenshot of Scoundrel game">
+            </a>
+            <div class="card-content">
+                <h2 class="card-title">Scoundrel</h2>
+                <div class="card-tags">
+                    <span>Card Game</span>
+                    <span>Roguelike</span>
+                    <span>Solo</span>
+                </div>
+                <p class="card-description">
+                    A classic roguelike adventure played with a standard deck of 52 cards. Outwit monsters, find weapons, and try to survive the dungeon.
+                </p>
+                <a href="/scoundrel" class="card-button">Play Now</a>
+            </div>
+        </div>
+
+        <!-- Game 2: Crypt of the Skeleton King -->
+        <div class="game-card">
+            <a href="/skeletonking" class="card-image-link">
+                <img src="skeletonking.png" alt="Screenshot of Crypt of the Skeleton King game">
+            </a>
+            <div class="card-content">
+                <h2 class="card-title">Crypt of the Skeleton King</h2>
+                <div class="card-tags">
+                    <span>Dungeon Crawler</span>
+                    <span>RPG-Lite</span>
+                    <span>Card-Based</span>
+                </div>
+                <p class="card-description">
+                    Inspired by Scoundrel, this dark fantasy crawler deepens the experience with persistent gear, unique events, and a world built from shuffled decks of cards.
+                </p>
+                <a href="/skeletonking" class="card-button">Explore the Crypt</a>
+            </div>
+        </div>
+
+        <!-- Game 3: AIMD -->
+        <div class="game-card">
+            <a href="/aimd/frontend" class="card-image-link">
+                <img src="aimd.png" alt="Screenshot of AIMD game">
+            </a>
+            <div class="card-content">
+                <h2 class="card-title">AIMD</h2>
+                <div class="card-tags">
+                    <span>Simulation</span>
+                    <span>Medical</span>
+                    <span>AI-Powered</span>
+                </div>
+                <p class="card-description">
+                    Step into the role of a medical specialist in this LLM-powered diagnostic challenge. Analyze complex patient cases and make critical decisions.
+                </p>
+                <a href="/aimd/frontend" class="card-button">Begin Assessment</a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2024 Your Name/Studio. All games designed and developed by you.</p>
+    </footer>
+
+</body>
 </html>
-
-    
-
