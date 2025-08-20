@@ -1,4 +1,5 @@
 // frontend/components/DisciplineSelection.js
+import { computed } from "vue";
 import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
 import { useGameStore } from "../stores/useGameStore.js";
 
@@ -9,13 +10,19 @@ export default {
     const gameStore = useGameStore();
 
     const handleSelectDiscipline = async (disciplineData) => {
-      // No longer need to set game state here, the store action will handle it.
       await creationStore.selectDiscipline(disciplineData);
     };
+
+    // This computed property creates a robust two-way binding with the store.
+    const characterName = computed({
+      get: () => creationStore.characterName,
+      set: (value) => creationStore.setCharacterName(value),
+    });
 
     return {
       creationStore,
       handleSelectDiscipline,
+      characterName, // Expose the computed property to the template
     };
   },
 
@@ -29,7 +36,7 @@ export default {
             id="characterNameInput" 
             class="form-input" 
             placeholder="Enter a name (e.g., Dr. Smith) or leave blank" 
-            v-model="creationStore.characterName"
+            v-model="characterName"
             @keydown.enter.prevent
         >
       </div>

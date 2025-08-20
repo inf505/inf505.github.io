@@ -1,4 +1,5 @@
 // frontend/stores/useCharacterCreationStore.js
+
 import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useGameStore } from "./useGameStore.js";
@@ -14,6 +15,11 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     characterName: "",
   }),
   actions: {
+    // ACTION ADDED: Explicitly set the character's name
+    setCharacterName(name) {
+      this.characterName = name;
+    },
+
     resetDisciplineSelection() {
       const gameStore = useGameStore();
       this.selectedDiscipline = null;
@@ -72,8 +78,6 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         const detailedDisciplineData = await response.json();
         this.specializations = detailedDisciplineData.specializations;
 
-        // ARCHITECTURAL FIX: Create the character stub *after* fetching the detailed data
-        // which contains the authoritative starting stats.
         this.finalizedCharacter = {
           name: "...",
           discipline: disciplineData.name,

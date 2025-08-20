@@ -1,4 +1,5 @@
 // frontend/components/SpecializationSelection.js
+import { computed } from "vue";
 import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
 
 export default {
@@ -12,9 +13,16 @@ export default {
       await creationStore.finalizeCharacter();
     };
 
+    // This computed property creates a robust two-way binding with the store.
+    const characterName = computed({
+      get: () => creationStore.characterName,
+      set: (value) => creationStore.setCharacterName(value),
+    });
+
     return {
       creationStore,
       handleSelectSpecialization,
+      characterName, // Expose the computed property to the template
     };
   },
 
@@ -29,7 +37,7 @@ export default {
               id="characterNameInputSpecialization" 
               class="form-input" 
               placeholder="Confirm name or leave blank" 
-              v-model="creationStore.characterName"
+              v-model="characterName"
               @keydown.enter.prevent
           >
       </div>
