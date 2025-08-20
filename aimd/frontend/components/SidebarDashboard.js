@@ -15,16 +15,14 @@ export default {
   setup(props) {
     const gameStore = useGameStore();
     const uiStore = useUiStore();
-    // NEW: Access the creation store to get the live user input
     const creationStore = useCharacterCreationStore();
     const activeTab = ref("character"); // 'character' or 'entities'
     const showCoreAttributes = ref(false);
 
     const character = computed(() => gameStore.character);
 
-    // NEW: A reactive property to display the correct name at all times.
     const displayName = computed(() => {
-      // If the user has typed a name during creation, show that.
+      // If the user has typed a name during creation, show that for immediate feedback.
       if (
         creationStore.characterName &&
         creationStore.characterName.trim() !== ""
@@ -201,7 +199,7 @@ export default {
       uiStore.showInfoPopover({
         title: item.name,
         description: descriptionFromEntries,
-        contextItem: item, // Pass the full item object
+        contextItem: item,
         target: event.currentTarget,
       });
     };
@@ -245,7 +243,6 @@ export default {
     const handleNameClick = (event) => {
       if (!isDuringGameplay.value || !character.value?.trait) return;
       uiStore.showInfoPopover({
-        // MODIFIED: Use the reactive displayName for the popover
         title: displayName.value,
         description: character.value.trait,
         contextItem: null,
@@ -269,7 +266,7 @@ export default {
       gameStore,
       uiStore,
       character,
-      displayName, // NEW: Expose to template
+      displayName,
       hasCharacter,
       hasStats,
       hasInventory,
@@ -324,7 +321,6 @@ export default {
             :title="isDuringGameplay ? character.trait : ''"
             @click="handleNameClick($event)"
           >
-            <!-- MODIFIED: Use the new reactive property -->
             {{ displayName }}
           </div>
         </div>

@@ -126,7 +126,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
           body: JSON.stringify({
             disciplineName: this.selectedDiscipline.name,
             specializationName: this.selectedSpecialization.specialization,
-            characterName: this.characterName.trim(), // <-- Send the name to the server
+            characterName: this.characterName.trim(),
           }),
         });
         if (!response.ok) {
@@ -135,8 +135,11 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         }
         const finalizedStub = await response.json();
 
-        // This logic is now simplified as the server returns the correct name.
+        // ARCHITECTURAL FIX: Merge the server's authoritative data (like the final name)
+        // with the character object built on the client, instead of replacing it.
+        // This preserves stats, inventory, and other details.
         this.finalizedCharacter = {
+          ...this.finalizedCharacter,
           ...finalizedStub,
         };
 
