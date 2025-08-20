@@ -76,8 +76,10 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         const detailedDisciplineData = await response.json();
         this.specializations = detailedDisciplineData.specializations;
 
+        // ARCHITECTURAL FIX: Immediately sync the character name from the input
+        // field into the character object upon its creation.
         this.finalizedCharacter = {
-          name: "...",
+          name: this.characterName.trim() || "...", // Use current name, fallback to '...'
           discipline: disciplineData.name,
           description: disciplineData.description,
           specialization: "",
@@ -99,8 +101,12 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
     selectSpecialization(specialization) {
       this.selectedSpecialization = specialization;
+
+      // ARCHITECTURAL FIX: Ensure the name is updated again when specialization is
+      // selected, as the user may have changed it on the specialization screen.
       this.finalizedCharacter = {
         ...this.finalizedCharacter,
+        name: this.characterName.trim() || this.finalizedCharacter.name,
         specialization: specialization.specialization,
         trait: specialization.trait,
         description: specialization.description,
@@ -135,9 +141,6 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         }
         const finalizedStub = await response.json();
 
-        // ARCHITECTURAL FIX: Merge the server's authoritative data (like the final name)
-        // with the character object built on the client, instead of replacing it.
-        // This preserves stats, inventory, and other details.
         this.finalizedCharacter = {
           ...this.finalizedCharacter,
           ...finalizedStub,
