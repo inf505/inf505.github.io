@@ -799,31 +799,40 @@ export const useGameStore = defineStore("game", {
 
     async generateCase(theme = "") {
       const uiStore = useUiStore();
+      const creationStore = useCharacterCreationStore();
       uiStore.clearError();
 
-      // --- Pre-flight check for API Key ---
       if (!this.apiKey) {
         uiStore.setError("A Gemini API Key is required to generate new cases.");
-
-        // --- NEW: Register the interrupted action before opening settings ---
-        console.log(
-          "[WORKFLOW] API key missing. Registering 'generateCase' as a pending action."
-        );
         uiStore.setPendingAction(() => this.generateCase(theme));
-
         uiStore.openSettings();
-        return; // Stop execution.
+        return;
       }
-      // --- END ---
 
-      const characterContext = this.character;
+      // --- ARCHITECTURAL FIX: Determine the authoritative character context ---
+      // This is the definitive fix. We now explicitly prioritize the newly finalized
+      // character from the creation flow over any stale character data that might
+      // exist in the session from a previous case.
+      const characterContext =
+        creationStore.finalizedCharacter || this.session?.state?.character;
 
       if (!characterContext) {
         uiStore.setError("Cannot generate case without a finalized character.");
         return;
       }
 
-      const difficultyTier = this._getDifficultyTier();
+      // --- ARCHITECTURAL FIX: Calculate difficulty based on the authoritative character ---
+      // This logic is moved from the flawed getter to be used here directly, ensuring
+      // it always uses the correct, non-stale character context.
+      const getDifficultyTierForCharacter = (char) => {
+        const reputation = char?.currency || 0;
+        if (reputation <= 100) return "Intern Level";
+        if (reputation <= 250) return "Resident Level";
+        if (reputation <= 1000) return "Attending Level";
+        return "Consultant Level";
+      };
+      const difficultyTier = getDifficultyTierForCharacter(characterContext);
+
       console.log(
         `[Difficulty] Generating case with tier: "${difficultyTier}" (Reputation: ${
           characterContext.currency || 0
@@ -835,12 +844,12 @@ export const useGameStore = defineStore("game", {
 
       try {
         const requestBody = {
-          apiKey: this.apiKey, // <-- Pass the client's key to the server.
-          characterContext: characterContext,
+          apiKey: this.apiKey,
+          characterContext: characterContext, // This now sends the correct character
           seed: theme,
           themesToExclude: theme ? [] : this.seenThemes,
           worldState: this.session?.state?.worldState || {},
-          difficultyTier: difficultyTier,
+          difficultyTier: difficultyTier, // This now sends the correct tier
           modelName: this.models.caseGeneration,
         };
 
