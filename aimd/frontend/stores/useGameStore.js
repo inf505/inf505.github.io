@@ -812,12 +812,6 @@ export const useGameStore = defineStore("game", {
       const characterContext =
         creationStore.finalizedCharacter || this.session?.state?.character;
 
-      console.log(
-        "%c[NAME_DEBUG] 4. `generateCase` called. Character context to be sent:",
-        "color: #ADD8E6",
-        JSON.parse(JSON.stringify(characterContext))
-      );
-
       if (!characterContext) {
         uiStore.setError("Cannot generate case without a finalized character.");
         return;

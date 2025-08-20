@@ -122,17 +122,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         const finalizedStubFromServer = await response.json();
 
         this.finalizedCharacter = finalizedStubFromServer;
-        console.log(
-          "%c[NAME_DEBUG] 2. Character finalized on client. `finalizedCharacter` object is now:",
-          "color: #90EE90",
-          JSON.parse(JSON.stringify(this.finalizedCharacter))
-        );
-
         gameStore.setGameState("case-selection");
-        console.log(
-          "%c[NAME_DEBUG] 3. Game state changed to 'case-selection'.",
-          "color: #90EE90"
-        );
       } catch (error) {
         uiStore.setError(error.message);
       } finally {

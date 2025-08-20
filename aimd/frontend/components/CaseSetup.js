@@ -40,16 +40,7 @@ export default {
       () => gameStore.case?.theme || "e.g., A patient with sudden weakness..."
     );
     onMounted(() => {
-      console.log("%c[NAME_DEBUG] 1. CaseSetup.vue mounted.", "color: #FFD700");
-      console.log(
-        `%c[NAME_DEBUG]    - Condition check: !gameStore.case (${!gameStore.case}), !uiStore.loadingTask (${!uiStore.loadingTask})`,
-        "color: #FFD700"
-      );
       if (!gameStore.case && !uiStore.loadingTask) {
-        console.log(
-          "%c[NAME_DEBUG]    -> Conditions met. Calling generateCase().",
-          "color: #FFD700"
-        );
         getAICase();
       }
     });
