@@ -1,5 +1,4 @@
 // frontend/stores/useCharacterCreationStore.js
-
 import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useGameStore } from "./useGameStore.js";
@@ -15,7 +14,6 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     characterName: "",
   }),
   actions: {
-    // ACTION ADDED: Explicitly set the character's name
     setCharacterName(name) {
       this.characterName = name;
     },
@@ -128,6 +126,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
           body: JSON.stringify({
             disciplineName: this.selectedDiscipline.name,
             specializationName: this.selectedSpecialization.specialization,
+            characterName: this.characterName.trim(), // <-- Send the name to the server
           }),
         });
         if (!response.ok) {
@@ -136,14 +135,9 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         }
         const finalizedStub = await response.json();
 
-        const finalName =
-          this.characterName.trim() !== ""
-            ? this.characterName.trim()
-            : finalizedStub.generatedName;
-
+        // This logic is now simplified as the server returns the correct name.
         this.finalizedCharacter = {
           ...finalizedStub,
-          name: finalName,
         };
 
         gameStore.setGameState("case-selection");
