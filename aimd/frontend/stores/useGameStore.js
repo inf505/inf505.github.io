@@ -809,21 +809,20 @@ export const useGameStore = defineStore("game", {
         return;
       }
 
-      // --- ARCHITECTURAL FIX: Determine the authoritative character context ---
-      // This is the definitive fix. We now explicitly prioritize the newly finalized
-      // character from the creation flow over any stale character data that might
-      // exist in the session from a previous case.
       const characterContext =
         creationStore.finalizedCharacter || this.session?.state?.character;
+
+      console.log(
+        "%c[NAME_DEBUG] 4. `generateCase` called. Character context to be sent:",
+        "color: #ADD8E6",
+        JSON.parse(JSON.stringify(characterContext))
+      );
 
       if (!characterContext) {
         uiStore.setError("Cannot generate case without a finalized character.");
         return;
       }
 
-      // --- ARCHITECTURAL FIX: Calculate difficulty based on the authoritative character ---
-      // This logic is moved from the flawed getter to be used here directly, ensuring
-      // it always uses the correct, non-stale character context.
       const getDifficultyTierForCharacter = (char) => {
         const reputation = char?.currency || 0;
         if (reputation <= 100) return "Intern Level";

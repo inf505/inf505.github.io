@@ -76,21 +76,8 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         const detailedDisciplineData = await response.json();
         this.specializations = detailedDisciplineData.specializations;
 
-        // ARCHITECTURAL FIX: Immediately sync the character name from the input
-        // field into the character object upon its creation.
-        this.finalizedCharacter = {
-          name: this.characterName.trim() || "...", // Use current name, fallback to '...'
-          discipline: disciplineData.name,
-          description: disciplineData.description,
-          specialization: "",
-          trait: "",
-          stats: {},
-          health: detailedDisciplineData.startingHealth,
-          maxHealth: detailedDisciplineData.startingHealth,
-          inventory: [],
-          energy: detailedDisciplineData.startingEnergy,
-          maxEnergy: detailedDisciplineData.startingEnergy,
-        };
+        // REMOVED: No longer creating an intermediate character object here.
+        this.finalizedCharacter = null;
       } catch (error) {
         uiStore.setError(error.message);
         gameStore.setGameState("discipline-selection");
@@ -100,53 +87,52 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     },
 
     selectSpecialization(specialization) {
+      // SIMPLIFIED: Only store the selection. Do not build a character object yet.
       this.selectedSpecialization = specialization;
-
-      // ARCHITECTURAL FIX: Ensure the name is updated again when specialization is
-      // selected, as the user may have changed it on the specialization screen.
-      this.finalizedCharacter = {
-        ...this.finalizedCharacter,
-        name: this.characterName.trim() || this.finalizedCharacter.name,
-        specialization: specialization.specialization,
-        trait: specialization.trait,
-        description: specialization.description,
-        stats: { ...specialization.stats },
-        inventory: specialization.items.map((item) => ({
-          ...item,
-          isNew: true,
-        })),
-      };
     },
 
     async finalizeCharacter() {
-      if (!this.selectedSpecialization) return;
+      if (!this.selectedSpecialization || !this.selectedDiscipline) return;
 
       const uiStore = useUiStore();
       const gameStore = useGameStore();
       uiStore.setLoadingTask("character-finalize");
+
+      const characterDataForServer = {
+        discipline: this.selectedDiscipline,
+        specialization: this.selectedSpecialization,
+        name: this.characterName.trim(),
+      };
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/character/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            disciplineName: this.selectedDiscipline.name,
-            specializationName: this.selectedSpecialization.specialization,
-            characterName: this.characterName.trim(),
+            disciplineName: characterDataForServer.discipline.name,
+            specializationName:
+              characterDataForServer.specialization.specialization,
+            characterName: characterDataForServer.name,
           }),
         });
         if (!response.ok) {
           const err = await response.json();
           throw new Error(err.error || "Failed to finalize character.");
         }
-        const finalizedStub = await response.json();
+        const finalizedStubFromServer = await response.json();
 
-        this.finalizedCharacter = {
-          ...this.finalizedCharacter,
-          ...finalizedStub,
-        };
+        this.finalizedCharacter = finalizedStubFromServer;
+        console.log(
+          "%c[NAME_DEBUG] 2. Character finalized on client. `finalizedCharacter` object is now:",
+          "color: #90EE90",
+          JSON.parse(JSON.stringify(this.finalizedCharacter))
+        );
 
         gameStore.setGameState("case-selection");
+        console.log(
+          "%c[NAME_DEBUG] 3. Game state changed to 'case-selection'.",
+          "color: #90EE90"
+        );
       } catch (error) {
         uiStore.setError(error.message);
       } finally {
