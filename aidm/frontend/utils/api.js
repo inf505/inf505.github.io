@@ -1,7 +1,7 @@
 // frontend/utils/api.js
-import { useConfigStore } from "/stores/useConfigStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
-import { API_BASE_URL } from "/config.js";
+import { useConfigStore } from "../stores/useConfigStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
+import { API_BASE_URL } from "../config.js";
 
 /**
  * A centralized API request handler that automatically attaches the API key
@@ -52,7 +52,7 @@ export async function makeApiRequest(url, options = {}) {
 
       // On a 404, we'll try to rehydrate the session, but only on the first attempt.
       if (response.status === 404 && attempt === 1) {
-        const { useGameStore } = await import("/stores/useGameStore.js");
+        const { useGameStore } = await import("../stores/useGameStore.js");
         const gameStore = useGameStore();
 
         if (gameStore.session?.sessionId) {

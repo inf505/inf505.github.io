@@ -25,7 +25,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
     async fetchClasses() {
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
 
       try {
