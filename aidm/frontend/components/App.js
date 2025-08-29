@@ -1,25 +1,25 @@
 // frontend/components/App.js
 
 import { computed, onMounted, ref } from "vue";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
-import { useConfigStore } from "/stores/useConfigStore.js";
-import NotificationContainer from "/components/NotificationContainer.js";
-import SidebarDashboard from "/components/SidebarDashboard.js";
-import QuestSetup from "/components/QuestSetup.js";
-import DndChatWindow from "/components/DndChatWindow.js";
-import ClassSelection from "/components/ClassSelection.js";
-import ArchetypeSelection from "/components/ArchetypeSelection.js";
-import LoadingSpinner from "/components/LoadingSpinner.js";
-import ErrorMessage from "/components/ErrorMessage.js";
-import ChatInput from "/components/ChatInput.js";
-import Settings from "/components/Settings.js";
-import QuestComplete from "/components/QuestComplete.js";
-import InfoPopover from "/components/InfoPopover.js";
-import VendorModal from "/components/VendorModal.js";
-import MobileStatusHud from "/components/MobileStatusHud.js";
-import GameOver from "/components/GameOver.js"; // <-- 1. IMPORT
+import { useUiStore } from "../stores/useUiStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
+import { useConfigStore } from "../stores/useConfigStore.js";
+import NotificationContainer from "./NotificationContainer.js";
+import SidebarDashboard from "./SidebarDashboard.js";
+import QuestSetup from "./QuestSetup.js";
+import DndChatWindow from "./DndChatWindow.js";
+import ClassSelection from "./ClassSelection.js";
+import ArchetypeSelection from "./ArchetypeSelection.js";
+import LoadingSpinner from "./LoadingSpinner.js";
+import ErrorMessage from "./ErrorMessage.js";
+import ChatInput from "./ChatInput.js";
+import Settings from "./Settings.js";
+import QuestComplete from "./QuestComplete.js";
+import InfoPopover from "./InfoPopover.js";
+import VendorModal from "./VendorModal.js";
+import MobileStatusHud from "./MobileStatusHud.js";
+import GameOver from "./GameOver.js"; // <-- 1. IMPORT
 
 export default {
   name: "App",

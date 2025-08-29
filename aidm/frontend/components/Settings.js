@@ -1,8 +1,8 @@
 // frontend/components/Settings.js
 import { ref, computed } from "vue";
-import { useGameStore } from "/stores/useGameStore.js";
-import { useConfigStore } from "/stores/useConfigStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
+import { useConfigStore } from "../stores/useConfigStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "Settings",

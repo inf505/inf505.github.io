@@ -1,8 +1,8 @@
 // frontend/components/ArchetypeSelection.js
 
 import { computed } from "vue";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "ArchetypeSelection",
