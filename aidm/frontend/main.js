@@ -3,10 +3,10 @@
 // 1. Import from Vue and Pinia using the import map
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-import { useConfigStore } from "/stores/useConfigStore.js";
+import { useConfigStore } from "./stores/useConfigStore.js";
 
 // 2. Import the root component
-import App from "/components/App.js";
+import App from "./components/App.js";
 
 // 3. Create the Pinia instance
 const pinia = createPinia();
