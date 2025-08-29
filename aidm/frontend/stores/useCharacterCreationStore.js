@@ -13,7 +13,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
   }),
   actions: {
     async resetClassSelection() {
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
 
       this.selectedClass = null;
@@ -25,7 +25,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
     async fetchClasses() {
       const uiStore = useUiStore();
-      const { useGameStore } = await import("./stores/useGameStore.js");
+      const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
 
       try {
@@ -52,7 +52,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
     async selectClass(classData) {
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
       gameStore.resetSeenThemes();
       uiStore.setLoadingTask("archetype-load");
@@ -90,7 +90,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     },
 
     async selectArchetype(archetype) {
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
 
       // --- THIS LINE WAS THE SECOND ERROR. IT IS NOW RESTORED. ---
@@ -111,7 +111,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       if (!this.selectedArchetype) return;
 
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
       uiStore.setLoadingTask("character-finalize");
 
