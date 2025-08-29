@@ -1,7 +1,7 @@
 // frontend/utils/api.js
 import { useConfigStore } from "/stores/useConfigStore.js";
 import { useUiStore } from "/stores/useUiStore.js";
-// Do NOT import useGameStore here at the top level.
+import { API_BASE_URL } from "/config.js";
 
 /**
  * A centralized API request handler that automatically attaches the API key
@@ -14,6 +14,8 @@ import { useUiStore } from "/stores/useUiStore.js";
 export async function makeApiRequest(url, options = {}) {
   const configStore = useConfigStore();
   const uiStore = useUiStore();
+
+  const fullUrl = API_BASE_URL + endpoint;
 
   if (uiStore.isRateLimited) {
     const errorMessage = `Please wait for the rate limit cooldown to finish (${uiStore.rateLimitSeconds}s).`;
@@ -40,7 +42,7 @@ export async function makeApiRequest(url, options = {}) {
   // The second attempt only happens after a successful session rehydration.
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const response = await fetch(url, { ...options, headers });
+      const response = await fetch(fullUrl, { ...options, headers });
 
       if (response.ok) {
         return response.json(); // Success on the first or second try
@@ -97,7 +99,7 @@ export async function makeApiRequest(url, options = {}) {
       }
 
       console.error(
-        `[API] Request to ${url} failed on attempt ${attempt}:`,
+        `[API] Request to ${fullUrl} failed on attempt ${attempt}:`,
         error.message
       );
       // If this was the last attempt, or not a rehydration-related error, re-throw it.

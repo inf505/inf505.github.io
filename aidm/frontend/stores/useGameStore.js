@@ -28,8 +28,8 @@ export const useGameStore = defineStore("game", {
     energyConstants: { maxEnergy: 100 },
     questCompletionMessage: null,
     pendingRollResult: null,
-    isGameOver: false, // <-- NEW
-    finalNarrative: null, // <-- NEW
+    isGameOver: false,
+    finalNarrative: null,
   }),
 
   getters: {
@@ -46,7 +46,7 @@ export const useGameStore = defineStore("game", {
           if (entry.role === "user") {
             speaker = "You";
           } else if (entry.role === "system") {
-            speaker = "System"; // Identify our chapter break
+            speaker = "System";
           } else {
             speaker = "DM";
           }
@@ -88,7 +88,6 @@ export const useGameStore = defineStore("game", {
 
     activeMerchant: (state) => state.session?.state?.activeMerchant || null,
 
-    // NEW Getter for the final narrative
     formattedFinalNarrative: (state) => {
       if (!state.finalNarrative) return "";
       return formatNarrative(state.finalNarrative);
@@ -216,7 +215,6 @@ export const useGameStore = defineStore("game", {
           }),
         });
 
-        // Sanitize suggestions before committing state
         if (
           data.newState?.currentSuggestions &&
           Array.isArray(data.newState.currentSuggestions)
@@ -231,7 +229,6 @@ export const useGameStore = defineStore("game", {
 
         this.session.state = data.newState;
 
-        // --- NEW Game Over Handling ---
         if (data.gameOver === true) {
           this.isGameOver = true;
           this.finalNarrative =
@@ -270,8 +267,8 @@ export const useGameStore = defineStore("game", {
       this.questCompletionMessage = null;
       this.isPlayerTurn = true;
       this.energyConstants = { maxEnergy: 100 };
-      this.isGameOver = false; // <-- NEW
-      this.finalNarrative = null; // <-- NEW
+      this.isGameOver = false;
+      this.finalNarrative = null;
       localStorage.removeItem(GAME_STATE_STORAGE_KEY);
       console.log("🔥 Game session and storage have been reset.");
       if (shouldReload) {
@@ -336,22 +333,25 @@ export const useGameStore = defineStore("game", {
     },
 
     async fetchGameConstants() {
+      // REFACTORED: Use the centralized API request utility
       try {
         if (!this.session?.state?.character?.maxEnergy) {
-          const energyResponse = await fetch("/api/data/energy-constants");
-          if (!energyResponse.ok) {
-            console.warn("Failed to load energy constants, using default.");
-          } else {
-            this.energyConstants = await energyResponse.json();
-            if (this.session?.state?.character) {
-              this.session.state.character.maxEnergy =
-                this.session.state.character.maxEnergy ||
-                this.energyConstants.maxEnergy;
-            }
+          this.energyConstants = await makeApiRequest(
+            "/api/data/energy-constants"
+          );
+          if (this.session?.state?.character) {
+            this.session.state.character.maxEnergy =
+              this.session.state.character.maxEnergy ||
+              this.energyConstants.maxEnergy;
           }
         }
       } catch (error) {
-        useUiStore().setError(error.message);
+        console.warn(
+          "Failed to load energy constants, using default.",
+          error.message
+        );
+        // Do not set a global UI error for this non-critical fetch.
+        // The store already has a default value.
       }
     },
 

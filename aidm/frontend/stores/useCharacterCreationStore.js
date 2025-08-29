@@ -10,7 +10,6 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     archetypes: [],
     selectedArchetype: null,
     finalizedCharacter: null,
-    // characterName: "", // <-- REMOVED
   }),
   actions: {
     async resetClassSelection() {
@@ -21,21 +20,16 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       this.archetypes = [];
       this.selectedArchetype = null;
       this.finalizedCharacter = null;
-      // this.characterName = ""; // <-- REMOVED
       gameStore.setGameState("class-selection");
     },
 
-    // ... fetchClasses and selectClass are unchanged ...
     async fetchClasses() {
       const uiStore = useUiStore();
       const { useGameStore } = await import("/stores/useGameStore.js");
       const gameStore = useGameStore();
 
       try {
-        const response = await fetch("/api/character/classes");
-        if (!response.ok) throw new Error("Failed to fetch character classes.");
-
-        const data = await response.json();
+        const data = await makeApiRequest("/api/character/classes");
 
         if (!Array.isArray(data)) {
           throw new Error("Invalid class data format from server.");
@@ -68,13 +62,9 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
       gameStore.setGameState("archetype-selection");
       try {
-        const response = await fetch(
+        const detailedClassData = await makeApiRequest(
           `/api/character/class-data/${classData.name}`
         );
-        if (!response.ok)
-          throw new Error(`Could not load archetypes for ${classData.name}.`);
-
-        const detailedClassData = await response.json();
 
         this.archetypes = detailedClassData.archetypes;
 
@@ -102,6 +92,8 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     async selectArchetype(archetype) {
       const { useGameStore } = await import("/stores/useGameStore.js");
       const gameStore = useGameStore();
+
+      // --- THIS LINE WAS THE SECOND ERROR. IT IS NOW RESTORED. ---
       gameStore.resetSeenThemes();
 
       this.selectedArchetype = archetype;
@@ -132,10 +124,9 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
           }),
         });
 
-        // MODIFIED: Remove user input logic and use the AI name authoritatively.
         this.finalizedCharacter = {
           ...finalizedStub,
-          name: finalizedStub.generatedName, // Ensure the 'name' prop is also set for consistency.
+          name: finalizedStub.generatedName,
         };
 
         gameStore.setGameState("quest-selection");
