@@ -17,7 +17,7 @@ export default {
     const localApiKey = ref(configStore.apiKey);
     const localModelName = ref(gameStore.modelName);
     const localQuestModelName = ref(gameStore.questModelName);
-    const localThemeModelName = ref(gameStore.themeModelName); // <-- ADDED
+    const localThemeModelName = ref(gameStore.themeModelName);
     const localTemperature = ref(gameStore.temperature);
     const localDiceBoost = ref(gameStore.diceBoost);
 
@@ -31,7 +31,7 @@ export default {
       gameStore.saveSettings({
         modelName: localModelName.value,
         questModelName: localQuestModelName.value,
-        themeModelName: localThemeModelName.value, // <-- ADDED
+        themeModelName: localThemeModelName.value,
         temperature: parseFloat(localTemperature.value),
         diceBoost: parseInt(localDiceBoost.value),
       });
@@ -40,11 +40,11 @@ export default {
     };
 
     return {
-      activeTab, // <-- EXPOSED
+      activeTab,
       localApiKey,
       localModelName,
       localQuestModelName,
-      localThemeModelName, // <-- ADDED
+      localThemeModelName,
       localTemperature,
       localDiceBoost,
       isDebugMode,

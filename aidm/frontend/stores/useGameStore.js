@@ -7,6 +7,13 @@ import { makeApiRequest } from "../utils/api.js";
 
 const GAME_STATE_STORAGE_KEY = "ai-dm-v2-game-state";
 
+// [REFACTORED] Namespaced keys to prevent localStorage collisions.
+const MODEL_NAME_KEY = "aidm_geminiModelName";
+const QUEST_MODEL_NAME_KEY = "aidm_geminiQuestModelName";
+const THEME_MODEL_NAME_KEY = "aidm_geminiThemeModelName";
+const TEMPERATURE_KEY = "aidm_geminiTemperature";
+const DICE_BOOST_KEY = "aidm_diceBoost";
+
 export const useGameStore = defineStore("game", {
   state: () => ({
     isStateHydrated: false,
@@ -15,13 +22,14 @@ export const useGameStore = defineStore("game", {
     seenThemes: [],
     isPlayerTurn: true,
     session: null,
-    modelName: localStorage.getItem("geminiModelName") || "gemma-3-27b-it",
+    // [REFACTORED] Use namespaced keys for loading settings.
+    modelName: localStorage.getItem(MODEL_NAME_KEY) || "gemma-3-27b-it",
     questModelName:
-      localStorage.getItem("geminiQuestModelName") || "gemini-2.5-flash",
+      localStorage.getItem(QUEST_MODEL_NAME_KEY) || "gemini-2.5-flash",
     themeModelName:
-      localStorage.getItem("geminiThemeModelName") || "gemini-2.5-flash-lite",
-    temperature: parseFloat(localStorage.getItem("geminiTemperature")) || 1.0,
-    diceBoost: parseInt(localStorage.getItem("diceBoost")) || 0,
+      localStorage.getItem(THEME_MODEL_NAME_KEY) || "gemini-2.5-flash-lite",
+    temperature: parseFloat(localStorage.getItem(TEMPERATURE_KEY)) || 1.0,
+    diceBoost: parseInt(localStorage.getItem(DICE_BOOST_KEY)) || 0,
     oneTimeBoost: 0,
     isFavorableWinds: true,
     isDebugMode: false,
@@ -286,11 +294,12 @@ export const useGameStore = defineStore("game", {
       this.temperature = newSettings.temperature;
       this.diceBoost = newSettings.diceBoost;
 
-      localStorage.setItem("geminiModelName", this.modelName);
-      localStorage.setItem("geminiQuestModelName", this.questModelName);
-      localStorage.setItem("geminiThemeModelName", this.themeModelName);
-      localStorage.setItem("geminiTemperature", this.temperature.toString());
-      localStorage.setItem("diceBoost", this.diceBoost.toString());
+      // [REFACTORED] Use namespaced keys for saving settings.
+      localStorage.setItem(MODEL_NAME_KEY, this.modelName);
+      localStorage.setItem(QUEST_MODEL_NAME_KEY, this.questModelName);
+      localStorage.setItem(THEME_MODEL_NAME_KEY, this.themeModelName);
+      localStorage.setItem(TEMPERATURE_KEY, this.temperature.toString());
+      localStorage.setItem(DICE_BOOST_KEY, this.diceBoost.toString());
 
       if (this.session?.sessionId) {
         makeApiRequest("/api/session", {

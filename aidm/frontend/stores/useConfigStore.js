@@ -1,6 +1,9 @@
 // frontend/stores/useConfigStore.js
 import { defineStore } from "pinia";
 
+// [REFACTORED] Namespaced key to prevent localStorage collisions.
+const API_KEY_STORAGE_KEY = "aidm_geminiApiKey";
+
 export const useConfigStore = defineStore("config", {
   state: () => ({
     apiKey: "",
@@ -12,7 +15,8 @@ export const useConfigStore = defineStore("config", {
 
   actions: {
     initialize() {
-      this.apiKey = localStorage.getItem("geminiApiKey") || "";
+      // [REFACTORED] Use namespaced key.
+      this.apiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || "";
       console.log(
         "[ConfigStore] Initialized. API key loaded from localStorage."
       );
@@ -22,9 +26,11 @@ export const useConfigStore = defineStore("config", {
       const trimmedKey = newKey.trim();
       this.apiKey = trimmedKey;
       if (trimmedKey) {
-        localStorage.setItem("geminiApiKey", trimmedKey);
+        // [REFACTORED] Use namespaced key.
+        localStorage.setItem(API_KEY_STORAGE_KEY, trimmedKey);
       } else {
-        localStorage.removeItem("geminiApiKey");
+        // [REFACTORED] Use namespaced key.
+        localStorage.removeItem(API_KEY_STORAGE_KEY);
       }
     },
   },
