@@ -19,7 +19,7 @@ import QuestComplete from "./QuestComplete.js";
 import InfoPopover from "./InfoPopover.js";
 import VendorModal from "./VendorModal.js";
 import MobileStatusHud from "./MobileStatusHud.js";
-import GameOver from "./GameOver.js"; // <-- 1. IMPORT
+import GameOver from "./GameOver.js";
 
 export default {
   name: "App",
@@ -38,7 +38,7 @@ export default {
     InfoPopover,
     VendorModal,
     MobileStatusHud,
-    GameOver, // <-- 2. REGISTER
+    GameOver,
   },
 
   setup() {
@@ -50,15 +50,15 @@ export default {
     const isSidebarCollapsed = ref(false);
 
     const BIOME_BACKGROUNDS = {
-      city: "/images/biomes/city-t.png",
-      forest: "/images/biomes/forest-t3.png",
-      mountain: "/images/biomes/mountain-t.png",
-      swamp: "/images/biomes/swamp-t2.png",
-      underdark: "/images/biomes/underdark-t.png",
-      coastal: "/images/biomes/coastal-t2.png",
-      desert: "/images/biomes/desert-t.png",
-      wasteland: "/images/biomes/wasteland-t.png",
-      plains: "/images/biomes/plains-t.png",
+      city: "../images/biomes/city-t.png",
+      forest: "../images/biomes/forest-t3.png",
+      mountain: "../images/biomes/mountain-t.png",
+      swamp: "../images/biomes/swamp-t2.png",
+      underdark: "../images/biomes/underdark-t.png",
+      coastal: "../images/biomes/coastal-t2.png",
+      desert: "../images/biomes/desert-t.png",
+      wasteland: "../images/biomes/wasteland-t.png",
+      plains: "../images/biomes/plains-t.png",
     };
 
     const showSettingsOverlay = computed(() => uiStore.isSettingsModalOpen);
