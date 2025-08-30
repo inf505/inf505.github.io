@@ -2497,7 +2497,7 @@ footer .btn.text-lg {
   border: none;
   box-shadow: none;
   /* Dummy background image properties */
-  background-image: url("/images/d20-graphic1.png"); /* Replace with your actual image path */
+  background-image: url("images/d20-graphic1.png"); /* Replace with your actual image path */
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
