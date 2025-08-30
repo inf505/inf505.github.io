@@ -2,12 +2,13 @@
 import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useCharacterCreationStore } from "./useCharacterCreationStore.js";
+import { useConfigStore } from "./useConfigStore.js"; // <-- [NEW] Import config store
 import { formatNarrative } from "../utils/formatters.js";
 import { makeApiRequest } from "../utils/api.js";
 
 const GAME_STATE_STORAGE_KEY = "ai-dm-v2-game-state";
 
-// [REFACTORED] Namespaced keys to prevent localStorage collisions.
+// Namespaced keys to prevent localStorage collisions.
 const MODEL_NAME_KEY = "aidm_geminiModelName";
 const QUEST_MODEL_NAME_KEY = "aidm_geminiQuestModelName";
 const THEME_MODEL_NAME_KEY = "aidm_geminiThemeModelName";
@@ -22,7 +23,6 @@ export const useGameStore = defineStore("game", {
     seenThemes: [],
     isPlayerTurn: true,
     session: null,
-    // [REFACTORED] Use namespaced keys for loading settings.
     modelName: localStorage.getItem(MODEL_NAME_KEY) || "gemma-3-27b-it",
     questModelName:
       localStorage.getItem(QUEST_MODEL_NAME_KEY) || "gemini-2.5-flash",
@@ -41,6 +41,7 @@ export const useGameStore = defineStore("game", {
   }),
 
   getters: {
+    // ... (no changes to getters)
     formattedChatHistory: (state) => {
       if (!state.session?.state?.history) return [];
       return state.session.state.history
@@ -103,6 +104,7 @@ export const useGameStore = defineStore("game", {
   },
 
   actions: {
+    // ... (no changes to initializeDebugMode)
     initializeDebugMode() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("debug") === "1") {
@@ -114,11 +116,22 @@ export const useGameStore = defineStore("game", {
       }
     },
 
+    // [REFACTORED] Hydration is now configuration-aware.
     async hydrateState() {
-      const uiStore = useUiStore();
+      const configStore = useConfigStore();
       const creationStore = useCharacterCreationStore();
 
       this.initializeDebugMode();
+
+      // Guard Clause: If there's no API key, don't attempt any API calls.
+      // Just complete hydration and let the UI prompt for a key.
+      if (!configStore.hasApiKey) {
+        this.isStateHydrated = true;
+        console.log(
+          "[HYDRATION] No API key found. Deferring initialization until key is provided."
+        );
+        return;
+      }
 
       const savedStateJSON = localStorage.getItem(GAME_STATE_STORAGE_KEY);
 
@@ -144,9 +157,8 @@ export const useGameStore = defineStore("game", {
           await creationStore.fetchClasses();
         }
       } else {
-        uiStore.setLoadingTask("initializing");
-        await creationStore.fetchClasses();
-        uiStore.clearLoadingTask();
+        // If there's no saved state, but we have a key, fetch initial data.
+        await this.initializeNewGame();
       }
 
       this.$subscribe((mutation, state) => {
@@ -161,6 +173,21 @@ export const useGameStore = defineStore("game", {
       console.log("State hydration complete. Opening the application gate.");
     },
 
+    // [NEW] This action encapsulates the initial data fetch for a new user.
+    async initializeNewGame() {
+      const uiStore = useUiStore();
+      const creationStore = useCharacterCreationStore();
+      uiStore.setLoadingTask("initializing");
+      try {
+        await creationStore.fetchClasses();
+      } catch (error) {
+        uiStore.setError(error.message);
+      } finally {
+        uiStore.clearLoadingTask();
+      }
+    },
+
+    // ... (no changes to remaining actions)
     async rehydrateSession() {
       if (!this.session?.sessionId || !this.session?.state) {
         console.error(
@@ -294,7 +321,6 @@ export const useGameStore = defineStore("game", {
       this.temperature = newSettings.temperature;
       this.diceBoost = newSettings.diceBoost;
 
-      // [REFACTORED] Use namespaced keys for saving settings.
       localStorage.setItem(MODEL_NAME_KEY, this.modelName);
       localStorage.setItem(QUEST_MODEL_NAME_KEY, this.questModelName);
       localStorage.setItem(THEME_MODEL_NAME_KEY, this.themeModelName);
@@ -359,8 +385,6 @@ export const useGameStore = defineStore("game", {
           "Failed to load energy constants, using default.",
           error.message
         );
-        // Do not set a global UI error for this non-critical fetch.
-        // The store already has a default value.
       }
     },
 

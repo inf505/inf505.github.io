@@ -64,7 +64,7 @@ export default {
     const showSettingsOverlay = computed(() => uiStore.isSettingsModalOpen);
     const isLoading = computed(() => uiStore.loadingTask === "game-turn");
     const isDebugMode = computed(() => gameStore.isDebugMode);
-    const isGameOver = computed(() => gameStore.isGameOver); // <-- 3. CREATE COMPUTED
+    const isGameOver = computed(() => gameStore.isGameOver);
 
     const suggestions = computed(
       () => gameStore.session?.state?.currentSuggestions || []
@@ -153,8 +153,18 @@ export default {
     const openSettings = () => uiStore.openSettingsModal();
     const closeSettings = () => uiStore.closeSettingsModal();
 
+    // [REFACTORED] Handle deferred initialization after first API key entry.
     const handleSettingsSave = () => {
       closeSettings();
+      // If the game is still in the 'initializing' state, it means the
+      // initial data load was skipped. Now that a key is present,
+      // trigger the data load.
+      if (gameStore.gameState === "initializing") {
+        console.log(
+          "[App.js] API key provided for the first time. Triggering initial game data load."
+        );
+        gameStore.initializeNewGame();
+      }
     };
 
     const toggleSidebar = () => {
@@ -205,7 +215,7 @@ export default {
       mainContentStyle,
       showVendorModal,
       showQuestGoal,
-      isGameOver, // <-- 4. EXPOSE TO TEMPLATE
+      isGameOver,
     };
   },
 
@@ -227,7 +237,6 @@ export default {
 
     <transition name="fade" mode="out-in">
       
-      <!-- 5. ADD TEMPLATE LOGIC -->
       <GameOver v-if="isGameOver" key="game-over" />
 
       <div v-else-if="['class-selection', 'archetype-selection', 'quest-selection'].includes(gameStore.gameState)" class="creation-container" key="creation">
