@@ -83,7 +83,7 @@ body {
 
 .card-image-link img {
     width: 100%;
-    height: 600px;
+    height: 650px;
     object-fit: cover;
     object-position: top; /* Adjust as needed for best framing */
     display: block;
