@@ -2,7 +2,7 @@
 import { defineStore } from "pinia";
 import { useUiStore } from "./useUiStore.js";
 import { useCharacterCreationStore } from "./useCharacterCreationStore.js";
-import { useConfigStore } from "./useConfigStore.js"; // <-- [NEW] Import config store
+import { useConfigStore } from "./useConfigStore.js";
 import { formatNarrative } from "../utils/formatters.js";
 import { makeApiRequest } from "../utils/api.js";
 
@@ -104,7 +104,6 @@ export const useGameStore = defineStore("game", {
   },
 
   actions: {
-    // ... (no changes to initializeDebugMode)
     initializeDebugMode() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("debug") === "1") {
@@ -116,19 +115,18 @@ export const useGameStore = defineStore("game", {
       }
     },
 
-    // [REFACTORED] Hydration is now configuration-aware.
     async hydrateState() {
       const configStore = useConfigStore();
       const creationStore = useCharacterCreationStore();
 
       this.initializeDebugMode();
 
-      // Guard Clause: If there's no API key, don't attempt any API calls.
-      // Just complete hydration and let the UI prompt for a key.
       if (!configStore.hasApiKey) {
+        // [REFACTORED] Set a valid, non-blocking UI state.
+        this.gameState = "class-selection";
         this.isStateHydrated = true;
         console.log(
-          "[HYDRATION] No API key found. Deferring initialization until key is provided."
+          "[HYDRATION] No API key. Set state to 'class-selection' to show creation UI behind settings modal."
         );
         return;
       }
@@ -157,7 +155,6 @@ export const useGameStore = defineStore("game", {
           await creationStore.fetchClasses();
         }
       } else {
-        // If there's no saved state, but we have a key, fetch initial data.
         await this.initializeNewGame();
       }
 
@@ -173,7 +170,6 @@ export const useGameStore = defineStore("game", {
       console.log("State hydration complete. Opening the application gate.");
     },
 
-    // [NEW] This action encapsulates the initial data fetch for a new user.
     async initializeNewGame() {
       const uiStore = useUiStore();
       const creationStore = useCharacterCreationStore();
@@ -186,8 +182,7 @@ export const useGameStore = defineStore("game", {
         uiStore.clearLoadingTask();
       }
     },
-
-    // ... (no changes to remaining actions)
+    // ... (rest of the actions are unchanged)
     async rehydrateSession() {
       if (!this.session?.sessionId || !this.session?.state) {
         console.error(
@@ -368,7 +363,6 @@ export const useGameStore = defineStore("game", {
     },
 
     async fetchGameConstants() {
-      // REFACTORED: Use the centralized API request utility
       try {
         if (!this.session?.state?.character?.maxEnergy) {
           this.energyConstants = await makeApiRequest(
