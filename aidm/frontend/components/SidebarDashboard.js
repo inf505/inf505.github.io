@@ -43,7 +43,7 @@ export default {
 
     const characterSheetStyle = computed(() => {
       if (!character.value?.class) return {};
-      const imageUrl = `/images/${character.value.class.toLowerCase()}.png`;
+      const imageUrl = `images/${character.value.class.toLowerCase()}.png`;
       return { "--bg-image-url": `url('${imageUrl}')` };
     });
 
