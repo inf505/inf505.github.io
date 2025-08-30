@@ -50,15 +50,15 @@ export default {
     const isSidebarCollapsed = ref(false);
 
     const BIOME_BACKGROUNDS = {
-      city: "../images/biomes/city-t.png",
-      forest: "../images/biomes/forest-t3.png",
-      mountain: "../images/biomes/mountain-t.png",
-      swamp: "../images/biomes/swamp-t2.png",
-      underdark: "../images/biomes/underdark-t.png",
-      coastal: "../images/biomes/coastal-t2.png",
-      desert: "../images/biomes/desert-t.png",
-      wasteland: "../images/biomes/wasteland-t.png",
-      plains: "../images/biomes/plains-t.png",
+      city: "images/biomes/city-t.png",
+      forest: "images/biomes/forest-t3.png",
+      mountain: "images/biomes/mountain-t.png",
+      swamp: "images/biomes/swamp-t2.png",
+      underdark: "images/biomes/underdark-t.png",
+      coastal: "images/biomes/coastal-t2.png",
+      desert: "images/biomes/desert-t.png",
+      wasteland: "images/biomes/wasteland-t.png",
+      plains: "images/biomes/plains-t.png",
     };
 
     const showSettingsOverlay = computed(() => uiStore.isSettingsModalOpen);
