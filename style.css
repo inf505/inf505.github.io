@@ -53,11 +53,13 @@ body {
 /* --- Game Gallery --- */
 .game-gallery {
     width: 100%;
-    max-width: 1200px;
+    /* [REFACTORED] Increased max-width to comfortably fit four cards */
+    max-width: 1600px; 
     margin: 0 auto;
     padding: 2rem 1.5rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    /* [REFACTORED] Set a specific 4-column layout for desktops */
+    grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
     flex-grow: 1;
 }
@@ -152,8 +154,19 @@ body {
 }
 
 /* --- Responsive Adjustments --- */
+/* [NEW] Add a breakpoint for tablets and smaller desktops */
+@media (max-width: 1400px) {
+    .game-gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .site-header h1 {
         font-size: 2rem;
+    }
+    /* [NEW] Make the gallery a single column on mobile */
+    .game-gallery {
+        grid-template-columns: 1fr;
     }
 }
