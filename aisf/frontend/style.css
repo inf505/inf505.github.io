@@ -1,3 +1,4 @@
+/* frontend/style.css */
 /* ==========================================================================
     Starforged AI Stylesheet - v1.0
     Author: Principal Engineer & AI Architect
@@ -65,6 +66,16 @@
   --spacing-small: 10px;
   --spacing-medium: 15px;
   --spacing-large: 20px;
+
+  /* --- Z-Index Layers (NEW) --- */
+  /* Establishes a global, predictable stacking order for all UI elements. */
+  --z-index-base: 1; /* Default layer for positioned elements */
+  --z-index-content-overlay: 2; /* For overlays within content, like the dice roll */
+  --z-index-sidebar-overlay: 998; /* Backdrop for mobile sidebar */
+  --z-index-sidebar: 999; /* The sidebar itself */
+  --z-index-modals: 1000; /* All modal backdrops and containers */
+  --z-index-popover: 1500; /* Popovers, which must appear above modals */
+  --z-index-notifications: 2000; /* Notifications, which must appear on top of everything */
 }
 
 *,
@@ -388,7 +399,7 @@ a:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-index-modals);
   color: var(--color-text-primary);
   font-size: 1.2rem;
   backdrop-filter: blur(4px);
@@ -404,7 +415,7 @@ a:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-index-modals);
 }
 
 .settings-modal {
@@ -462,7 +473,7 @@ a:hover {
   position: fixed;
   top: var(--spacing-unit);
   right: var(--spacing-unit);
-  z-index: 2000;
+  z-index: var(--z-index-notifications);
   width: 320px;
   display: flex;
   flex-direction: column;
@@ -529,7 +540,9 @@ a:hover {
   position: fixed;
   top: var(--spacing-small);
   left: var(--spacing-small);
-  z-index: 1001;
+  z-index: calc(
+    var(--z-index-sidebar) + 1
+  ); /* Must be above the sidebar it controls */
   background-color: var(--color-surface);
   border-radius: var(--border-radius);
   border: 1px solid var(--color-border);
@@ -544,7 +557,7 @@ a:hover {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
-  z-index: 999;
+  z-index: var(--z-index-sidebar-overlay);
   backdrop-filter: blur(2px);
 }
 
@@ -1416,6 +1429,9 @@ a:hover {
   display: flex;
   align-items: center;
   padding: 8px 0;
+  /* BUG FIX: Establish a stacking context for the indicator */
+  position: relative;
+  z-index: var(--z-index-base);
 }
 
 .typing-indicator span {
@@ -2118,7 +2134,7 @@ a:hover {
     height: 100vh;
     width: var(--mobile-sidebar-width);
     max-width: 85%;
-    z-index: 1000;
+    z-index: var(--z-index-sidebar);
     border-right: 1px solid var(--color-border);
     border-top: none;
     max-height: none;
@@ -2185,7 +2201,7 @@ a:hover {
    ========================================================================== */
 .info-popover {
   position: fixed;
-  z-index: 1500;
+  z-index: var(--z-index-popover);
   width: 280px;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -2254,7 +2270,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: var(--z-index-modals);
   padding: 1rem;
   backdrop-filter: blur(4px);
 }
@@ -2647,7 +2663,9 @@ footer .btn.text-lg {
   right: 1px;
   width: 32px;
   height: 32px;
-  z-index: 5;
+  z-index: var(
+    --z-index-content-overlay
+  ); /* BUG FIX: Ensure dice is above other message content */
 }
 .quest-background::before {
   content: "Background:";
@@ -2755,7 +2773,7 @@ footer .btn.text-lg {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-index-modals);
   animation: fadeInGameOver 0.7s ease-out forwards;
 }
 
