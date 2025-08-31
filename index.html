@@ -1,101 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Games Collection</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <header class="site-header">
-        <h1>A Collection of Web Games</h1>
-        <p>Explore four unique worlds, from card-based dungeon crawlers to advanced AI-powered simulations.</p>
+      <h1>A Collection of Web Games</h1>
+      <p>
+        Explore four unique worlds, from card-based dungeon crawlers to advanced
+        AI-powered simulations.
+      </p>
     </header>
 
     <main class="game-gallery">
-
-        <!-- Game 1: Scoundrel -->
-        <div class="game-card">
+      <section class="game-category">
+        <h2 class="category-title">Card Games</h2>
+        <div class="category-cards">
+          <!-- Game 1: Scoundrel -->
+          <div class="game-card">
             <a href="/scoundrel" class="card-image-link">
-                <img src="scoundrel.png" alt="Scoundrel card game">
+              <img src="scoundrel.png" alt="Scoundrel card game" />
             </a>
             <div class="card-content">
-                <h2 class="card-title">Scoundrel</h2>
-                <div class="card-tags">
-                    <span>Card Game</span>
-                    <span>Roguelike</span>
-                    <span>Solo</span>
-                </div>
-                <p class="card-description">
-                    A classic roguelike adventure played with a standard deck of 52 cards. Outwit monsters, find weapons, and try to survive the dungeon.
-                </p>
-                <a href="/scoundrel" class="card-button">Play Now</a>
+              <h2 class="card-title">Scoundrel</h2>
+              <div class="card-tags">
+                <span>Card Game</span>
+                <span>Roguelike</span>
+                <span>Solo</span>
+              </div>
+              <p class="card-description">
+                A classic roguelike adventure played with a standard deck of 52
+                cards. Outwit monsters, find weapons, and try to survive the
+                dungeon.
+              </p>
+              <a href="/scoundrel" class="card-button">Play Now</a>
             </div>
-        </div>
+          </div>
 
-        <!-- Game 2: Crypt of the Skeleton King -->
-        <div class="game-card">
+          <!-- Game 2: Crypt of the Skeleton King -->
+          <div class="game-card">
             <a href="/skeletonking" class="card-image-link">
-                <img src="skeletonking.png" alt="Crypt of the Skeleton King card game">
+              <img
+                src="skeletonking.png"
+                alt="Crypt of the Skeleton King card game"
+              />
             </a>
             <div class="card-content">
-                <h2 class="card-title">Skeleton King</h2>
-                <div class="card-tags">
-                    <span>Dungeon Crawler</span>
-                    <span>RPG-Lite</span>
-                    <span>Card-Based</span>
-                </div>
-                <p class="card-description">
-                    Inspired by Scoundrel, this dark fantasy crawler deepens the experience with persistent gear, unique events, and a world built from shuffled decks of cards.
-                </p>
-                <a href="/skeletonking" class="card-button">Explore the Crypt</a>
+              <h2 class="card-title">Skeleton King</h2>
+              <div class="card-tags">
+                <span>Dungeon Crawler</span>
+                <span>RPG-Lite</span>
+                <span>Card-Based</span>
+              </div>
+              <p class="card-description">
+                Inspired by Scoundrel, this dark fantasy crawler deepens the
+                experience with persistent gear, unique events, and a world
+                built from shuffled decks of cards.
+              </p>
+              <a href="/skeletonking" class="card-button">Explore the Crypt</a>
             </div>
+          </div>
         </div>
+      </section>
 
-        <!-- Game 3: AI Dungeon Master (AIDM) -->
-        <div class="game-card">
+      <section class="game-category">
+        <h2 class="category-title">AI Games</h2>
+        <div class="category-cards">
+          <!-- Game 3: AI Dungeon Master (AIDM) -->
+          <div class="game-card">
             <a href="/aidm/frontend/" class="card-image-link">
-                <img src="aidm.png" alt="AI Dungeon Master (AIDM) role-playing game">
+              <img
+                src="aidm.png"
+                alt="AI Dungeon Master (AIDM) role-playing game"
+              />
             </a>
             <div class="card-content">
-                <h2 class="card-title">AI Dungeon Master</h2>
-                <div class="card-tags">
-                    <span>RPG</span>
-                    <span>Storyteller</span>
-                    <span>AI-Powered</span>
-                </div>
-                <p class="card-description">
-                    Forge a unique hero and embark on an unscripted adventure. A state-of-the-art AI acts as your personal Dungeon Master, creating a dynamic story that reacts to your every choice.
-                </p>
-                <a href="/aidm/frontend/" class="card-button">Start Your Adventure</a>
+              <h2 class="card-title">AI Dungeon Master</h2>
+              <div class="card-tags">
+                <span>RPG</span>
+                <span>Storyteller</span>
+                <span>AI-Powered</span>
+              </div>
+              <p class="card-description">
+                Forge a unique hero and embark on an unscripted adventure. A
+                state-of-the-art AI acts as your personal Dungeon Master,
+                creating a dynamic story that reacts to your every choice.
+              </p>
+              <a href="/aidm/frontend/" class="card-button"
+                >Start Your Adventure</a
+              >
             </div>
-        </div>
+          </div>
 
-        <!-- Game 4: AIMD -->
-        <div class="game-card">
+          <!-- Game 4: AIMD -->
+          <div class="game-card">
             <a href="/aimd/frontend/" class="card-image-link">
-                <img src="aimd.png" alt="AIMD (Medical Diagnostician) AI game">
+              <img src="aimd.png" alt="AIMD (Medical Diagnostician) AI game" />
             </a>
             <div class="card-content">
-                <h2 class="card-title">AI Medical Diagnostician</h2>
-                <div class="card-tags">
-                    <span>Simulation</span>
-                    <span>Medical</span>
-                    <span>AI-Powered</span>
-                </div>
-                <p class="card-description">
-                    Step into the role of a medical specialist in this LLM-powered diagnostic challenge. Analyze complex patient cases and make critical decisions.
-                </p>
-                <a href="/aimd/frontend/" class="card-button">Begin Assessment</a>
+              <h2 class="card-title">AI Medical Diagnostician</h2>
+              <div class="card-tags">
+                <span>Simulation</span>
+                <span>Medical</span>
+                <span>AI-Powered</span>
+              </div>
+              <p class="card-description">
+                Step into the role of a medical specialist in this LLM-powered
+                diagnostic challenge. Analyze complex patient cases and make
+                critical decisions.
+              </p>
+              <a href="/aimd/frontend/" class="card-button">Begin Assessment</a>
             </div>
+          </div>
         </div>
-
+      </section>
     </main>
 
     <footer class="site-footer">
-        <p>Gemini may have made this for me.</p>
+      <p>Gemini may have made this for me.</p>
     </footer>
-
-</body>
+  </body>
 </html>
