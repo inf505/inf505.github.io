@@ -1,0 +1,9 @@
+# .gitignore
+
+# Dependencies
+/node_modules
+
+# Secrets and environment-specific files
+.env
+
+/backend
