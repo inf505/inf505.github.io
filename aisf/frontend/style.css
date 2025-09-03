@@ -1,4 +1,3 @@
-/* frontend/style.css */
 /* ==========================================================================
     Starforged AI Stylesheet - v1.0
     Author: Principal Engineer & AI Architect
@@ -66,16 +65,6 @@
   --spacing-small: 10px;
   --spacing-medium: 15px;
   --spacing-large: 20px;
-
-  /* --- Z-Index Layers (NEW) --- */
-  /* Establishes a global, predictable stacking order for all UI elements. */
-  --z-index-base: 1; /* Default layer for positioned elements */
-  --z-index-content-overlay: 2; /* For overlays within content, like the dice roll */
-  --z-index-sidebar-overlay: 998; /* Backdrop for mobile sidebar */
-  --z-index-sidebar: 999; /* The sidebar itself */
-  --z-index-modals: 1000; /* All modal backdrops and containers */
-  --z-index-popover: 1500; /* Popovers, which must appear above modals */
-  --z-index-notifications: 2000; /* Notifications, which must appear on top of everything */
 }
 
 *,
@@ -399,7 +388,7 @@ a:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: var(--z-index-modals);
+  z-index: 1000;
   color: var(--color-text-primary);
   font-size: 1.2rem;
   backdrop-filter: blur(4px);
@@ -415,7 +404,7 @@ a:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: var(--z-index-modals);
+  z-index: 1000;
 }
 
 .settings-modal {
@@ -473,7 +462,7 @@ a:hover {
   position: fixed;
   top: var(--spacing-unit);
   right: var(--spacing-unit);
-  z-index: var(--z-index-notifications);
+  z-index: 2000;
   width: 320px;
   display: flex;
   flex-direction: column;
@@ -540,9 +529,7 @@ a:hover {
   position: fixed;
   top: var(--spacing-small);
   left: var(--spacing-small);
-  z-index: calc(
-    var(--z-index-sidebar) + 1
-  ); /* Must be above the sidebar it controls */
+  z-index: 1001;
   background-color: var(--color-surface);
   border-radius: var(--border-radius);
   border: 1px solid var(--color-border);
@@ -557,7 +544,7 @@ a:hover {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
-  z-index: var(--z-index-sidebar-overlay);
+  z-index: 999;
   backdrop-filter: blur(2px);
 }
 
@@ -1429,9 +1416,6 @@ a:hover {
   display: flex;
   align-items: center;
   padding: 8px 0;
-  /* BUG FIX: Establish a stacking context for the indicator */
-  position: relative;
-  z-index: var(--z-index-base);
 }
 
 .typing-indicator span {
@@ -2134,7 +2118,7 @@ a:hover {
     height: 100vh;
     width: var(--mobile-sidebar-width);
     max-width: 85%;
-    z-index: var(--z-index-sidebar);
+    z-index: 1000;
     border-right: 1px solid var(--color-border);
     border-top: none;
     max-height: none;
@@ -2201,7 +2185,7 @@ a:hover {
    ========================================================================== */
 .info-popover {
   position: fixed;
-  z-index: var(--z-index-popover);
+  z-index: 1500;
   width: 280px;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -2270,7 +2254,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-index-modals);
+  z-index: 50;
   padding: 1rem;
   backdrop-filter: blur(4px);
 }
@@ -2505,8 +2489,8 @@ footer .btn.text-lg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 90px;
-  height: 90px;
+  width: 100%; /* Use 100% to fill its parent */
+  height: 100%; /* Use 100% to fill its parent */
   background-color: transparent;
   border: none;
   box-shadow: none;
@@ -2515,7 +2499,7 @@ footer .btn.text-lg {
   background-position: center;
   background-repeat: no-repeat;
   color: #fff;
-  font-size: 28px;
+  font-size: 16px; /* Smaller font for the smaller container */
   font-weight: bold;
   perspective: 400px;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -2657,16 +2641,6 @@ footer .btn.text-lg {
   padding-right: 20px;
 }
 
-.message-d20-roll {
-  position: absolute;
-  top: 15px;
-  right: 1px;
-  width: 32px;
-  height: 32px;
-  z-index: var(
-    --z-index-content-overlay
-  ); /* BUG FIX: Ensure dice is above other message content */
-}
 .quest-background::before {
   content: "Background:";
   display: block;
@@ -2773,7 +2747,7 @@ footer .btn.text-lg {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-index-modals);
+  z-index: 1000;
   animation: fadeInGameOver 0.7s ease-out forwards;
 }
 
@@ -2821,4 +2795,29 @@ footer .btn.text-lg {
 .game-over__button:hover {
   background-color: var(--color-accent-hover);
   transform: translateY(-2px);
+}
+/* --- Turn Resolution Area (NEW) --- */
+
+.turn-resolution-area {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-small) 0;
+  min-height: 110px;
+}
+
+/* Override the base .d20-container style to make it large in the new area */
+.turn-resolution-area .d20-container {
+  width: 90px;
+  height: 90px;
+  font-size: 28px; /* Restore original font size for prominence */
+}
+.message-d20-roll {
+  position: absolute;
+  top: 15px;
+  right: 1px;
+  width: 32px;
+  height: 32px;
+  z-index: var(--z-index-content-overlay);
 }
