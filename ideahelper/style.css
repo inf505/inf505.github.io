@@ -1,0 +1,481 @@
+/* style.css */
+:root {
+  --primary-bg: #1a1a1a;
+  --secondary-bg: #2a2a2a;
+  --card-bg: #333;
+  --text-color: #f0f0f0;
+  --primary-accent: #42b883;
+  --border-color: #555;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+/* --- General Layout & Typography --- */
+body {
+  font-family: var(--font-family);
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  margin: 0;
+  padding: 1rem;
+  font-size: 16px;
+}
+
+#app {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  color: var(--primary-accent);
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+  /* Adjust margin to account for button width */
+  margin-left: 50px;
+}
+
+main {
+  background-color: var(--secondary-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+/* --- State Indicators --- */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-state {
+  color: #ff6b6b;
+}
+
+/* --- Wizard Container & Header --- */
+.wizard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.wizard-container h2 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.btn-shuffle {
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--primary-accent);
+  border: 1px solid var(--primary-accent);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-shuffle:hover {
+  background-color: var(--primary-accent);
+  color: var(--primary-bg);
+}
+
+/* --- Reusable Card Grid & Card Styles --- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: var(--primary-accent);
+  outline: none;
+}
+
+.card-title {
+  color: var(--primary-accent);
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.card-description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #ccc;
+  flex-grow: 1;
+}
+
+/* --- Specific Card Variant Styles --- */
+.card-details {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #ccc;
+  flex-grow: 1;
+}
+
+.card-details p {
+  margin: 0 0 0.5rem 0;
+}
+
+.card-details p:last-child {
+  margin-bottom: 0;
+}
+
+.card-description.main-description {
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.card-footer {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.card-tag {
+  display: inline-block;
+  background-color: var(--primary-accent);
+  color: var(--primary-bg);
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* --- Final Outline & Structure Selector Styles --- */
+.outline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.outline-container textarea {
+  width: 100%;
+  height: 50vh;
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.outline-container button {
+  cursor: pointer;
+  background-color: var(--primary-accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  align-self: center;
+  transition: background-color 0.2s ease;
+}
+
+.outline-container button:hover {
+  background-color: #36a071;
+}
+
+.structure-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.structure-option {
+  display: flex;
+  align-items: center;
+  background-color: var(--card-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.structure-option:hover {
+  background-color: #444;
+}
+
+.structure-option.selected {
+  border-color: var(--primary-accent);
+  background-color: #3a4a42;
+}
+
+.structure-option input[type="radio"] {
+  /* Hide the default radio button */
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.structure-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.structure-info strong {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.structure-info span {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin-top: 0.2rem;
+}
+/* --- New Settings Button Style --- */
+.btn-settings {
+  cursor: pointer;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  /* Use padding and aspect ratio for better sizing */
+  font-size: 1.2rem;
+  width: 50px;
+  height: 42px; /* Maintain height consistency */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-settings:hover {
+  background-color: #444;
+  border-color: var(--primary-accent);
+}
+
+/* --- New Modal Styles --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-panel {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 {
+  margin: 0;
+  color: var(--primary-accent);
+}
+.btn-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.btn-close:hover {
+  color: var(--text-color);
+}
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.form-group label {
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+}
+.form-group small {
+  color: #aaa;
+  font-size: 0.8rem;
+}
+.modal-footer {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-color);
+}
+.btn-primary {
+  cursor: pointer;
+  background-color: var(--primary-accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+.btn-primary:hover {
+  background-color: #36a071;
+}
+/* --- Workspace Layout & Panel Styles --- */
+.workspace-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header header"
+    "editor result"
+    "actions actions";
+  gap: 1.5rem;
+}
+
+.wizard-header {
+  grid-area: header;
+}
+
+.prompt-editor-panel {
+  grid-area: editor;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.generation-result-panel {
+  grid-area: result;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workspace-container h3 {
+  margin: 0;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+
+.prompt-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 40vh;
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.prompt-textarea:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+}
+
+.generation-result {
+  background-color: var(--primary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.outline-content {
+  white-space: pre-wrap; /* Crucial for preserving formatting */
+  line-height: 1.6;
+  font-family: "Georgia", serif;
+  text-align: left;
+  justify-content: flex-start;
+  flex-grow: 1;
+}
+
+.workspace-actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-generate {
+  font-size: 1.1rem;
+  padding: 0.8rem 2rem;
+}
+
+/* --- Cleanup old outline styles --- */
+.outline-container {
+  /* This class is no longer used, but we'll remove its specific rules
+     to avoid conflicts in case it's reintroduced. */
+  gap: 0;
+}
+.outline-actions {
+  /* This class name was reused, so we remove the old rule */
+  margin-top: 0;
+}

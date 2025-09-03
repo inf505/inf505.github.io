@@ -1,0 +1,212 @@
+[
+  {
+    "archetype": "The Chosen One",
+    "motivation": "To fulfill a destiny they never asked for.",
+    "flaw": "A crippling fear of failure."
+  },
+  {
+    "archetype": "The Mentor",
+    "motivation": "To guide the next generation.",
+    "flaw": "Haunted by past failures."
+  },
+  {
+    "archetype": "The Lovable Rogue",
+    "motivation": "To live life on their own terms.",
+    "flaw": "Chronic selfishness."
+  },
+  {
+    "archetype": "The Rebel",
+    "motivation": "To overturn a corrupt system.",
+    "flaw": "Recklessness and impulsivity."
+  },
+  {
+    "archetype": "The Investigator",
+    "motivation": "To uncover a hidden truth.",
+    "flaw": "Obsessive to the point of self-destruction."
+  },
+  {
+    "archetype": "The Guardian",
+    "motivation": "To protect the innocent.",
+    "flaw": "Overly protective and controlling."
+  },
+  {
+    "archetype": "The Artist",
+    "motivation": "To create a masterpiece.",
+    "flaw": "Crippling self-doubt."
+  },
+  {
+    "archetype": "The King/Queen",
+    "motivation": "To maintain order and prosperity.",
+    "flaw": "Aloofness and out of touch with their people."
+  },
+  {
+    "archetype": "The Wanderer",
+    "motivation": "To find a place to belong.",
+    "flaw": "Inability to form lasting connections."
+  },
+  {
+    "archetype": "The Jester",
+    "motivation": "To expose hypocrisy through humor.",
+    "flaw": "Never takes anything seriously."
+  },
+  {
+    "archetype": "The Healer",
+    "motivation": "To mend what is broken.",
+    "flaw": "Neglects their own well-being."
+  },
+  {
+    "archetype": "The Explorer",
+    "motivation": "To venture into the unknown.",
+    "flaw": "Never satisfied with the present."
+  },
+  {
+    "archetype": "The Everyman",
+    "motivation": "To live a simple, peaceful life.",
+    "flaw": "Reluctance to get involved."
+  },
+  {
+    "archetype": "The Seductress/Seducer",
+    "motivation": "To gain power through attraction.",
+    "flaw": "Incapable of genuine intimacy."
+  },
+  {
+    "archetype": "The Innocent",
+    "motivation": "To see the good in everything.",
+    "flaw": "Extreme naivete."
+  },
+  {
+    "archetype": "The Anti-Hero",
+    "motivation": "To achieve a noble goal through questionable means.",
+    "flaw": "Cynicism and moral ambiguity."
+  },
+  {
+    "archetype": "The Disillusioned Whistleblower",
+    "motivation": "To expose a devastating truth.",
+    "flaw": "Paranoia and distrust."
+  },
+  {
+    "archetype": "The Retired Warrior",
+    "motivation": "To escape a violent past.",
+    "flaw": "Prone to violent outbursts."
+  },
+  {
+    "archetype": "The Ambitious Apprentice",
+    "motivation": "To surpass their master.",
+    "flaw": "Ruthless and willing to betray others."
+  },
+  {
+    "archetype": "The Last of Their Kind",
+    "motivation": "To preserve a dying culture or species.",
+    "flaw": "Crippling loneliness and survivor's guilt."
+  },
+  {
+    "archetype": "The Cursed One",
+    "motivation": "To break a terrible affliction.",
+    "flaw": "Resentment and bitterness."
+  },
+  {
+    "archetype": "The Master Thief",
+    "motivation": "To pull off the ultimate heist.",
+    "flaw": "Overconfidence and arrogance."
+  },
+  {
+    "archetype": "The Peacemaker",
+    "motivation": "To broker peace between warring factions.",
+    "flaw": "Avoids conflict at any cost."
+  },
+  {
+    "archetype": "The Seeker of Vengeance",
+    "motivation": "To avenge a past wrong.",
+    "flaw": "Blinded by hatred."
+  },
+  {
+    "archetype": "The Reluctant Prophet",
+    "motivation": "To deliver a message they don't want to believe in.",
+    "flaw": "Crippling anxiety."
+  },
+  {
+    "archetype": "The Loyal Companion",
+    "motivation": "To support their friend no matter what.",
+    "flaw": "Blind loyalty, even when it's wrong."
+  },
+  {
+    "archetype": "The Idealist",
+    "motivation": "To create a perfect world.",
+    "flaw": "Unwillingness to compromise."
+  },
+  {
+    "archetype": "The Survivor",
+    "motivation": "To endure against all odds.",
+    "flaw": "Emotional detachment."
+  },
+  {
+    "archetype": "The Mad Scientist",
+    "motivation": "To push the boundaries of knowledge.",
+    "flaw": "Disregard for ethical consequences."
+  },
+  {
+    "archetype": "The Fallen Hero",
+    "motivation": "To redeem their past mistakes.",
+    "flaw": "Overwhelming guilt and self-loathing."
+  },
+  {
+    "archetype": "The Schemer",
+    "motivation": "To manipulate events from behind the scenes.",
+    "flaw": "Underestimates the emotions of others."
+  },
+  {
+    "archetype": "The Unlikely Leader",
+    "motivation": "To rise to an occasion they feel unprepared for.",
+    "flaw": "Imposter syndrome."
+  },
+  {
+    "archetype": "The Dreamer",
+    "motivation": "To escape a mundane reality.",
+    "flaw": "Impractical and disconnected from reality."
+  },
+  {
+    "archetype": "The Zealot",
+    "motivation": "To serve a cause with absolute devotion.",
+    "flaw": "Fanaticism and intolerance."
+  },
+  {
+    "archetype": "The Outcast",
+    "motivation": "To find acceptance.",
+    "flaw": "Social anxiety and fear of rejection."
+  },
+  {
+    "archetype": "The Con Artist",
+    "motivation": "To exploit the greed of others.",
+    "flaw": "Inability to trust anyone."
+  },
+  {
+    "archetype": "The Pacifist",
+    "motivation": "To resolve conflict without violence.",
+    "flaw": "Unprepared for the brutality of others."
+  },
+  {
+    "archetype": "The Bureaucrat",
+    "motivation": "To uphold the rules and regulations.",
+    "flaw": "Inflexibility and lack of empathy."
+  },
+  {
+    "archetype": "The Gambler",
+    "motivation": "To risk it all for the ultimate prize.",
+    "flaw": "Addictive and self-destructive tendencies."
+  },
+  {
+    "archetype": "The Grieving Parent",
+    "motivation": "To find meaning after a devastating loss.",
+    "flaw": "Reckless disregard for their own safety."
+  },
+  {
+    "archetype": "The Historian",
+    "motivation": "To preserve and understand the past.",
+    "flaw": "Lives in the past, neglecting the present."
+  },
+  {
+    "archetype": "The Child Prodigy",
+    "motivation": "To live up to overwhelming expectations.",
+    "flaw": "Emotional immaturity."
+  }
+]

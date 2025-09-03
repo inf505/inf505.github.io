@@ -1,0 +1,28 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Idea Helper</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+          "pinia": "https://unpkg.com/pinia@3/dist/pinia.esm-browser.js",
+          "@vue/devtools-api": "https://unpkg.com/@vue/devtools-api@6.5.1/lib/esm/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- The entire application will be rendered here by Vue -->
+    </div>
+
+    <!-- Load main application script as an ES Module -->
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

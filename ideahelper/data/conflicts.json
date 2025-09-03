@@ -1,0 +1,170 @@
+[
+  {
+    "type": "Person vs. Person",
+    "description": "A determined detective relentlessly pursues a brilliant art thief across continents."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "Two ambitious co-workers vie for the same promotion, resorting to sabotage and corporate espionage."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "A young queen must defend her throne from her treacherous uncle who believes he is the rightful heir."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "Estranged siblings are forced to reunite and confront their painful past after inheriting their family's dilapidated estate."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "A seasoned trial lawyer faces off against a cunning prosecutor in a high-stakes murder case."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "A pacifist martial artist is challenged to a duel by a rival warrior seeking to prove his own superiority."
+  },
+  {
+    "type": "Person vs. Person",
+    "description": "Lovers from two warring families must choose between their loyalties and their forbidden romance."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "An accomplished surgeon develops a tremor in her hands and must overcome her identity crisis."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "A soldier returning from war struggles with PTSD, alienating the family he fought to protect."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "A recovering addict must confront their personal demons and temptations to stay sober for their child."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "An aspiring musician with crippling stage fright must perform a solo to win a life-changing scholarship."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "A reformed criminal is haunted by guilt and must decide whether to confess to a past crime to save an innocent person."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "A devoutly religious person questions their faith after a personal tragedy shatters their worldview."
+  },
+  {
+    "type": "Person vs. Self",
+    "description": "An ambitious politician must choose between their moral principles and a compromising deal that will ensure their election."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A lone astronaut is stranded on Mars and must use their ingenuity to survive the hostile environment."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A group of climbers is caught in a sudden, violent blizzard while attempting to summit Mount Everest."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A small coastal town is threatened by a monstrous hurricane, forcing residents to fight for their survival."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A family on a safari trip must survive in the wilderness after their vehicle breaks down in a remote game reserve."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A scientist studying a remote rainforest contracts a mysterious, rapidly evolving virus."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A young boy is shipwrecked on a deserted island and must learn to live off the land."
+  },
+  {
+    "type": "Person vs. Nature",
+    "description": "A ship captain becomes obsessed with hunting a massive white whale that destroyed his previous vessel."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "A young woman in a dystopian regime is chosen for a televised death match and becomes a symbol of rebellion."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "An idealist politician attempts to expose widespread corruption but finds the entire system is allied against them."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "A person from a rigid caste system dares to pursue a relationship with someone from a higher, forbidden class."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "A brilliant scientist makes a groundbreaking discovery that contradicts the core beliefs of her repressive society."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "An artist creates a controversial piece of work that challenges the government's strict censorship laws."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "A whistleblower leaks classified documents that reveal their government is illegally spying on its citizens."
+  },
+  {
+    "type": "Person vs. Society",
+    "description": "A teenager in a conformist town fights for the right to express their individuality through their unique style and ideas."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A computer programmer discovers the artificial intelligence she created has become sentient and has sinister plans for humanity."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A family's new smart home system begins to psychologically terrorize them, turning their sanctuary into a prison."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A detective in a futuristic city must hunt a rogue android that is indistinguishable from a human."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A gamer becomes trapped in a fully immersive virtual reality world and must beat the game to escape."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "The last human survivors must battle an army of sentient machines determined to eradicate them."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A spaceship's crew must regain control from their malfunctioning onboard computer during a critical mission."
+  },
+  {
+    "type": "Person vs. Technology",
+    "description": "A Luddite artisan struggles to keep his traditional craft alive in a world increasingly dominated by automation."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A family moves into a new house only to discover it is haunted by a malevolent spirit."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A young wizard must confront a dark lord who is prophesied to be his vanquisher."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A skeptic paranormal investigator's beliefs are shattered when they come face-to-face with a real demonic entity."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A character makes a deal with a demon for fame and fortune but must find a way to break the pact before their soul is claimed."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A town is besieged by vampires, and a small group of residents must fight to survive the night."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "An ancient curse is unleashed from a newly discovered tomb, and an archaeologist must stop it before it consumes the world."
+  },
+  {
+    "type": "Person vs. Supernatural",
+    "description": "A chosen hero is destined to battle ancient gods who are awakening to reclaim the world."
+  }
+]

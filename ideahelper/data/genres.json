@@ -1,0 +1,202 @@
+[
+  {
+    "name": "Science Fiction",
+    "description": "Explores speculative concepts, advanced technology, and the impact of science on society, often set in the future or alternate realities."
+  },
+  {
+    "name": "Fantasy",
+    "description": "Features magical elements, mythical creatures, and often takes place in imagined worlds, focusing on epic journeys, good versus evil, or personal quests."
+  },
+  {
+    "name": "Mystery",
+    "description": "Centers on a crime or puzzle that a protagonist must solve through investigation, clues, and deduction, typically leading to a surprising reveal."
+  },
+  {
+    "name": "Thriller",
+    "description": "A fast-paced genre designed to elicit excitement, suspense, and anticipation in the reader, often involving high stakes, a menacing antagonist, and a race against time."
+  },
+  {
+    "name": "Romance",
+    "description": "Focuses on the development of a romantic relationship between two or more characters, culminating in an emotionally satisfying and optimistic ending."
+  },
+  {
+    "name": "Horror",
+    "description": "Aims to evoke fear, dread, and revulsion in the reader through supernatural elements, psychological terror, or graphic violence, exploring the darker aspects of human nature or the unknown."
+  },
+  {
+    "name": "Historical Fiction",
+    "description": "Set in a recognizable past period, it weaves fictional characters and plots into historically accurate settings and events, bringing a bygone era to life."
+  },
+  {
+    "name": "Young Adult",
+    "description": "Features protagonists typically between the ages of 12 and 18, addressing themes of identity, coming-of-age, friendship, and first love."
+  },
+  {
+    "name": "Dystopian",
+    "description": "Explores a fictional society that is undesirable or frightening, often as a critique of current societal trends or political systems, highlighting oppression and rebellion."
+  },
+  {
+    "name": "Action/Adventure",
+    "description": "Revolves around a protagonist who embarks on a perilous journey or quest, facing danger, challenges, and exciting events in dynamic settings."
+  },
+  {
+    "name": "Western",
+    "description": "Set in the American Old West, this genre often features cowboys, outlaws, and lawmen, exploring themes of frontier life, justice, and survival."
+  },
+  {
+    "name": "Crime Fiction",
+    "description": "Focuses on criminal acts and their consequences, often from the perspective of law enforcement, criminals, or victims, exploring the motivations and impact of illegal activities."
+  },
+  {
+    "name": "Literary Fiction",
+    "description": "Characterized by its focus on style, character development, and thematic depth, often exploring complex human experiences and societal issues."
+  },
+  {
+    "name": "Gothic Fiction",
+    "description": "Blends elements of horror and romance, often set in dark, atmospheric locations, emphasizing suspense, mystery, and the supernatural."
+  },
+  {
+    "name": "Comedy",
+    "description": "Aims to amuse and entertain through humorous situations, characters, and dialogue, often leading to a lighthearted or joyful resolution."
+  },
+  {
+    "name": "Urban Fantasy",
+    "description": "Blends fantastical elements with a contemporary, real-world urban setting, often featuring magic, mythical creatures, or supernatural beings hidden among humanity."
+  },
+  {
+    "name": "Paranormal Romance",
+    "description": "Centers on romantic relationships between human characters and supernatural beings, such as vampires, werewolves, or ghosts, often incorporating elements of fantasy or horror."
+  },
+  {
+    "name": "Steampunk",
+    "description": "Features anachronistic technology inspired by 19th-century industrial steam-powered machinery within a speculative, often Victorian-era, setting."
+  },
+  {
+    "name": "Cyberpunk",
+    "description": "Set in a dystopian future, focusing on advanced technology like artificial intelligence and cybernetics, alongside societal breakdown and corporate control."
+  },
+  {
+    "name": "Magical Realism",
+    "description": "Weaves fantastical or mythical elements into a realistic setting, treating the magical as mundane and seamlessly integrating it into everyday life."
+  },
+  {
+    "name": "Contemporary Romance",
+    "description": "Explores romantic relationships set in the present day, focusing on modern challenges, emotional intimacy, and realistic character development."
+  },
+  {
+    "name": "Cozy Mystery",
+    "description": "Features an amateur detective solving a crime, usually without graphic violence or explicit content, often set in a small, close-knit community."
+  },
+  {
+    "name": "Epic Fantasy",
+    "description": "Involves large-scale conflicts, intricate world-building, and numerous characters often engaged in a struggle for the fate of an entire world or kingdom."
+  },
+  {
+    "name": "Space Opera",
+    "description": "Features adventurous, often melodramatic, stories set in outer space, typically involving advanced technology, futuristic warfare, and exploration of distant galaxies."
+  },
+  {
+    "name": "Speculative Fiction",
+    "description": "An umbrella term for genres that explore worlds different from our own, encompassing science fiction, fantasy, horror, and their subgenres."
+  },
+  {
+    "name": "Legal Thriller",
+    "description": "Focuses on legal proceedings, lawyers, and courtroom drama, often involving high-stakes cases, corruption, and moral dilemmas."
+  },
+  {
+    "name": "Medical Thriller",
+    "description": "Centers on medical professionals, diseases, biohazards, and ethical issues within the healthcare industry, often with a suspenseful plot."
+  },
+  {
+    "name": "Psychological Thriller",
+    "description": "Emphasizes the unstable or delusional psychological states of its characters, creating suspense through internal conflict and unreliable narration rather than external action."
+  },
+  {
+    "name": "Espionage Thriller",
+    "description": "Involves spies, secret agents, and international intrigue, often featuring political conspiracies, covert operations, and double-crosses."
+  },
+  {
+    "name": "Dark Fantasy",
+    "description": "Blends fantasy elements with tones and themes from horror, often featuring morally ambiguous characters and a bleaker, more cynical world view."
+  },
+  {
+    "name": "Historical Romance",
+    "description": "Combines elements of romance with a historical setting, often focusing on courtly love, societal expectations, and the challenges of relationships in a specific past era."
+  },
+  {
+    "name": "Military Science Fiction",
+    "description": "Focuses on warfare in outer space or on other planets, often exploring military tactics, technology, and the experiences of soldiers in a futuristic context."
+  },
+  {
+    "name": "Post-Apocalyptic",
+    "description": "Set after a catastrophic event that has devastated civilization, exploring survival, rebuilding, and the human condition in a harsh new world."
+  },
+  {
+    "name": "Biographical Fiction",
+    "description": "A fictionalized account of a real person's life, blending factual events with imaginative storytelling to explore their experiences and impact."
+  },
+  {
+    "name": "Satire",
+    "description": "Uses humor, irony, exaggeration, or ridicule to expose and criticize people's stupidity or vices, particularly in the context of contemporary politics and other topical issues."
+  },
+  {
+    "name": "Social Science Fiction",
+    "description": "Explores sociological concepts, human behavior, and societal structures within a futuristic or alternate reality setting, often posing 'what if' questions about humanity."
+  },
+  {
+    "name": "Techno-Thriller",
+    "description": "Combines the suspense of a thriller with detailed technological explanations and cutting-edge science, often involving advanced weaponry, computer hacking, or scientific breakthroughs."
+  },
+  {
+    "name": "New Adult",
+    "description": "Features protagonists typically aged 18-25, focusing on challenges of early adulthood, college life, career beginnings, and more mature romantic relationships."
+  },
+  {
+    "name": "Gothic Romance",
+    "description": "A subgenre of Gothic fiction that emphasizes romantic elements within a dark, mysterious, and often supernatural setting, with strong emotional intensity."
+  },
+  {
+    "name": "Hard Science Fiction",
+    "description": "Emphasizes scientific accuracy and plausibility, with technological and scientific details central to the plot and world-building."
+  },
+  {
+    "name": "Soft Science Fiction",
+    "description": "Focuses on the social sciences (psychology, sociology, anthropology) rather than the natural sciences, exploring human nature and society in speculative settings."
+  },
+  {
+    "name": "Slipstream",
+    "description": "A genre that blurs the boundaries between traditional genres, often incorporating elements of the fantastic or surreal into otherwise realistic narratives."
+  },
+  {
+    "name": "Bildungsroman",
+    "description": "A coming-of-age story that tracks the moral and psychological growth of the protagonist from youth to adulthood, often through a series of formative experiences."
+  },
+  {
+    "name": "Pulp Fiction",
+    "description": "Refers to mass-produced, inexpensive fiction popular in the early 20th century, characterized by sensational plots, vivid characters, and often genre-specific tropes."
+  },
+  {
+    "name": "Fantastique",
+    "description": "A genre where the supernatural intrudes into a realistic world, creating doubt in the characters and reader about whether the events are real or imagined."
+  },
+  {
+    "name": "Paranormal",
+    "description": "Focuses on phenomena that are outside the scope of normal scientific understanding, such as ghosts, psychics, or other supernatural occurrences."
+  },
+  {
+    "name": "Mythic Fiction",
+    "description": "Draws heavily on mythology, folklore, and religious stories, reinterpreting or expanding upon these ancient narratives in new settings or with modern characters."
+  },
+  {
+    "name": "Urban Fiction (Street Lit)",
+    "description": "A contemporary genre often set in an urban environment, focusing on issues of poverty, crime, and social struggles, typically from the perspective of marginalized communities."
+  },
+  {
+    "name": "Noir",
+    "description": "A subgenre of crime fiction characterized by a cynical, morally ambiguous protagonist, bleak settings, and a sense of inevitable doom or fatalism."
+  },
+  {
+    "name": "Magical Girl",
+    "description": "Features young female protagonists who possess magical abilities, typically used to fight evil or solve problems, often with a focus on friendship and personal growth."
+  }
+]

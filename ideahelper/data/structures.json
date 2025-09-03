@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Three-Act Structure",
+    "description": "The classic, balanced model for storytelling, focusing on a clear Setup, Confrontation, and Resolution.",
+    "prompt_text": "**Act I: The Setup**\n- Introduction to the protagonist in their ordinary world (reflecting the setting).\n- The inciting incident that introduces the central conflict and forces the protagonist to act.\n- The protagonist's initial goal is established.\n\n**Act II: The Confrontation**\n- The protagonist attempts to resolve the conflict but faces escalating obstacles.\n- A \"Midpoint\" where the stakes are raised dramatically.\n- The protagonist's flaw is tested and becomes a significant hindrance.\n- A \"Lowest Point\" where the protagonist seemingly fails, and all hope appears lost.\n\n**Act III: The Resolution**\n- The Climax: The protagonist confronts the central conflict head-on, using what they've learned.\n- The Resolution: The immediate aftermath of the climax.\n- The New Normal: Show the protagonist's transformation and the new state of their world."
+  },
+  {
+    "name": "The Hero's Journey",
+    "description": "A detailed 12-step archetypal template for stories of transformation, adventure, and homecoming.",
+    "prompt_text": "**I. The Ordinary World:** Introduce the hero in their normal life.\n**II. The Call to Adventure:** An event or discovery disrupts the hero's life and presents a challenge.\n**III. Refusal of the Call:** The hero is hesitant or fearful to accept the challenge.\n**IV. Meeting the Mentor:** The hero encounters a mentor figure who provides guidance or a tool.\n**V. Crossing the Threshold:** The hero commits to the journey and enters the unknown world.\n**VI. Tests, Allies, and Enemies:** The hero faces challenges, makes friends, and identifies foes.\n**VII. Approach to the Inmost Cave:** The hero nears the center of the conflict or the story's greatest danger.\n**VIII. The Ordeal:** The hero faces their greatest fear or a death-and-rebirth moment. The low point.\n**IX. The Reward:** The hero survives and seizes a treasure, knowledge, or power.\n**X. The Road Back:** The hero begins the journey back to their ordinary world, but the consequences of the ordeal are not yet over.\n**XI. The Resurrection:** A final, climactic test where the hero must use everything they have learned.\n**XII. Return with the Elixir:** The hero returns home transformed, bringing something to benefit their community."
+  },
+  {
+    "name": "Fichtean Curve",
+    "description": "A structure that starts in the middle of the action, focusing on rising tension that builds to a single, explosive climax.",
+    "prompt_text": "**1. Rising Action:** The story begins amidst escalating tension and a series of crises that directly follow one another. Introduce the protagonist and their situation through action, not exposition.\n\n**2. Climax:** The story builds to a single, decisive peak. This is the central turning point where the main conflict is confronted and resolved.\n\n**3. Falling Action:** Briefly explore the immediate consequences and aftermath of the climax.\n\n**4. Resolution:** A short conclusion showing the new state of equilibrium for the protagonist."
+  }
+]
