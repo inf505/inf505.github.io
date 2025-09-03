@@ -386,16 +386,18 @@ export default {
             <span v-else>N/A</span>
           </div>
         </div>
-        
+
         <div v-if="hasShip" class="form-group">
-          <label>Ship</label>
-          <div class="static-value">
-            <span class="is-clickable-info" @click="showShipInfo">
-              {{ ship.name }}
-            </span>
+          <label>Ship ({{ ship.class }})</label>
+          <div 
+            class="static-value is-clickable-info"
+            :title="ship.description"
+            @click="showShipInfo"
+          >
+            {{ ship.name }}
           </div>
         </div>
-        
+
         <template v-if="!isDuringGameplay">
             <div v-if="character.description && character.archetype" class="form-group">
                 <label>Archetype Dossier</label>

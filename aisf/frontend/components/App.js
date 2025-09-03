@@ -19,7 +19,8 @@ import QuestComplete from "/components/QuestComplete.js";
 import InfoPopover from "/components/InfoPopover.js";
 import VendorModal from "/components/VendorModal.js";
 import MobileStatusHud from "/components/MobileStatusHud.js";
-import GameOver from "/components/GameOver.js"; // <-- 1. IMPORT
+import GameOver from "/components/GameOver.js";
+import D20Roll from "/components/D20Roll.js";
 
 export default {
   name: "App",
@@ -38,7 +39,8 @@ export default {
     InfoPopover,
     VendorModal,
     MobileStatusHud,
-    GameOver, // <-- 2. REGISTER
+    GameOver,
+    D20Roll,
   },
 
   setup() {
@@ -203,7 +205,8 @@ export default {
       mainContentStyle,
       showVendorModal,
       showQuestGoal,
-      isGameOver, // <-- 4. EXPOSE TO TEMPLATE
+      isGameOver,
+      pendingRollResult: computed(() => gameStore.pendingRollResult),
     };
   },
 
@@ -303,6 +306,15 @@ export default {
             <!-- Otherwise, show the active gameplay interface -->
             <template v-else>
               <ChatWindow />
+
+              <!-- NEW: Turn Resolution Area -->
+              <div v-if="isLoading && pendingRollResult" class="turn-resolution-area">
+                <D20Roll 
+                  :result="pendingRollResult" 
+                  :is-current-roll="true"
+                  :animate="true" 
+                />
+              </div>
 
               <div class="chat-controls-container">
                 <div v-if="suggestions.length > 0 && gameStore.isPlayerTurn && gameStore.gameState === 'adventuring'" class="suggestion-chips-in-chat">

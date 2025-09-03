@@ -51,13 +51,7 @@ export default {
         <div v-if="isAiThinking" class="message-container">
           <div class="message message-gm is-thinking">
             
-            <div v-if="gameStore.pendingRollResult" class="message-d20-roll">
-              <D20Roll 
-                :result="gameStore.pendingRollResult" 
-                :is-current-roll="true"
-                :animate="true" 
-              />
-            </div>
+            <!-- The D20Roll component has been removed from here. -->
 
             <span class="speaker">Narrator</span>
             <div class="typing-indicator">
