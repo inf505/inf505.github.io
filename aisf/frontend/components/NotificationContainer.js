@@ -1,6 +1,6 @@
 // frontend/components/NotificationContainer.js
 
-import { useUiStore } from "/stores/useUiStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "NotificationContainer",

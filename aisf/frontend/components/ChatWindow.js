@@ -1,8 +1,8 @@
 // frontend/components/ChatWindow.js
 import { ref, computed, watch, nextTick } from "vue";
-import { useGameStore } from "/stores/useGameStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
-import D20Roll from "/components/D20Roll.js";
+import { useGameStore } from "../stores/useGameStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
+import D20Roll from "./D20Roll.js";
 
 export default {
   name: "ChatWindow",

@@ -1,7 +1,7 @@
 // frontend/stores/useCharacterCreationStore.js
 import { defineStore } from "pinia";
-import { useUiStore } from "/stores/useUiStore.js";
-import { makeApiRequest } from "/utils/api.js";
+import { useUiStore } from "./stores/useUiStore.js";
+import { makeApiRequest } from "../utils/api.js";
 
 export const useCharacterCreationStore = defineStore("characterCreation", {
   state: () => ({
@@ -14,7 +14,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
   }),
   actions: {
     async resetClassSelection() {
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
 
       this.selectedClass = null;
@@ -28,7 +28,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     // ... fetchClasses and selectClass are unchanged ...
     async fetchClasses() {
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
 
       try {
@@ -58,7 +58,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
 
     async selectClass(classData) {
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
       gameStore.resetSeenThemes();
       uiStore.setLoadingTask("archetype-load");
@@ -100,7 +100,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     },
 
     async selectArchetype(archetype) {
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
       gameStore.resetSeenThemes();
 
@@ -119,7 +119,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       if (!this.selectedArchetype) return;
 
       const uiStore = useUiStore();
-      const { useGameStore } = await import("/stores/useGameStore.js");
+      const { useGameStore } = await import("./stores/useGameStore.js");
       const gameStore = useGameStore();
       uiStore.setLoadingTask("character-finalize");
 

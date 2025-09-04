@@ -1,6 +1,6 @@
 // frontend/components/GameOver.js
 import { computed } from "vue";
-import { useGameStore } from "/stores/useGameStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
 
 const GameOver = {
   setup() {

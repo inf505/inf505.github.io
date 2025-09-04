@@ -1,7 +1,7 @@
 // frontend/components/ArchetypeSelection.js
 
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 
 export default {
   name: "ArchetypeSelection",

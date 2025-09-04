@@ -1,9 +1,9 @@
 // frontend/stores/useGameStore.js
 import { defineStore } from "pinia";
-import { useUiStore } from "/stores/useUiStore.js";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { formatNarrative } from "/utils/formatters.js";
-import { makeApiRequest } from "/utils/api.js";
+import { useUiStore } from "./stores/useUiStore.js";
+import { useCharacterCreationStore } from "./stores/useCharacterCreationStore.js";
+import { formatNarrative } from "../utils/formatters.js";
+import { makeApiRequest } from "../utils/api.js";
 
 const GAME_STATE_STORAGE_KEY = "ai-dm-v2-game-state";
 

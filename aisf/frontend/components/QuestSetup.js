@@ -1,10 +1,10 @@
 // frontend/components/QuestSetup.js
 
 import { ref, computed, onMounted } from "vue";
-import { useCharacterCreationStore } from "/stores/useCharacterCreationStore.js";
-import { useGameStore } from "/stores/useGameStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
-import LoadingSpinner from "/components/LoadingSpinner.js";
+import { useCharacterCreationStore } from "../stores/useCharacterCreationStore.js";
+import { useGameStore } from "../stores/useGameStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
+import LoadingSpinner from "./LoadingSpinner.js";
 
 export default {
   name: "QuestSetup",
