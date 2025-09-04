@@ -1,6 +1,7 @@
 // frontend/utils/api.js
-import { useConfigStore } from "/stores/useConfigStore.js";
-import { useUiStore } from "/stores/useUiStore.js";
+import { API_BASE_URL } from "/config.js";
+import { useConfigStore } from "../stores/useConfigStore.js";
+import { useUiStore } from "../stores/useUiStore.js";
 // Do NOT import useGameStore here at the top level.
 
 /**
@@ -14,6 +15,7 @@ import { useUiStore } from "/stores/useUiStore.js";
 export async function makeApiRequest(url, options = {}) {
   const configStore = useConfigStore();
   const uiStore = useUiStore();
+  const fullUrl = API_BASE_URL + url;
 
   if (uiStore.isRateLimited) {
     const errorMessage = `Please wait for the rate limit cooldown to finish (${uiStore.rateLimitSeconds}s).`;
@@ -40,7 +42,7 @@ export async function makeApiRequest(url, options = {}) {
   // The second attempt only happens after a successful session rehydration.
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const response = await fetch(url, { ...options, headers });
+      const response = await fetch(fullUrl, { ...options, headers });
 
       if (response.ok) {
         return response.json(); // Success on the first or second try
@@ -50,7 +52,7 @@ export async function makeApiRequest(url, options = {}) {
 
       // On a 404, we'll try to rehydrate the session, but only on the first attempt.
       if (response.status === 404 && attempt === 1) {
-        const { useGameStore } = await import("/stores/useGameStore.js");
+        const { useGameStore } = await import("../stores/useGameStore.js");
         const gameStore = useGameStore();
 
         if (gameStore.session?.sessionId) {
