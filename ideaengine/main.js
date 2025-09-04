@@ -64,7 +64,7 @@ const App = {
   template: `
     <settings-modal></settings-modal>
     <header>
-      <h1>Idea Helper</h1>
+      <h1>Idea Engine</h1>
       <button @click="store.toggleSettingsModal()" class="btn-settings" aria-label="Settings">⚙️</button>
     </header>
     <main>
