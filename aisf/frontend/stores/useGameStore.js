@@ -200,19 +200,15 @@ export const useGameStore = defineStore("game", {
           debugBoost: this.isDebugMode ? this.diceBoost + this.oneTimeBoost : 0,
         };
 
-        // 1. Call pre-generate and wait for the response.
         const preGenData = await makeApiRequest("/api/pre-generate", {
           method: "POST",
           body: JSON.stringify(preGenPayload),
         });
 
-        // 2. Set the pending roll result FIRST.
         this.pendingRollResult = preGenData.roll;
 
-        // 3. THEN, set the loading task to trigger the UI update.
         uiStore.setLoadingTask("game-turn");
 
-        // 4. Now, proceed with the main generate call.
         const data = await makeApiRequest("/api/generate", {
           method: "POST",
           body: JSON.stringify({
@@ -221,7 +217,17 @@ export const useGameStore = defineStore("game", {
           }),
         });
 
-        // Sanitize suggestions before committing state
+        if (data.events && data.events.includes("SHIP_UPGRADED")) {
+          const newShip = data.newState.character.ship;
+          if (newShip && newShip.name && newShip.class) {
+            uiStore.addNotification({
+              message: `SHIP UPGRADED! You have acquired the ${newShip.class}-class "${newShip.name}".`,
+              type: "success",
+              duration: 8000,
+            });
+          }
+        }
+
         if (
           data.newState?.currentSuggestions &&
           Array.isArray(data.newState.currentSuggestions)

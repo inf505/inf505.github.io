@@ -176,6 +176,15 @@ a:hover {
   overflow-y: auto;
 }
 
+/* --- Shared Content Background --- */
+.main-content,
+.creation-content {
+  background-image: url("/images/starfield-bg.jpg");
+  background-color: var(--color-background-dark); /* Fallback color */
+  background-repeat: repeat;
+  background-position: center center;
+}
+
 .creation-content {
   padding: calc(var(--spacing-unit) * 3);
   display: flex;

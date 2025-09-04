@@ -51,20 +51,10 @@ export default {
 
     const isSidebarCollapsed = ref(false);
 
-    const BIOME_BACKGROUNDS = {
-      "orbital station": "images/biomes/orbital-station.png",
-      "derelict ship": "images/biomes/derelict-ship.png",
-      "asteroid mine": "images/biomes/asteroid-mine.png",
-      "urban sprawl": "images/biomes/urban-sprawl.png",
-      "alien jungle": "images/biomes/alien-jungle.png",
-      "barren moon": "images/biomes/barren-moon.png",
-      wasteland: "images/biomes/wasteland.png",
-    };
-
     const showSettingsOverlay = computed(() => uiStore.isSettingsModalOpen);
     const isLoading = computed(() => uiStore.loadingTask === "game-turn");
     const isDebugMode = computed(() => gameStore.isDebugMode);
-    const isGameOver = computed(() => gameStore.isGameOver); // <-- 3. CREATE COMPUTED
+    const isGameOver = computed(() => gameStore.isGameOver);
 
     const suggestions = computed(
       () => gameStore.session?.state?.currentSuggestions || []
@@ -97,23 +87,6 @@ export default {
     const questHookForTooltip = computed(() => gameStore.quest?.hook || "");
 
     const showVendorModal = computed(() => gameStore.gameState === "shopping");
-
-    const mainContentStyle = computed(() => {
-      const locationType = gameStore.quest?.locationType;
-      if (!locationType) {
-        return {};
-      }
-      const imageUrl = BIOME_BACKGROUNDS[locationType.toLowerCase()];
-      if (imageUrl) {
-        return {
-          backgroundImage: `url(${imageUrl})`,
-        };
-      }
-      console.warn(
-        `[App.js] No background image found for locationType: '${locationType}'`
-      );
-      return {};
-    });
 
     const useSuggestion = (suggestionText) => {
       if (!gameStore.isPlayerTurn || isQuestComplete.value) return;
@@ -202,7 +175,6 @@ export default {
       isQuestComplete,
       findNewQuest,
       questCompletionMessage,
-      mainContentStyle,
       showVendorModal,
       showQuestGoal,
       isGameOver,
@@ -228,7 +200,6 @@ export default {
 
     <transition name="fade" mode="out-in">
       
-      <!-- 5. ADD TEMPLATE LOGIC -->
       <GameOver v-if="isGameOver" key="game-over" />
 
       <div v-else-if="['class-selection', 'archetype-selection', 'quest-selection'].includes(gameStore.gameState)" class="creation-container" key="creation">
@@ -248,7 +219,7 @@ export default {
           <div class="creation-sidebar">
             <SidebarDashboard :game-state="gameStore.gameState" />
           </div>
-          <div class="creation-content" :style="mainContentStyle">
+          <div class="creation-content">
             <transition name="fade" mode="out-in">
                 <ClassSelection v-if="gameStore.gameState === 'class-selection'" key="class" />
                 <ArchetypeSelection v-else-if="gameStore.gameState === 'archetype-selection'" key="archetype" />
@@ -277,7 +248,7 @@ export default {
             <SidebarDashboard :game-state="gameStore.gameState" />
           </div>
         </aside>
-        <div class="main-content" :style="mainContentStyle">
+        <div class="main-content">
           <header class="app-header">
             <h1 @click="showQuestGoal" class="is-clickable-quest-title" :title="questHookForTooltip">{{ headerTitle }}</h1>
             <div class="header-actions">
@@ -307,7 +278,6 @@ export default {
             <template v-else>
               <ChatWindow />
 
-              <!-- NEW: Turn Resolution Area -->
               <div v-if="isLoading && pendingRollResult" class="turn-resolution-area">
                 <D20Roll 
                   :result="pendingRollResult" 
