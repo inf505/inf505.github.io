@@ -1,5 +1,5 @@
 // frontend/utils/api.js
-import { API_BASE_URL } from "/config.js";
+import { API_BASE_URL } from "../config.js";
 import { useConfigStore } from "../stores/useConfigStore.js";
 import { useUiStore } from "../stores/useUiStore.js";
 // Do NOT import useGameStore here at the top level.
