@@ -1,5 +1,6 @@
 // frontend/components/VendorModal.js
 import { computed } from "vue";
+import { makeApiRequest } from "../utils/api.js";
 import { useGameStore } from "../stores/useGameStore.js";
 import { useUiStore } from "../stores/useUiStore.js";
 
@@ -9,21 +10,17 @@ export default {
     const gameStore = useGameStore();
     const uiStore = useUiStore();
 
-    // All buttons are disabled when the player cannot act. This is the single source of truth.
     const isTransacting = computed(() => !gameStore.isPlayerTurn);
 
     const merchant = computed(() => gameStore.activeMerchant);
     const playerCurrency = computed(() => gameStore.character?.currency ?? 0);
     const playerSellableItems = computed(() => {
       if (!gameStore.character?.inventory) return [];
-      // This ensures only items marked as rewards (i.e., not signature/quest items) can be sold.
       return gameStore.character.inventory.filter(
         (item) => item.isReward === true
       );
     });
 
-    // This utility function is for DISPLAY PURPOSES ONLY.
-    // The backend performs the authoritative calculation.
     function getSellValue(item) {
       if (!item.rarity) return 1;
       let baseCost;
@@ -64,21 +61,14 @@ export default {
       uiStore.clearError();
 
       try {
-        const response = await fetch("/api/merchants/transact", {
+        const data = await makeApiRequest("/api/merchants/transact", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId: gameStore.session.sessionId,
             action,
             itemName,
           }),
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Transaction failed.");
-        }
 
         // Backend is the source of truth. Update the entire session state.
         gameStore.session.state = data.newState;
@@ -89,15 +79,16 @@ export default {
           type: "success",
         });
       } catch (error) {
-        uiStore.setError(error.message);
+        // makeApiRequest handles rate-limit UI, so we only show errors for other issues.
+        if (error.message !== "RATE_LIMIT_ACTIVE") {
+          uiStore.setError(error.message);
+        }
       } finally {
         gameStore.isPlayerTurn = true;
       }
     }
 
     function onContinue() {
-      // The component's only job is to signal intent to the store.
-      // The store handles the API call and the atomic state change.
       gameStore.exitShopping();
     }
 
@@ -115,7 +106,6 @@ export default {
   template: `
     <div class="vendor-modal">
       <div class="vendor-modal__content">
-        <!-- Close button added for improved UX -->
         <button 
           @click="onContinue" 
           class="vendor-modal__close-btn" 

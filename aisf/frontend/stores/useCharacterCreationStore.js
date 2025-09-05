@@ -25,14 +25,13 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       gameStore.setGameState("class-selection");
     },
 
-    // ... fetchClasses and selectClass are unchanged ...
     async fetchClasses() {
       const uiStore = useUiStore();
       const { useGameStore } = await import("./useGameStore.js");
       const gameStore = useGameStore();
 
       try {
-        const response = await fetch(API_BASE_URL + "/api/character/classes");
+        const response = await fetch(`${API_BASE_URL}/api/character/classes`);
         if (!response.ok) throw new Error("Failed to fetch character classes.");
 
         const data = await response.json();
@@ -42,7 +41,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
         }
 
         const transformedClasses = data.map((c) => ({
-          class: c.class, // <-- CORRECTED PROPERTY NAME
+          class: c.class,
           description: c.description,
           image: c.image,
           startingEnergy: c.startingEnergy || 0,
@@ -69,7 +68,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       gameStore.setGameState("archetype-selection");
       try {
         const response = await fetch(
-          `/api/character/class-data/${classData.class}`
+          `${API_BASE_URL}/api/character/class-data/${classData.class}`
         );
         if (!response.ok)
           throw new Error(`Could not load archetypes for ${classData.class}.`);

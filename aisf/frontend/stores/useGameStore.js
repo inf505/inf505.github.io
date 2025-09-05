@@ -1,5 +1,6 @@
 // frontend/stores/useGameStore.js
 import { defineStore } from "pinia";
+import { API_BASE_URL } from "../config.js";
 import { useUiStore } from "./useUiStore.js";
 import { useCharacterCreationStore } from "./useCharacterCreationStore.js";
 import { formatNarrative } from "../utils/formatters.js";
@@ -348,7 +349,9 @@ export const useGameStore = defineStore("game", {
     async fetchGameConstants() {
       try {
         if (!this.session?.state?.character?.maxEnergy) {
-          const energyResponse = await fetch("/api/data/energy-constants");
+          const energyResponse = await fetch(
+            `${API_BASE_URL}/api/data/energy-constants`
+          );
           if (!energyResponse.ok) {
             console.warn("Failed to load energy constants, using default.");
           } else {
