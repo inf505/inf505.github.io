@@ -1,5 +1,6 @@
 // frontend/stores/useCharacterCreationStore.js
 import { defineStore } from "pinia";
+import { API_BASE_URL } from "../config.js";
 import { useUiStore } from "./useUiStore.js";
 import { makeApiRequest } from "../utils/api.js";
 
@@ -10,7 +11,6 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
     archetypes: [],
     selectedArchetype: null,
     finalizedCharacter: null,
-    // characterName: "", // <-- REMOVED
   }),
   actions: {
     async resetClassSelection() {
@@ -32,7 +32,7 @@ export const useCharacterCreationStore = defineStore("characterCreation", {
       const gameStore = useGameStore();
 
       try {
-        const response = await fetch("/api/character/classes");
+        const response = await fetch(API_BASE_URL + "/api/character/classes");
         if (!response.ok) throw new Error("Failed to fetch character classes.");
 
         const data = await response.json();
