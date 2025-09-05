@@ -179,7 +179,7 @@ a:hover {
 /* --- Shared Content Background --- */
 .main-content,
 .creation-content {
-  background-image: url("/images/starfield-bg.jpg");
+  background-image: url("./images/starfield-bg.jpg");
   background-color: var(--color-background-dark); /* Fallback color */
   background-repeat: repeat;
   background-position: center center;
