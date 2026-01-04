@@ -34,7 +34,7 @@ export default {
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
     backgroundSize: '90px auto',
-    backgroundPosition: 'left 5px',
+    backgroundPosition: 'left 15px',
     backgroundRepeat: 'no-repeat'
   }"
 >
