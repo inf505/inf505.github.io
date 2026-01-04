@@ -36,7 +36,8 @@ export default {
     background-size: contain,
     backgroundSize: '100px auto', 
     backgroundPosition: '0px 9px', 
-    backgroundRepeat: 'no-repeat'
+    backgroundRepeat: 'no-repeat',
+    opacity: 0.35
   }"
         >
           <div class="class-selection__text-content">
