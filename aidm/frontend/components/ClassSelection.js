@@ -26,18 +26,18 @@ export default {
       <!-- REMOVED name input container -->
 
       <div v-if="creationStore.classes && creationStore.classes.length > 0" class="class-selection__grid">
-        <div 
-          v-for="classItem in creationStore.classes" 
-          :key="classItem.name"
-          class="class-selection__card"
-          @click="handleSelectClass(classItem)"
+<div 
+  v-for="classItem in creationStore.classes" 
+  :key="classItem.name"
+  class="class-selection__card"
+  @click="handleSelectClass(classItem)"
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
-    backgroundSize: '80px auto',   /* Width is 100px, Height scales automatically */
-    backgroundPosition: 'left top', /* Pushed 20px from the left, centered vertically */
+    backgroundSize: '80px auto',
+    backgroundPosition: 'left top',
     backgroundRepeat: 'no-repeat'
   }"
-        >
+>
           <div class="class-selection__text-content">
             <div>
               <h3 class="class-card__title">{{ classItem.name }}</h3>
