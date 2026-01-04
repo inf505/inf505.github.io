@@ -33,8 +33,9 @@ export default {
           @click="handleSelectClass(classItem)"
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
-    backgroundSize: '100px auto',   /* Width is 100px, Height scales automatically */
-    backgroundPosition: '20px center', /* Pushed 20px from the left, centered vertically */
+    background-size: contain,
+    backgroundSize: '100px auto', 
+    backgroundPosition: '0px 9px', 
     backgroundRepeat: 'no-repeat'
   }"
         >
