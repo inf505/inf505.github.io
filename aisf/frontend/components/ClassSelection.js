@@ -31,7 +31,7 @@ export default {
           :key="classItem.name"
           class="class-selection__card"
           @click="handleSelectClass(classItem)"
-          :style="{ '--bg-image-url': 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.name.toLowerCase() + '.png)' }"
+          :style="{ backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.name.toLowerCase() + '.png)' }"
         >
         
           <div class="class-selection__text-content">
