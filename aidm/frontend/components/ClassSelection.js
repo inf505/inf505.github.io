@@ -33,9 +33,9 @@ export default {
           @click="handleSelectClass(classItem)"
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
-    background-size: contain,
-    background-position: '0px 9px', 
-    background-repeat: 'no-repeat'
+    backgroundSize: '80px auto',   /* Width is 100px, Height scales automatically */
+    backgroundPosition: 'left top', /* Pushed 20px from the left, centered vertically */
+    backgroundRepeat: 'no-repeat'
   }"
         >
           <div class="class-selection__text-content">
