@@ -33,8 +33,8 @@ export default {
   @click="handleSelectClass(classItem)"
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
-    backgroundSize: '80px auto',
-    backgroundPosition: 'left top',
+    backgroundSize: '90px auto',
+    backgroundPosition: 'left 5px',
     backgroundRepeat: 'no-repeat'
   }"
 >
