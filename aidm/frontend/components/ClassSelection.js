@@ -34,9 +34,8 @@ export default {
   :style="{ 
     backgroundImage: 'url(https://inf505.github.io/aidm/frontend/images/' + classItem.name.toLowerCase() + '.png)',
     background-size: contain,
-    backgroundSize: '100px auto', 
-    backgroundPosition: '0px 9px', 
-    backgroundRepeat: 'no-repeat'
+    background-position: '0px 9px', 
+    background-repeat: 'no-repeat'
   }"
         >
           <div class="class-selection__text-content">
