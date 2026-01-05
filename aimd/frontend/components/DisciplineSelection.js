@@ -50,7 +50,7 @@ export default {
 
 
   :style="{ 
-    backgroundImage: 'url(https://inf505.github.io/aimd/frontend/images/' + disciplineItem.image + '.png)',
+    backgroundImage: 'url(https://inf505.github.io/aimd/frontend/images/' + disciplineItem.image + ')',
     backgroundSize: '90px auto',
     backgroundPosition: 'left 15px',
     backgroundRepeat: 'no-repeat'
