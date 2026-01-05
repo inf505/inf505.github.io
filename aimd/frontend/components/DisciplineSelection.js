@@ -47,7 +47,15 @@ export default {
           :key="disciplineItem.name"
           class="discipline-selection__card"
           @click="handleSelectDiscipline(disciplineItem)"
-          :style="{ '--bg-image-url': 'url(./images/' + disciplineItem.image + ')' }"
+
+
+  :style="{ 
+    backgroundImage: 'url(https://inf505.github.io/aimd/frontend/images/' + disciplineItem.image + '.png)',
+    backgroundSize: '90px auto',
+    backgroundPosition: 'left 15px',
+    backgroundRepeat: 'no-repeat'
+  }"
+          
         >
           <div class="discipline-selection__text-content">
             <div>
