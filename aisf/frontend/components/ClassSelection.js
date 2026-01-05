@@ -32,7 +32,7 @@ export default {
           class="class-selection__card"
           @click="handleSelectClass(classItem)"
   :style="{ 
-    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.name.toLowerCase() + '.png)'
+    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.name.toLowerCase() + '.png)',
     backgroundSize: '90px auto',
     backgroundPosition: 'left 15px',
     backgroundRepeat: 'no-repeat'
@@ -69,7 +69,7 @@ export default {
           @click="handleSelectClass(classItem)"
 
   :style="{ 
-    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.class.toLowerCase() + '.png)'
+    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.class.toLowerCase() + '.png)',
     backgroundSize: '90px auto',
     backgroundPosition: 'left 15px',
     backgroundRepeat: 'no-repeat'
