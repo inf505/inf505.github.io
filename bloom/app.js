@@ -1,3 +1,17 @@
+// // Function to update CSS variable to the exact pixel height of the window
+// function updateAppHeight() {
+//   document.documentElement.style.setProperty(
+//     "--app-height",
+//     `${window.innerHeight}px`,
+//   );
+// }
+
+// // Listen for window resizes (which Firefox triggers when keyboard opens)
+// window.addEventListener("resize", updateAppHeight);
+
+// // Run it once immediately on load
+// updateAppHeight();
+
 const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 
 const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journaling companion. You speak only English.
@@ -30,20 +44,6 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
     ]
   }
   `;
-
-// Function to update CSS variable to the exact pixel height of the window
-function updateAppHeight() {
-  document.documentElement.style.setProperty(
-    "--app-height",
-    `${window.innerHeight}px`,
-  );
-}
-
-// Listen for window resizes (which Firefox triggers when keyboard opens)
-window.addEventListener("resize", updateAppHeight);
-
-// Run it once immediately on load
-updateAppHeight();
 
 // Initialize Dexie
 const db = new Dexie("GeminiLocalDB");
