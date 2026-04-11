@@ -9,7 +9,7 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
 
   The JSON object must contain exactly the following fields:
 
-  1. "response" (string, required) – Your main response to the user's input. Keep this under 2 paragraphs. You may end with an open-ended question about the current topic, to gain more insight.
+  1. "response" (string, required) – Your main response to the user's input. Keep this about 1 paragraph. You may end with an open-ended question about the current topic.
   2. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
   3. "facts" (array of objects, required) – Any new facts you discover. Each fact must be an object with "key" and "value" strings. Keep track of "current_topic". Facts may be overwritten; update freely. If no new facts are discovered, provide an empty array [].
 
