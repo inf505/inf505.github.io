@@ -188,12 +188,12 @@ createApp({
     // };
 
     const scrollToBottom = async () => {
-      this.$nextTick(() => {
+      setTimeout(() => {
         const container = this.$refs.messagesContainer;
         if (container) {
           container.scrollTop = container.scrollHeight;
         }
-      });
+      }, 150); // 150ms wait for Firefox Android keyboard to slide up
     };
 
     const saveToDb = async (role, text, thought = "") => {
@@ -622,6 +622,7 @@ createApp({
       deleteFact,
       totalSizeKb,
       totalTokens,
+      scrollToBottom,
     };
   },
 }).mount("#app");
