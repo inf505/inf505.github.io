@@ -31,6 +31,20 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
   }
   `;
 
+// Function to update CSS variable to the exact pixel height of the window
+function updateAppHeight() {
+  document.documentElement.style.setProperty(
+    "--app-height",
+    `${window.innerHeight}px`,
+  );
+}
+
+// Listen for window resizes (which Firefox triggers when keyboard opens)
+window.addEventListener("resize", updateAppHeight);
+
+// Run it once immediately on load
+updateAppHeight();
+
 // Initialize Dexie
 const db = new Dexie("GeminiLocalDB");
 db.version(2).stores({
@@ -165,12 +179,21 @@ createApp({
       isConfigured.value = true;
     };
 
+    // const scrollToBottom = async () => {
+    //   await nextTick();
+    //   if (messagesContainer.value) {
+    //     messagesContainer.value.scrollTop =
+    //       messagesContainer.value.scrollHeight;
+    //   }
+    // };
+
     const scrollToBottom = async () => {
-      await nextTick();
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop =
-          messagesContainer.value.scrollHeight;
-      }
+      this.$nextTick(() => {
+        const container = this.$refs.messagesContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
     };
 
     const saveToDb = async (role, text, thought = "") => {
