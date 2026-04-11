@@ -613,6 +613,7 @@ createApp({
       deleteFact,
       totalSizeKb,
       totalTokens,
+      scrollToBottom,
     };
   },
 }).mount("#app");
