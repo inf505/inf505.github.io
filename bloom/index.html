@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vue Gemini/Gemma App</title>
+        <link rel="stylesheet" href="style.css" />
+
+        <!-- External Libraries -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <!-- CHAT INTERFACE -->
+            <div class="chat-container">
+                <!-- HEADER -->
+                <div class="chat-header">
+                    <button
+                        :disabled="isSummarizing"
+                        class="small-btn"
+                        @click="summarizeAndArchive"
+                        title="Summarize and Archive"
+                    >
+                        <span v-if="isSummarizing">Summarizing...</span>
+                        <span v-else
+                            >Summarize & Archive {{ totalSizeKb }} KB / {{
+                            totalTokens }} tokens</span
+                        >
+                    </button>
+
+                    <button
+                        class="small-btn settings-btn"
+                        @click="showSettings = !showSettings"
+                        title="Settings"
+                    >
+                        ⚙️
+                    </button>
+                </div>
+
+                <!-- SETTINGS PANEL -->
+                <div v-if="showSettings" class="settings-panel">
+                    <div class="settings-group inline-group">
+                        <div class="model-selector">
+                            <label>Model:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input
+                                        type="radio"
+                                        value="gemma-4-31b-it"
+                                        v-model="selectedModel"
+                                    />
+                                    31B Dense
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        value="gemma-4-26b-a4b-it"
+                                        v-model="selectedModel"
+                                    />
+                                    26B MOE
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>API Key:</label>
+                        <input
+                            type="password"
+                            v-model="apiKey"
+                            placeholder="AIzaSy..."
+                        />
+                    </div>
+
+                    <div class="settings-group">
+                        <label>System Prompt:</label>
+                        <textarea
+                            v-model="systemPrompt"
+                            rows="4"
+                            placeholder="You are a helpful assistant..."
+                        ></textarea>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>Facts:</label>
+                        <div class="facts-list">
+                            <div
+                                v-for="fact in facts"
+                                :key="fact.id"
+                                class="fact-item"
+                            >
+                                <span class="fact-text"
+                                    >{{ fact.key }}: {{ fact.value }}</span
+                                >
+                                <button
+                                    class="fact-delete-btn"
+                                    @click="deleteFact(fact.id)"
+                                    title="Delete fact"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            <div v-if="facts.length === 0" class="no-facts">
+                                No facts stored
+                            </div>
+                        </div>
+                        <div class="fact-inputs">
+                            <input
+                                v-model="factKey"
+                                placeholder="Key (e.g. name)"
+                            />
+                            <input
+                                v-model="factValue"
+                                placeholder="Value (e.g. Paul)"
+                            />
+                            <button class="small-btn" @click="addFact">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="small-btn" @click="saveAllSettings">
+                        Apply
+                    </button>
+                </div>
+
+                <!-- SCROLLING MESSAGES -->
+                <div class="chat-messages" ref="messagesContainer">
+                    <!-- Conversation Summary -->
+                    <div v-if="reflections.length > 0" class="summary-box">
+                        <h3>Conversation Summary</h3>
+                        <pre>{{ reflections[0].insight }}</pre>
+                    </div>
+
+                    <div v-if="messages.length === 0" class="empty-state">
+                        Send a message to start. History is saved locally.
+                    </div>
+
+                    <div
+                        v-for="(msg, index) in messages"
+                        :key="msg.id || index"
+                        :class="['message', msg.role]"
+                    >
+                        <div class="bubble">
+                            <!-- Individual Delete Button -->
+                            <button
+                                class="delete-msg-btn"
+                                @click="deleteMessage(index)"
+                            >
+                                &times;
+                            </button>
+
+                            <!-- Thought Process -->
+                            <div v-if="msg.thought" class="thought-box">
+                                <details>
+                                    <summary>Thinking Process</summary>
+                                    <pre>{{ msg.thought }}</pre>
+                                </details>
+                            </div>
+
+                            <!-- Content -->
+                            <div
+                                class="message-text"
+                                v-html="renderMarkdown(msg.text)"
+                            ></div>
+                        </div>
+                    </div>
+
+                    <!-- Typing -->
+                    <div v-if="isLoading" class="message model">
+                        <div class="bubble typing">Typing...</div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="chat-footer">
+                    <div class="chat-options"></div>
+
+                    <div class="chat-input-area">
+                        <textarea
+                            v-model="currentInput"
+                            ref="inputArea"
+                            rows="1"
+                            @keydown.ctrl.enter.prevent="sendMessage"
+                            @keydown.meta.enter.prevent="sendMessage"
+                            placeholder="Type your message... (Ctrl+Enter to send)"
+                            :disabled="isLoading"
+                        ></textarea>
+
+                        <button
+                            @click="sendMessage"
+                            :disabled="isLoading || !currentInput.trim()"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>

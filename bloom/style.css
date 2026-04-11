@@ -1,0 +1,542 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+#app {
+    background: #1e1e1e;
+    width: 100%;
+    max-width: 800px;
+    height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Setup Screen */
+.setup-container {
+    padding: 3rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.setup-container input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: white;
+    font-size: 1rem;
+}
+
+/* Chat Header */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    background: #252525;
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.header-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-item input {
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    font-size: 0.85rem;
+    width: 180px;
+}
+
+.editable-text {
+    cursor: pointer;
+    border-bottom: 1px dashed #666;
+    padding-bottom: 2px;
+    transition: all 0.2s;
+}
+
+.editable-text:hover {
+    color: #42b883;
+    border-bottom-color: #42b883;
+}
+
+/* Scrolling messages area */
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Increased gap for delete buttons */
+}
+
+.empty-state {
+    text-align: center;
+    color: #666;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.message {
+    display: flex;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.bubble {
+    position: relative; /* Required for absolute delete button */
+    max-width: 80%;
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px;
+    line-height: 1.4;
+}
+
+.user .bubble {
+    background-color: #42b883;
+    color: #121212;
+    border-bottom-right-radius: 4px;
+}
+
+.model .bubble {
+    background-color: #333;
+    color: #eee;
+    border-bottom-left-radius: 4px;
+}
+
+/* Thoughts Box */
+.thought-box {
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 3px solid #666;
+    border-radius: 4px;
+    margin-bottom: 0.8rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.thought-box summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #aaa;
+    user-select: none;
+    outline: none;
+}
+
+.thought-box pre {
+    white-space: pre-wrap;
+    margin-top: 0.5rem;
+    color: #bbb;
+    font-family: inherit;
+}
+
+.typing {
+    font-style: italic;
+    color: #aaa;
+}
+
+/* Footer & Input Area */
+.chat-footer {
+    background: #252525;
+    border-top: 1px solid #333;
+    padding: 0.8rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.chat-options {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: #ccc;
+    padding-left: 0.2rem;
+}
+
+.level-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.level-input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    width: 120px;
+    font-size: 0.85rem;
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end; /* Keeps button at bottom of expanding textarea */
+}
+
+.chat-input-area textarea {
+    flex-grow: 1;
+    resize: none;
+    min-height: 50px;
+    max-height: 250px;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    font-family: inherit;
+    line-height: 1.4;
+    overflow-y: auto;
+}
+
+/* Buttons */
+button {
+    background-color: #42b883;
+    color: #121212;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+button:hover:not(:disabled) {
+    opacity: 0.8;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+button.small-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    background-color: #444;
+    color: white;
+}
+
+button.small-btn.summarize-btn {
+    background-color: #555;
+}
+
+button.small-btn.summarize-btn:hover {
+    background-color: #666;
+}
+
+.clear-btn:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+/* System Prompt Styling */
+.setup-container textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: white;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.system-prompt-editor,
+.settings-panel {
+    background: #252525;
+    padding: 1rem;
+    border-bottom: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.system-prompt-editor label,
+.settings-group label {
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.system-prompt-editor textarea,
+.settings-panel textarea,
+.settings-panel input,
+.settings-panel select {
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.settings-panel input {
+    resize: none;
+    min-height: auto;
+}
+
+.settings-panel select {
+    width: 100%;
+    padding: 0.8rem;
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.inline-group {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.inline-group input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    margin-left: 1rem;
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #42b883;
+}
+
+.settings-btn {
+    font-size: 1.2rem;
+    padding: 0.3rem 0.6rem;
+    background: transparent;
+}
+
+.settings-btn:hover {
+    background: #444;
+}
+
+/* Facts Panel */
+.facts-list {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.fact-item {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #333;
+    font-size: 0.85rem;
+    color: #ccc;
+}
+
+.fact-item:last-child {
+    border-bottom: none;
+}
+
+.no-facts {
+    color: #666;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.fact-inputs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fact-inputs input {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    font-size: 0.85rem;
+}
+
+.fact-inputs button {
+    padding: 0.5rem 1rem;
+}
+
+/* Message Content Markdown Styling */
+.message-text {
+    word-break: break-word;
+}
+
+.message-text h1,
+.message-text h2,
+.message-text h3 {
+    margin: 0.5rem 0;
+}
+
+.message-text p {
+    margin: 0.5rem 0;
+}
+
+.message-text code {
+    background: #000;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.message-text pre {
+    background: #000;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.message-text ul,
+.message-text ol {
+    padding-left: 1.5rem;
+}
+
+/* Delete Button Styling */
+.delete-msg-btn {
+    position: absolute;
+    top: -10px;
+    display: none; /* Hidden unless parent bubble is hovered */
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    line-height: 20px;
+    cursor: pointer;
+    padding: 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+/* Show button on bubble hover */
+.bubble:hover .delete-msg-btn {
+    display: block;
+}
+
+.user .delete-msg-btn {
+    left: -10px;
+}
+
+.model .delete-msg-btn {
+    right: -10px;
+}
+
+.delete-msg-btn:hover {
+    background: #ff0000;
+    transform: scale(1.1);
+}
+
+/* Fact Delete Button */
+.fact-delete-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 0.3rem;
+    margin-left: 0.5rem;
+    line-height: 1;
+}
+
+.fact-delete-btn:hover {
+    color: #ff4444;
+}
+
+.fact-text {
+    flex-grow: 1;
+}
+
+/* Summary Box Styling */
+.summary-box {
+    background: #252525;
+    padding: 1rem;
+    border-bottom: 1px solid #333;
+    margin-bottom: 1.5rem;
+}
+
+.summary-box h3 {
+    margin: 0 0 0.5rem 0;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.summary-box pre {
+    margin: 0;
+    color: #bbb;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
