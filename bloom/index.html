@@ -2,7 +2,10 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
+        />
         <title>Bloom</title>
         <link rel="stylesheet" href="style.css" />
 
@@ -189,6 +192,7 @@
                             @keydown.ctrl.enter.prevent="sendMessage"
                             @keydown.meta.enter.prevent="sendMessage"
                             placeholder="Type your message... (Ctrl+Enter to send)"
+                            @focus="scrollToBottom"
                             :disabled="isLoading"
                         ></textarea>
 

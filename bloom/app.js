@@ -558,6 +558,20 @@ createApp({
       await updateCounts();
     };
 
+    // Add this anywhere in your app.js
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", () => {
+        // Force the body height to match the exact visible space
+        document.body.style.height = window.visualViewport.height + "px";
+
+        // Optional: Scroll chat to bottom when keyboard opens
+        if (window.vueApp) {
+          // Assuming your vue instance is stored in a variable
+          window.vueApp.scrollToBottom();
+        }
+      });
+    }
+
     return {
       apiKey,
       selectedModel,

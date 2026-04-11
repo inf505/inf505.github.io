@@ -9,21 +9,25 @@ body {
         sans-serif;
     background-color: #121212;
     color: #ffffff;
+    margin: 0;
+    padding: 0; /* Remove padding to maximize mobile space */
+
+    /* Center horizontally for desktop, but let it flow vertically */
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    padding: 1rem;
+
+    /* Use dvh to account for mobile browser UI (address bars) */
+    height: 100dvh;
+    width: 100vw;
 }
 
 #app {
     background: #1e1e1e;
     width: 100%;
     max-width: 800px;
-    height: 100%;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    height: 100%; /* Will inherit the 100dvh from body */
+
+    /* Re-add border-radius and padding only on larger screens */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -539,4 +543,16 @@ button.small-btn.summarize-btn:hover {
     font-family: monospace;
     white-space: pre-wrap;
     word-wrap: break-word;
+}
+/* Add a media query to make it look like a floating app only on desktop */
+@media (min-width: 820px) {
+    body {
+        align-items: center; /* Center vertically on desktop */
+        padding: 1rem;
+    }
+    #app {
+        height: 90vh; /* Don't take up the whole screen on desktop */
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
 }
