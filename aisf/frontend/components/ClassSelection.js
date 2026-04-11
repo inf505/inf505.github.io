@@ -31,8 +31,15 @@ export default {
           :key="classItem.name"
           class="class-selection__card"
           @click="handleSelectClass(classItem)"
-          :style="{ '--bg-image-url': 'url(./images/' + classItem.name.toLowerCase() + '.png)' }"
+  :style="{ 
+    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.name.toLowerCase() + '.png)',
+    backgroundSize: '90px auto',
+    backgroundPosition: 'left 15px',
+    backgroundRepeat: 'no-repeat'
+  }"
+          
         >
+        
           <div class="class-selection__text-content">
             <div>
               <h3 class="class-card__title">{{ classItem.name }}</h3>
@@ -60,7 +67,14 @@ export default {
           :key="classItem.class"
           class="class-selection__card"
           @click="handleSelectClass(classItem)"
-          :style="{ '--bg-image-url': 'url(./images/' + classItem.class.toLowerCase() + '.png)' }"
+
+  :style="{ 
+    backgroundImage: 'url(https://inf505.github.io/aisf/frontend/images/' + classItem.class.toLowerCase() + '.png)',
+    backgroundSize: '90px auto',
+    backgroundPosition: 'left 15px',
+    backgroundRepeat: 'no-repeat'
+  }"
+          
         >
           <div class="class-selection__text-content">
             <div>
