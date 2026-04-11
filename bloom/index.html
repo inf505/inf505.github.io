@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Vue Gemini/Gemma App</title>
+        <title>Bloom</title>
         <link rel="stylesheet" href="style.css" />
 
         <!-- External Libraries -->
@@ -75,7 +75,10 @@
                     </div>
 
                     <div class="settings-group">
-                        <label>System Prompt:</label>
+                        <label
+                            >Personality / Tone (Customize how the assistant
+                            speaks)</label
+                        >
                         <textarea
                             v-model="systemPrompt"
                             rows="4"
