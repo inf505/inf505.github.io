@@ -179,21 +179,12 @@ createApp({
       isConfigured.value = true;
     };
 
-    // const scrollToBottom = async () => {
-    //   await nextTick();
-    //   if (messagesContainer.value) {
-    //     messagesContainer.value.scrollTop =
-    //       messagesContainer.value.scrollHeight;
-    //   }
-    // };
-
     const scrollToBottom = async () => {
-      setTimeout(() => {
-        const container = this.$refs.messagesContainer;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      }, 150); // 150ms wait for Firefox Android keyboard to slide up
+      await nextTick();
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop =
+          messagesContainer.value.scrollHeight;
+      }
     };
 
     const saveToDb = async (role, text, thought = "") => {
@@ -622,7 +613,6 @@ createApp({
       deleteFact,
       totalSizeKb,
       totalTokens,
-      scrollToBottom,
     };
   },
 }).mount("#app");
