@@ -1,17 +1,3 @@
-// Function to update CSS variable to the exact pixel height of the window
-function updateAppHeight() {
-  document.documentElement.style.setProperty(
-    "--app-height",
-    `${window.innerHeight}px`,
-  );
-}
-
-// Listen for window resizes (which Firefox triggers when keyboard opens)
-window.addEventListener("resize", updateAppHeight);
-
-// Run it once immediately on load
-updateAppHeight();
-
 const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 
 const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journaling companion. You speak only English.
@@ -160,7 +146,37 @@ createApp({
       } catch (err) {
         console.error("Dexie Conversation Summary Load Error:", err);
       }
+
       await updateCounts();
+      // --- NEW UNIFIED KEYBOARD RESIZE LOGIC ---
+      if (window.visualViewport) {
+        const handleResize = () => {
+          // Set both the CSS variable and the body height directly (Belt and Suspenders for Fennec)
+          document.documentElement.style.setProperty(
+            "--app-height",
+            `${window.visualViewport.height}px`,
+          );
+          document.body.style.height = `${window.visualViewport.height}px`;
+
+          // Whenever the screen size changes (keyboard opens/closes), scroll to bottom
+          scrollToBottom();
+        };
+
+        window.visualViewport.addEventListener("resize", handleResize);
+        handleResize(); // Run once on load
+      } else {
+        // Fallback for very old browsers
+        const handleFallbackResize = () => {
+          document.documentElement.style.setProperty(
+            "--app-height",
+            `${window.innerHeight}px`,
+          );
+          document.body.style.height = `${window.innerHeight}px`;
+          scrollToBottom();
+        };
+        window.addEventListener("resize", handleFallbackResize);
+        handleFallbackResize();
+      }
     });
 
     const saveAllSettings = () => {
@@ -179,12 +195,14 @@ createApp({
       isConfigured.value = true;
     };
 
-    const scrollToBottom = async () => {
-      await nextTick();
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop =
-          messagesContainer.value.scrollHeight;
-      }
+    const scrollToBottom = () => {
+      // Wait 300ms for the mobile keyboard animation to finish sliding up
+      setTimeout(() => {
+        if (messagesContainer.value) {
+          messagesContainer.value.scrollTop =
+            messagesContainer.value.scrollHeight;
+        }
+      }, 300);
     };
 
     const saveToDb = async (role, text, thought = "") => {
@@ -571,20 +589,6 @@ createApp({
 
       await updateCounts();
     };
-
-    // Add this anywhere in your app.js
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", () => {
-        // Force the body height to match the exact visible space
-        document.body.style.height = window.visualViewport.height + "px";
-
-        // Optional: Scroll chat to bottom when keyboard opens
-        if (window.vueApp) {
-          // Assuming your vue instance is stored in a variable
-          window.vueApp.scrollToBottom();
-        }
-      });
-    }
 
     return {
       apiKey,
