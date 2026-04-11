@@ -1,16 +1,16 @@
-// // Function to update CSS variable to the exact pixel height of the window
-// function updateAppHeight() {
-//   document.documentElement.style.setProperty(
-//     "--app-height",
-//     `${window.innerHeight}px`,
-//   );
-// }
+// Function to update CSS variable to the exact pixel height of the window
+function updateAppHeight() {
+  document.documentElement.style.setProperty(
+    "--app-height",
+    `${window.innerHeight}px`,
+  );
+}
 
-// // Listen for window resizes (which Firefox triggers when keyboard opens)
-// window.addEventListener("resize", updateAppHeight);
+// Listen for window resizes (which Firefox triggers when keyboard opens)
+window.addEventListener("resize", updateAppHeight);
 
-// // Run it once immediately on load
-// updateAppHeight();
+// Run it once immediately on load
+updateAppHeight();
 
 const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 
