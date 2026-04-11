@@ -140,7 +140,7 @@ body {
 
 .bubble {
     position: relative; /* Required for absolute delete button */
-    max-width: 80%;
+    max-width: 95%;
     padding: 0.8rem 1.2rem;
     border-radius: 18px;
     line-height: 1.4;
@@ -554,5 +554,9 @@ button.small-btn.summarize-btn:hover {
         height: 90vh; /* Don't take up the whole screen on desktop */
         border-radius: 12px;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    .bubble {
+        max-width: 80%;
+        padding: 0.8rem 1.2rem; /* Restore original padding for desktop */
     }
 }
