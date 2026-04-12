@@ -102,11 +102,28 @@ createApp({
     });
 
     const cleanGlitch = (text) => {
-      return text
-        .replace(/\{[\s\S]*?[:][\s\S]*?\}/g, "") // Finds { anything : anything }
-        .replace(/\s\s+/g, " ") // Collapses double spaces
-        .trim(); // Trims leading/trailing whitespace
+      if (!text) return "";
+
+      return (
+        text
+          // 1. Remove the JSON-in-text glitch: { "//": "..." }
+          .replace(/\{[\s\S]*?[:][\s\S]*?\}/g, "")
+
+          // 2. DELETE the "a a-priori" hallucination completely
+          // This catches "a a-priori", "a a priori", "A a-priori", etc.
+          .replace(/\ba\s+a-?priori\b/gi, "")
+
+          // 3. COLLAPSE the "stutter" if it just says "a a" elsewhere
+          .replace(/\ba\s+a\b/gi, "a")
+
+          // 4. CLEAN UP resulting double spaces or triple spaces
+          .replace(/\s\s+/g, " ")
+
+          // 5. Final trim for start/end of string
+          .trim()
+      );
     };
+    79;
 
     onMounted(async () => {
       // Load Settings
