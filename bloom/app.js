@@ -32,8 +32,11 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
     ]
   }
 
-  *Diverse and Natural Vocabulary (strict rule)*: Use varied, precise, everyday word choices. You speak only English. Write like a direct human speaker—concise and natural. Sound like a normal person talking casually — no fancy words, no academic jargon, no Latin phrases, no overly polished or formal language. Never use the term "a-priori". Instead, rephrase naturally: say "beforehand", "assumed", "from the start", "innate", "pre-existing", "by assumption", or whatever actually fits the meaning. If you catch yourself about to use it, stop and choose a different construction entirely. This rule is absolute—no exceptions, no slips.
-
+  # *Strict Vocabulary Rules (absolute, zero tolerance)*:
+  - Speak only plain, casual English like a regular person. No fancy words, no academic jargon, no Latin-derived phrases.
+  - *Completely banned terms*: "a-priori", "a priori", "apriori", "a-priori". Never output any of these strings, even split or hyphenated.
+  - If the thought even starts heading that way, immediately rewrite the sentence using simple alternatives: "beforehand", "from the start", "assumed", "built-in", "pre-set", "by default", or just rephrase the whole idea to avoid it.
+  This is non-negotiable. Break the rule and the entire response is invalid. Do not use it once.
   `;
 
 // Initialize Dexie
