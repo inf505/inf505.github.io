@@ -635,7 +635,7 @@ createApp({
 
         for (const theme of extractedThemes) {
           await upsertTheme(theme);
-          console.log("Auto-saved theme:", theme);
+          //console.log("Auto-saved theme:", theme);
         }
 
         messages.value.push({
