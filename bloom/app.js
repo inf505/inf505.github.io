@@ -98,6 +98,13 @@ createApp({
       nextTick(adjustHeight);
     });
 
+    const cleanGlitch = (text) => {
+      return text
+        .replace(/\{[\s\S]*?[:][\s\S]*?\}/g, "") // Finds { anything : anything }
+        .replace(/\s\s+/g, " ") // Collapses double spaces
+        .trim(); // Trims leading/trailing whitespace
+    };
+
     onMounted(async () => {
       // Load Settings
       const storedKey = localStorage.getItem("gemini_api_key");
@@ -590,15 +597,19 @@ createApp({
 
         try {
           const parsed = JSON.parse(finalResponse);
+
           if (parsed.response) {
-            finalResponse = parsed.response;
+            finalResponse = cleanGlitch(parsed.response);
           }
+
           if (parsed.reflection) {
             finalInsight = parsed.reflection;
           }
+
           if (parsed.facts && Array.isArray(parsed.facts)) {
             extractedFacts = parsed.facts;
           }
+
           if (parsed.themes && Array.isArray(parsed.themes)) {
             extractedThemes = parsed.themes;
           }
