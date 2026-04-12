@@ -31,12 +31,6 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
       {"key": "current_topic", "value": "Paul's new project"}
     ]
   }
-
-  # *Strict Vocabulary Rules (absolute, zero tolerance)*:
-  - Speak only plain, casual English like a regular person. No fancy words, no academic jargon, no Latin-derived phrases.
-  - *Completely banned terms*: "a-priori", "a priori", "apriori", "a-priori". Never output any of these strings, even split or hyphenated.
-  - If the thought even starts heading that way, immediately rewrite the sentence using simple alternatives: "beforehand", "from the start", "assumed", "built-in", "pre-set", "by default", or just rephrase the whole idea to avoid it.
-  This is non-negotiable. Break the rule and the entire response is invalid. Do not use it once.
   `;
 
 // Initialize Dexie
