@@ -98,7 +98,6 @@ createApp({
       // Load Settings
       const storedKey = localStorage.getItem("gemini_api_key");
       const storedModel = localStorage.getItem("gemini_model");
-      const storedLevel = localStorage.getItem("gemini_thinking_level");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -132,6 +131,18 @@ createApp({
         facts.value = factsArray;
       } catch (err) {
         console.error("Dexie Facts Load Error:", err);
+      }
+
+      // Load Themes
+      try {
+        // We sort by count so the most important themes are at the top
+        const themesArray = await db.themes
+          .orderBy("count")
+          .reverse()
+          .toArray();
+        themes.value = themesArray;
+      } catch (err) {
+        console.error("Dexie Themes Load Error:", err);
       }
 
       // --- NEW: Load Conversation Summary (if exists) ---
@@ -253,21 +264,18 @@ createApp({
       messages.value.splice(index, 1);
     };
 
-    const upsertTheme = async (themeName) => {
-      const existing = await db.themes.where({ name: themeName }).first();
+    const upsertTheme = async (name) => {
+      const existing = await db.themes.where({ name }).first();
       if (existing) {
         await db.themes.update(existing.id, {
           count: existing.count + 1,
-          last_seen: Date.now(),
+          timestamp: Date.now(),
         });
       } else {
-        await db.themes.add({
-          name: themeName,
-          count: 1,
-          last_seen: Date.now(),
-        });
+        await db.themes.add({ name, count: 1, timestamp: Date.now() });
       }
-      themes.value = await db.themes.orderBy("last_seen").reverse().toArray();
+      // Refresh the ref so it's always up to date
+      themes.value = await db.themes.orderBy("count").reverse().toArray();
     };
 
     const summarizeAndArchive = async () => {
@@ -464,10 +472,14 @@ createApp({
         }
 
         if (themes.value.length > 0) {
-          const themeString = themes.value.map((t) => t.name).join(", ");
+          // Take the top 5 most frequent themes
+          const themeContext = themes.value
+            .slice(0, 5)
+            .map((t) => t.name)
+            .join(", ");
           contents.unshift({
             role: "system",
-            parts: [{ text: `RECURRING THEMES: ${themeString}` }],
+            parts: [{ text: `RECURRING LIFE THEMES: ${themeContext}` }],
           });
         }
 
