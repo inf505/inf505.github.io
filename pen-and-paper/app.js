@@ -33,6 +33,7 @@ The JSON object must contain exactly the following fields:
   "response": "Nice to meet you, Paul! I'm glad you're enjoying the new project.",
   "reflection": "User shared name and current project status.",
   "facts": [
+    {"key": "path", "value": "Explore"},
     {"key": "name", "value": "Paul"},
     {"key": "project", "value": "User started new project last week"},
     {"key": "current_topic", "value": "Paul's new project"}
