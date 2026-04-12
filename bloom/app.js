@@ -34,7 +34,7 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
 
 // Initialize Dexie
 const db = new Dexie("GeminiLocalDB");
-db.version(2).stores({
+db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   reflections: "++id, chatId, insight, timestamp",
   facts: "++id, key, value, timestamp",
