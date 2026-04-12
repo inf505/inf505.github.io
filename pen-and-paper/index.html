@@ -190,7 +190,7 @@
                             v-model="currentInput"
                             ref="inputArea"
                             rows="1"
-                            @keydown.enter.prevent="sendMessage"
+                            @keydown.enter.exact.prevent="sendMessage"
                             placeholder="Type your message..."
                             @focus="scrollToBottom"
                             :disabled="isLoading"
