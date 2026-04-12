@@ -485,9 +485,9 @@ createApp({
           },
         };
 
-        payload.generationConfig.thinkingConfig = {
-          thinkingLevel: "MINIMAL",
-        };
+        // payload.generationConfig.thinkingConfig = {
+        //   thinkingLevel: "MINIMAL",
+        // };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
         const response = await fetch(url, {
