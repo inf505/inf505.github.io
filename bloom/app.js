@@ -125,7 +125,6 @@ createApp({
           .trim()
       );
     };
-    79;
 
     onMounted(async () => {
       // Load Settings
