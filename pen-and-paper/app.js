@@ -535,7 +535,7 @@ createApp({
         // Add generationConfig with temperature and JSON response
         // thinking MINIMAL or HIGH
         payload.generationConfig = {
-          temperature: 1.0,
+          temperature: 0.9,
           responseMimeType: "application/json",
           responseSchema: {
             type: "object",
@@ -563,7 +563,7 @@ createApp({
         };
 
         payload.generationConfig.thinkingConfig = {
-          thinkingLevel: "HIGH",
+          thinkingLevel: "MINIMAL",
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
