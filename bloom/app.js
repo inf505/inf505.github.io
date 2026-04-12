@@ -12,6 +12,7 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
   1. "response" (string, required) – Your main response to the user's input. Keep this about 1 paragraph. You may end with an open-ended question about the current topic.
   2. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
   3. "facts" (array of objects, required) – Any new facts you discover. Each fact must be an object with "key" and "value" strings. Keep track of "current_topic". Facts may be overwritten; update freely. If no new facts are discovered, provide an empty array [].
+  4. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
 
   ### Example JSON
   {
@@ -37,6 +38,7 @@ db.version(2).stores({
   chats: "++id, role, text, thought, timestamp",
   reflections: "++id, chatId, insight, timestamp",
   facts: "++id, key, value, timestamp",
+  themes: "++id, name, count, last_seen",
 });
 
 createApp({
@@ -51,11 +53,10 @@ createApp({
     const facts = ref([]);
     const factKey = ref("");
     const factValue = ref("");
-
+    const themes = ref([]);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
 
-    // Chat State
     const messages = ref([]);
     const currentInput = ref("");
     const isLoading = ref(false);
@@ -252,6 +253,23 @@ createApp({
       messages.value.splice(index, 1);
     };
 
+    const upsertTheme = async (themeName) => {
+      const existing = await db.themes.where({ name: themeName }).first();
+      if (existing) {
+        await db.themes.update(existing.id, {
+          count: existing.count + 1,
+          last_seen: Date.now(),
+        });
+      } else {
+        await db.themes.add({
+          name: themeName,
+          count: 1,
+          last_seen: Date.now(),
+        });
+      }
+      themes.value = await db.themes.orderBy("last_seen").reverse().toArray();
+    };
+
     const summarizeAndArchive = async () => {
       if (
         !confirm(
@@ -445,6 +463,14 @@ createApp({
           });
         }
 
+        if (themes.value.length > 0) {
+          const themeString = themes.value.map((t) => t.name).join(", ");
+          contents.unshift({
+            role: "system",
+            parts: [{ text: `RECURRING THEMES: ${themeString}` }],
+          });
+        }
+
         const userTone = systemPrompt.value.trim();
         const finalSystemInstruction = userTone
           ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
@@ -480,8 +506,12 @@ createApp({
                   required: ["key", "value"],
                 },
               },
+              themes: {
+                type: "array",
+                items: { type: "string" },
+              },
             },
-            required: ["response", "reflection", "facts"],
+            required: ["response", "reflection", "facts", "themes"],
           },
         };
 
@@ -540,6 +570,8 @@ createApp({
         let finalResponse = responseText.trim() || "*(No response text)*";
         let finalInsight = null;
         let extractedFacts = [];
+        let extractedThemes = [];
+
         try {
           const parsed = JSON.parse(finalResponse);
           if (parsed.response) {
@@ -550,6 +582,9 @@ createApp({
           }
           if (parsed.facts && Array.isArray(parsed.facts)) {
             extractedFacts = parsed.facts;
+          }
+          if (parsed.themes && Array.isArray(parsed.themes)) {
+            extractedThemes = parsed.themes;
           }
         } catch (e) {
           // Not JSON, use as-is
@@ -569,6 +604,11 @@ createApp({
             await upsertFact(fact.key, fact.value);
             //console.log("Auto-saved fact:", fact.key, "=", fact.value);
           }
+        }
+
+        for (const theme of extractedThemes) {
+          await upsertTheme(theme);
+          console.log("Auto-saved theme:", theme);
         }
 
         messages.value.push({
@@ -610,6 +650,7 @@ createApp({
       reflections,
       summarizeAndArchive,
       facts,
+      themes,
       upsertFact,
       factKey,
       factValue,
