@@ -38,6 +38,8 @@ The JSON object must contain exactly the following fields:
     {"key": "current_topic", "value": "Paul's new project"}
   ]
 }
+
+CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
 
 // Initialize Dexie
@@ -617,26 +619,36 @@ createApp({
         let extractedThemes = [];
 
         try {
-          const parsed = JSON.parse(finalResponse);
+          // Find the actual JSON boundaries in case the model added markdown fences or text
+          const jsonStartIndex = finalResponse.indexOf("{");
+          const jsonEndIndex = finalResponse.lastIndexOf("}");
 
-          if (parsed.response) {
-            finalResponse = cleanGlitch(parsed.response);
-          }
+          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+            const jsonString = finalResponse.substring(
+              jsonStartIndex,
+              jsonEndIndex + 1,
+            );
+            const parsed = JSON.parse(jsonString);
 
-          if (parsed.reflection) {
-            finalInsight = parsed.reflection;
-          }
+            if (parsed.response) {
+              finalResponse = cleanGlitch(parsed.response);
+            }
 
-          if (parsed.facts && Array.isArray(parsed.facts)) {
-            extractedFacts = parsed.facts;
-          }
+            if (parsed.reflection) {
+              finalInsight = parsed.reflection;
+            }
 
-          if (parsed.themes && Array.isArray(parsed.themes)) {
-            extractedThemes = parsed.themes;
+            if (parsed.facts && Array.isArray(parsed.facts)) {
+              extractedFacts = parsed.facts;
+            }
+
+            if (parsed.themes && Array.isArray(parsed.themes)) {
+              extractedThemes = parsed.themes;
+            }
           }
         } catch (e) {
-          // Not JSON, use as-is
-          console.log(e, responseText);
+          console.error("JSON Parse error, showing raw response", e);
+          // If it fails, finalResponse remains the raw text for safety
         }
 
         const finalThought = thoughtText.trim();
