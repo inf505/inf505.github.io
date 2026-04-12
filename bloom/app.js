@@ -31,6 +31,9 @@ const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journali
       {"key": "current_topic", "value": "Paul's new project"}
     ]
   }
+
+  *Diverse and Natural Vocabulary (strict rule)*: Use varied, precise, everyday word choices. Write like a direct human speaker—concise and natural. Never use the term "a priori", "a-priori", "apriori", or any hyphenated/compound version of it. Instead, rephrase naturally: say "beforehand", "assumed", "from the start", "innate", "pre-existing", "by assumption", or whatever actually fits the meaning. If you catch yourself about to use it, stop and choose a different construction entirely. This rule is absolute—no exceptions, no slips.
+
   `;
 
 // Initialize Dexie
