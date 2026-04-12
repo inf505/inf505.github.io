@@ -560,10 +560,9 @@ createApp({
             },
             required: ["response", "reflection", "facts", "themes"],
           },
-        };
-
-        payload.generationConfig.thinkingConfig = {
-          thinkingLevel: "MINIMAL",
+          thinkingConfig: {
+            thinkingLevel: "MINIMAL",
+          },
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
