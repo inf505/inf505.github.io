@@ -150,7 +150,10 @@
                         :key="msg.id || index"
                         :class="['message', msg.role]"
                     >
-                        <div class="bubble">
+                        <div
+                            class="bubble"
+                            :style="msg.path ? { border: '3px solid ' + getPathColor(msg.path) } : {}"
+                        >
                             <!-- Individual Delete Button -->
                             <button
                                 class="delete-msg-btn"

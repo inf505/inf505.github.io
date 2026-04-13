@@ -313,6 +313,15 @@ createApp({
       themes.value = await db.themes.orderBy("count").reverse().toArray();
     };
 
+    const getPathColor = (path) => {
+      if (!path) return "transparent";
+      const p = path.toLowerCase();
+      if (p.includes("Ruminate")) return "#8e44ad"; // Purple
+      if (p.includes("Explore")) return "#3498db"; // Blue
+      if (p.includes("Move Forward")) return "#f1c40f"; // Gold
+      return "#444"; // Fallback grey
+    };
+
     const summarizeAndArchive = async () => {
       if (
         !confirm(
@@ -651,9 +660,15 @@ createApp({
           // If it fails, finalResponse remains the raw text for safety
         }
 
+        const pathFact = extractedFacts.find(
+          (f) => f.key.toLowerCase() === "path",
+        );
+        const currentPath = pathFact ? pathFact.value : null;
+
         const finalThought = thoughtText.trim();
 
         const modelId = await saveToDb("model", finalResponse, finalThought);
+
         if (finalInsight) {
           await saveReflection(modelId, finalInsight);
         }
@@ -676,6 +691,7 @@ createApp({
           role: "model",
           text: finalResponse,
           thought: finalThought,
+          path: currentPath,
         });
       } catch (error) {
         const errorMsg = `❌ Error: ${error.message}`;
@@ -719,6 +735,7 @@ createApp({
       totalSizeKb,
       totalTokens,
       scrollToBottom,
+      getPathColor,
     };
   },
 }).mount("#app");
