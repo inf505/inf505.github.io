@@ -584,18 +584,11 @@ button.small-btn.summarize-btn:hover {
     font-size: 0.7rem;
     letter-spacing: 1px;
 }
+
 .header-left-group {
     display: flex;
     align-items: center;
     gap: 10px; /* Space between button and text */
-}
-
-.new-day-hint {
-    font-size: 0.8rem;
-    color: #42b883; /* Matching the button color */
-    font-weight: bold;
-    opacity: 0.8;
-    animation: fadeIn 0.5s ease-in;
 }
 
 /* Optional: a subtle fade-in for when the text appears */
