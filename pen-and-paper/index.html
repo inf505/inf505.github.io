@@ -23,15 +23,12 @@
                     <div class="header-left-group">
                         <button
                             :disabled="isSummarizing"
-                            class="small-btn"
+                            class="small-btn icon-btn"
                             @click="summarizeAndArchive"
-                            title="Summarize and Archive"
+                            :title="'Summarize & Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
                         >
-                            <span v-if="isSummarizing">Summarizing...</span>
-                            <span v-else
-                                >{{ totalSizeKb }} KB / {{ totalTokens }}
-                                tokens</span
-                            >
+                            <span v-if="isSummarizing">⏳</span>
+                            <span v-else>☀️</span>
                         </button>
 
                         <span class="new-day-hint"> ⬅️ Begin new day! </span>
