@@ -20,36 +20,35 @@ The JSON object must contain exactly the following fields:
 2. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
 3. "facts" (array of objects, required) – Any facts you discover. Each fact must be an object with "key" and "value" strings. Facts may be overwritten; so update freely. If no facts are found, provide an empty array [].
 4. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
+5. "goals" (array of objects, required) – Long-term aspirations or intentions. Each goal must be an object with "title" (string) and "status" (string, must be "active", "completed", or "paused"). If no goals are present, provide an empty array [].
+
+### Example JSON (no facts or goals)
+{
+  "response": "That sounds like a great way to spend time together! Exercising with your son not only promotes physical health but is also a wonderful way to bond.",
+  "reflection": "User sharing a personal detail about their day and seems happy about exercising with their son.",
+  "facts": [],
+  "goals": []
+}
 
 ### Example JSON
 {
   "response": "That sounds like a great way to spend time together! Exercising with your son not only promotes physical health but is also a wonderful way to bond.",
   "reflection": "User sharing a personal detail about their day and seems happy about exercising with their son.",
-  "facts": []
-}
-
-### Example with new facts
-{
-  "response": "Nice to meet you, Paul! I'm glad you're enjoying the new project.",
-  "reflection": "User shared name and current project status.",
-  "facts": [
-    {"key": "path", "value": "Explore"},
-    {"key": "name", "value": "Paul"},
-    {"key": "project", "value": "User started new project last week"},
-    {"key": "current_topic", "value": "Paul's new project"}
-  ]
+  "facts": [{"key": "current_topic", "value": "Exercise with son"}],
+  "themes": ["Parenting", "Health"],
+  "goals": [{"title": "Exercise 3 times a week", "status": "active"}]
 }
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
 
-// Initialize Dexie
 const db = new Dexie("GeminiLocalDB");
-db.version(3).stores({
+db.version(4).stores({
   chats: "++id, role, text, thought, timestamp",
   reflections: "++id, chatId, insight, timestamp",
   facts: "++id, key, value, timestamp",
   themes: "++id, name, count, last_seen",
+  goals: "++id, title, status, timestamp",
 });
 
 createApp({
@@ -62,6 +61,7 @@ createApp({
     const showSettings = ref(false);
     const reflections = ref([]);
     const facts = ref([]);
+    const goals = ref([]);
     const factKey = ref("");
     const factValue = ref("");
     const themes = ref([]);
@@ -187,7 +187,6 @@ createApp({
         console.error("Dexie Themes Load Error:", err);
       }
 
-      // --- NEW: Load Conversation Summary (if exists) ---
       try {
         // Assuming summary is stored in chats with role === 'system'
         const summaryRow = await db.chats
@@ -200,6 +199,8 @@ createApp({
       } catch (err) {
         console.error("Dexie Conversation Summary Load Error:", err);
       }
+
+      await loadGoals();
 
       await updateCounts();
       // --- NEW UNIFIED KEYBOARD RESIZE LOGIC ---
@@ -232,6 +233,15 @@ createApp({
         handleFallbackResize();
       }
     });
+
+    const loadGoals = async () => {
+      goals.value = await db.goals.orderBy("timestamp").reverse().toArray();
+    };
+
+    const deleteGoal = async (id) => {
+      await db.goals.delete(id);
+      await loadGoals();
+    };
 
     const saveAllSettings = () => {
       if (apiKey.value.trim())
@@ -329,6 +339,16 @@ createApp({
 
       console.log(p);
       return "#444"; // Fallback grey
+    };
+
+    const upsertGoal = async (title, status) => {
+      const existing = await db.goals.where({ title }).first();
+      if (existing) {
+        await db.goals.update(existing.id, { status, timestamp: Date.now() });
+      } else {
+        await db.goals.add({ title, status, timestamp: Date.now() });
+      }
+      await loadGoals();
     };
 
     const summarizeAndArchive = async () => {
@@ -536,6 +556,15 @@ createApp({
           });
         }
 
+        const activeGoals = goals.value.filter((g) => g.status === "active");
+        if (activeGoals.length > 0) {
+          const goalsString = activeGoals.map((g) => g.title).join(", ");
+          contents.unshift({
+            role: "system",
+            parts: [{ text: `ACTIVE GOALS: ${goalsString}` }],
+          });
+        }
+
         const userTone = systemPrompt.value.trim();
         const finalSystemInstruction = userTone
           ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
@@ -575,8 +604,22 @@ createApp({
                 type: "array",
                 items: { type: "string" },
               },
+              goals: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    status: {
+                      type: "string",
+                      enum: ["active", "completed", "paused"],
+                    },
+                  },
+                  required: ["title", "status"],
+                },
+              },
             },
-            required: ["response", "reflection", "facts", "themes"],
+            required: ["response", "reflection", "facts", "themes", "goals"],
           },
           thinkingConfig: {
             thinkingLevel: "MINIMAL",
@@ -635,6 +678,7 @@ createApp({
         let finalInsight = null;
         let extractedFacts = [];
         let extractedThemes = [];
+        let extractedGoals = [];
 
         try {
           // Find the actual JSON boundaries in case the model added markdown fences or text
@@ -662,6 +706,10 @@ createApp({
 
             if (parsed.themes && Array.isArray(parsed.themes)) {
               extractedThemes = parsed.themes;
+            }
+
+            if (parsed.goals && Array.isArray(parsed.goals)) {
+              extractedGoals = parsed.goals;
             }
           }
         } catch (e) {
@@ -693,13 +741,17 @@ createApp({
         for (const fact of extractedFacts) {
           if (fact.key && fact.value) {
             await upsertFact(fact.key, fact.value);
-            //console.log("Auto-saved fact:", fact.key, "=", fact.value);
           }
         }
 
         for (const theme of extractedThemes) {
           await upsertTheme(theme);
-          //console.log("Auto-saved theme:", theme);
+        }
+
+        for (const goal of extractedGoals) {
+          if (goal.title && goal.status) {
+            await upsertGoal(goal.title, goal.status);
+          }
         }
 
         messages.value.push({
