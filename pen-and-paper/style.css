@@ -562,3 +562,50 @@ button.small-btn.summarize-btn:hover {
         padding: 0.8rem 1.2rem; /* Restore original padding for desktop */
     }
 }
+.message.system {
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.message.system .bubble {
+    background-color: #2a2a2a;
+    color: #888;
+    border: 1px dashed #444;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    max-width: 90%;
+}
+
+.message.system .bubble::before {
+    content: "📜 ARCHIVE";
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between button and text */
+}
+
+.new-day-hint {
+    font-size: 0.8rem;
+    color: #42b883; /* Matching the button color */
+    font-weight: bold;
+    opacity: 0.8;
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Optional: a subtle fade-in for when the text appears */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+    to {
+        opacity: 0.8;
+        transform: translateX(0);
+    }
+}

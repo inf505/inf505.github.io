@@ -33,7 +33,10 @@
                         >
                     </button>
 
-                    <span style="text-align: left">⬅️ Begin new day!</span>
+                    <!-- Only show hint if there are messages to archive -->
+                    <span v-if="messages.length > 2" class="new-day-hint">
+                        ⬅️ Begin new day!
+                    </span>
 
                     <button
                         class="small-btn settings-btn"
