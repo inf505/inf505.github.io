@@ -620,7 +620,8 @@ button.small-btn.summarize-btn:hover {
 
 .topic-text {
     font-size: 0.85rem;
-    color: #666;
+    font-variant: small-caps;
+    color: #ffb300;
     width: 100%; /* Needs to be full width of container for ellipsis */
     white-space: nowrap;
     overflow: hidden;
@@ -633,4 +634,8 @@ button.small-btn.summarize-btn:hover {
     width: 45px; /* Give both buttons an identical fixed width */
     display: flex;
     justify-content: center;
+}
+.icon-btn:hover:not(:disabled) {
+    background-color: rgba(255, 179, 0, 0.15); /* Subtle Amber background */
+    color: #ffb300; /* The Amber color */
 }
