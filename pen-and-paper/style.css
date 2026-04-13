@@ -620,22 +620,13 @@ button.small-btn.summarize-btn:hover {
 
 .topic-text {
     font-size: 0.85rem;
-    color: #42b883;
-    font-weight: 500;
+    color: #666;
     width: 100%; /* Needs to be full width of container for ellipsis */
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.topic-label {
-    font-size: 0.6rem;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: -2px;
-}
 .small-btn.icon-btn,
 .settings-btn {
     flex-shrink: 0;
