@@ -22,21 +22,23 @@ The JSON object must contain exactly the following fields:
 4. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
 5. "goals" (array of objects, required) – Long-term aspirations or intentions. Each goal must be an object with "title" (string) and "status" (string, must be "active", "completed", or "paused"). If no goals are present, provide an empty array [].
 
-### Example JSON (no facts or goals)
-{
-  "response": "That sounds like a great way to spend time together! Exercising with your son not only promotes physical health but is also a wonderful way to bond.",
-  "reflection": "User sharing a personal detail about their day and seems happy about exercising with their son.",
-  "facts": [],
-  "goals": []
-}
-
 ### Example JSON
 {
   "response": "That sounds like a great way to spend time together! Exercising with your son not only promotes physical health but is also a wonderful way to bond.",
   "reflection": "User sharing a personal detail about their day and seems happy about exercising with their son.",
-  "facts": [{"key": "current_topic", "value": "Exercise with son"}],
-  "themes": ["Parenting", "Health"],
-  "goals": [{"title": "Exercise 3 times a week", "status": "active"}]
+  "facts": []
+}
+
+### Example with new facts
+{
+  "response": "Nice to meet you, Paul! I'm glad you're enjoying the new project.",
+  "reflection": "User shared name and current project status.",
+  "facts": [
+    {"key": "path", "value": "Explore"},
+    {"key": "name", "value": "Paul"},
+    {"key": "project", "value": "User started new project last week"},
+    {"key": "current_topic", "value": "Paul's new project"}
+  ]
 }
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
