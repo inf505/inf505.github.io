@@ -20,19 +20,17 @@
             <div class="chat-container">
                 <!-- HEADER -->
                 <div class="chat-header">
-                    <div class="header-left-group">
-                        <button
-                            :disabled="isSummarizing"
-                            class="small-btn icon-btn"
-                            @click="summarizeAndArchive"
-                            :title="'Summarize & Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
-                        >
-                            <span v-if="isSummarizing">⏳</span>
-                            <span v-else>☀️</span>
-                        </button>
+                    <button
+                        :disabled="isSummarizing"
+                        class="small-btn icon-btn"
+                        @click="summarizeAndArchive"
+                        :title="'Summarize & Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
+                    >
+                        <span v-if="isSummarizing">⏳</span>
+                        <span v-else>☀️</span>
+                    </button>
 
-                        <span> Current Topic </span>
-                    </div>
+                    <span> Current Topic </span>
 
                     <button
                         class="small-btn settings-btn"
