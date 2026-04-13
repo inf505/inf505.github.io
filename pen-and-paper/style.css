@@ -76,6 +76,7 @@ body {
     background: #252525;
     padding: 1rem;
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
     justify-content: space-between;
@@ -585,23 +586,6 @@ button.small-btn.summarize-btn:hover {
     letter-spacing: 1px;
 }
 
-.header-left-group {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Space between button and text */
-}
-
-/* Optional: a subtle fade-in for when the text appears */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(-5px);
-    }
-    to {
-        opacity: 0.8;
-        transform: translateX(0);
-    }
-}
 .topic-container {
     display: flex;
     flex-direction: column;
@@ -623,13 +607,6 @@ button.small-btn.summarize-btn:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-.chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Pushes Sun to left, Settings to right */
-    gap: 12px;
-    padding: 0.5rem 1rem;
 }
 
 /* This container acts as the 'bridge' in the middle */
