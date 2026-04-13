@@ -318,7 +318,9 @@ createApp({
       const p = path.toLowerCase();
       if (p.includes("ruminate")) return "#8e44ad"; // Purple
       if (p.includes("explore")) return "#3498db"; // Blue
-      if (p.includes("move forward")) return "#f1c40f"; // Gold
+      if (p.includes("forward")) return "#f1c40f"; // Gold
+
+      console.log(p);
       return "#444"; // Fallback grey
     };
 
