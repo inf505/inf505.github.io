@@ -338,10 +338,10 @@ createApp({
       try {
         let summaryContent = "";
 
-        // 3. Build summary only from non-system messages
         if (messages.value.length > 0) {
           summaryContent += "CONVERSATION:\n";
           summaryContent += messages.value
+            .filter((msg) => msg.role !== "system")
             .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
             .join("\n\n");
         }
