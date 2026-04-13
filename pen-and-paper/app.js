@@ -316,9 +316,9 @@ createApp({
     const getPathColor = (path) => {
       if (!path) return "transparent";
       const p = path.toLowerCase();
-      if (p.includes("Ruminate")) return "#8e44ad"; // Purple
-      if (p.includes("Explore")) return "#3498db"; // Blue
-      if (p.includes("Move Forward")) return "#f1c40f"; // Gold
+      if (p.includes("ruminate")) return "#8e44ad"; // Purple
+      if (p.includes("explore")) return "#3498db"; // Blue
+      if (p.includes("move forward")) return "#f1c40f"; // Gold
       return "#444"; // Fallback grey
     };
 
