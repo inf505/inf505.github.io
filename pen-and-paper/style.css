@@ -602,3 +602,25 @@ button.small-btn.summarize-btn:hover {
         transform: translateX(0);
     }
 }
+.topic-container {
+    display: flex;
+    flex-direction: column;
+    margin-left: 5px;
+}
+
+.topic-label {
+    font-size: 0.6rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.topic-text {
+    font-size: 0.85rem;
+    color: #42b883; /* Green to match the theme */
+    font-weight: 500;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

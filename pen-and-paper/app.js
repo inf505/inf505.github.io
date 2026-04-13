@@ -67,7 +67,7 @@ createApp({
     const themes = ref([]);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
-
+    const currentTopic = ref("Current Topic");
     const messages = ref([]);
     const currentInput = ref("");
     const isLoading = ref(false);
@@ -93,7 +93,7 @@ createApp({
         console.error("Error updating stats:", err);
       }
     };
-    // Auto-expand Textarea
+
     const adjustHeight = () => {
       const el = inputArea.value;
       if (!el) return;
@@ -164,6 +164,13 @@ createApp({
       try {
         const factsArray = await db.facts.orderBy("timestamp").toArray();
         facts.value = factsArray;
+
+        const existingTopic = factsArray.find((f) => f.key === "current_topic");
+        if (existingTopic) {
+          currentTopic.value = existingTopic.value;
+        } else {
+          currentTopic.value = "New Conversation";
+        }
       } catch (err) {
         console.error("Dexie Facts Load Error:", err);
       }
@@ -667,6 +674,13 @@ createApp({
         );
         const currentPath = pathFact ? pathFact.value : null;
 
+        const topicFact = extractedFacts.find(
+          (f) => f.key.toLowerCase() === "current_topic",
+        );
+        if (topicFact) {
+          currentTopic.value = topicFact.value;
+        }
+
         const finalThought = thoughtText.trim();
 
         const modelId = await saveToDb("model", finalResponse, finalThought);
@@ -710,6 +724,7 @@ createApp({
 
     return {
       apiKey,
+      currentTopic,
       selectedModel,
       isConfigured,
       saveSettings,
