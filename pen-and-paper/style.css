@@ -619,8 +619,42 @@ button.small-btn.summarize-btn:hover {
     font-size: 0.85rem;
     color: #42b883; /* Green to match the theme */
     font-weight: 500;
-    max-width: 150px;
+    max-width: 400px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes Sun to left, Settings to right */
+    gap: 12px;
+    padding: 0.5rem 1rem;
+}
+
+/* This container acts as the 'bridge' in the middle */
+.topic-container {
+    flex: 1; /* Take all available space between the buttons */
+    min-width: 0; /* This is the magic line that allows ellipsis to work */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.topic-text {
+    font-size: 0.85rem;
+    color: #42b883;
+    font-weight: 500;
+
+    /* Truncation Logic */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* Ensure the buttons don't get squished if the topic is long */
+.small-btn.icon-btn,
+.settings-btn {
+    flex-shrink: 0;
 }

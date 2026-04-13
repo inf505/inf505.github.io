@@ -20,24 +20,28 @@
             <div class="chat-container">
                 <!-- HEADER -->
                 <div class="chat-header">
+                    <!-- Left: The Sun Button -->
                     <button
                         :disabled="isSummarizing"
                         class="small-btn icon-btn"
                         @click="summarizeAndArchive"
-                        :title="'Summarize & Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
+                        :title="'Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
                     >
                         <span v-if="isSummarizing">⏳</span>
                         <span v-else>☀️</span>
                     </button>
 
+                    <!-- Center: The Reactive Topic -->
                     <div class="topic-container">
-                        <span class="topic-text">{{ currentTopic }}</span>
+                        <span class="topic-text"
+                            >{{ currentTopic || 'New Session' }}</span
+                        >
                     </div>
 
+                    <!-- Right: Settings -->
                     <button
                         class="small-btn settings-btn"
                         @click="showSettings = !showSettings"
-                        title="Settings"
                     >
                         ⚙️
                     </button>
