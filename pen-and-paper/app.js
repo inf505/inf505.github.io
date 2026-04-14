@@ -708,13 +708,34 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
+        // --- PRO LOGGING START ---
         console.group("🤖 AI Extraction Results");
-        console.log("💭 Thought:", thoughtText.trim());
-        console.log("📝 Reflection (Internal):", finalInsight);
-        console.log("📊 Facts:", extractedFacts);
-        console.log("🏷️ Themes:", extractedThemes);
-        console.log("🎯 Goals:", extractedGoals);
+
+        console.log(
+          "%c💭 THOUGHT",
+          "color: #aaa; font-weight: bold;",
+          thoughtText.trim(),
+        );
+        console.log(
+          "%c📝 REFLECTION",
+          "color: #42b883; font-weight: bold;",
+          finalInsight,
+        );
+
+        console.log("%c📊 FACTS", "color: #2196F3; font-weight: bold;");
+        console.table(extractedFacts);
+
+        console.log(
+          "%c🏷️ THEMES",
+          "color: #FF9800; font-weight: bold;",
+          extractedThemes.join(", "),
+        );
+
+        console.log("%c🎯 GOALS", "color: #E91E63; font-weight: bold;");
+        console.table(extractedGoals);
+
         console.groupEnd();
+        // --- PRO LOGGING END ---
 
         const pathFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "path",
