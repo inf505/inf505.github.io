@@ -729,12 +729,12 @@ createApp({
           .join("\n");
 
         console.log(
-          `AI EXTRACTION\n` +
+          `DEBUG\n` +
             `THOUGHT: ${thoughtText.trim()}\n` +
-            `REFLECTION: ${finalInsight}\n` +
-            `FACTS:\n${logFacts || "- none"}\n` +
-            `THEMES:\n${logThemes || "- none"}\n` +
-            `GOALS:\n${logGoals || "- none"}`,
+            `\nREFLECTION: ${finalInsight}\n` +
+            `\nFACTS:\n${logFacts || "- none"}\n` +
+            `\nTHEMES:\n${logThemes || "- none"}\n` +
+            `\nGOALS:\n${logGoals || "- none"}`,
         );
 
         const topicFact = extractedFacts.find(
