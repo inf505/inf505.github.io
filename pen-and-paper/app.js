@@ -697,7 +697,7 @@ createApp({
             );
             const parsed = JSON.parse(jsonString);
 
-            console.log(parsed);
+            console.log(jsonString);
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = cleanGlitch(parsed.response);
