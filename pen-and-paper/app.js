@@ -658,8 +658,6 @@ createApp({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
-        console.log(response);
-
         let responseText = "";
         let thoughtText = "";
         totalTokens.value =
@@ -719,6 +717,14 @@ createApp({
           (f) => f.key.toLowerCase() === "current_topic",
         );
         if (topicFact) currentTopic.value = topicFact.value;
+
+        if (true) {
+          console.log("Thought: ".thoughtText);
+          console.log("Reflection: ".finalInsight);
+          console.log("Facts: ".extractedFacts);
+          console.log("Themes: ".extractedThemes);
+          console.log("Goals: ".extractedGoals);
+        }
 
         const modelId = await saveToDb(
           "model",
