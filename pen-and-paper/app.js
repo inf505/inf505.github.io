@@ -728,18 +728,19 @@ createApp({
           .map((g) => `- ${g.title} (${g.status})`)
           .join("\n");
 
+        const topicFact = extractedFacts.find(
+          (f) => f.key.toLowerCase() === "current_topic",
+        );
+        if (topicFact) currentTopic.value = topicFact.value;
+
         console.log(
-          `\nTHOUGHT:\n${thoughtText.trim()}\n` +
+          `\nTOPIC:\n${topicFact.trim()}\n` +
+            `\nTHOUGHT:\n${thoughtText.trim()}\n` +
             `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
             `\nTHEMES:\n${logThemes || "- none"}\n` +
             `\nGOALS:\n${logGoals || "- none"}`,
         );
-
-        const topicFact = extractedFacts.find(
-          (f) => f.key.toLowerCase() === "current_topic",
-        );
-        if (topicFact) currentTopic.value = topicFact.value;
 
         const modelId = await saveToDb(
           "model",
