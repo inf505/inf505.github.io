@@ -535,20 +535,7 @@ createApp({
       }
     };
 
-    const sendMessage = async () => {
-      if (!currentInput.value.trim()) return;
-
-      const userText = currentInput.value.trim();
-      if (!userText || isLoading.value) return;
-
-      const userId = await saveToDb("user", userText);
-      messages.value.push({ id: userId, role: "user", text: userText });
-
-      currentInput.value = "";
-      nextTick(() => {
-        if (inputArea.value) inputArea.value.style.height = "auto";
-      });
-
+    const triggerAIResponse = async () => {
       isLoading.value = true;
       scrollToBottom();
 
@@ -558,7 +545,7 @@ createApp({
           parts: [{ text: msg.text }],
         }));
 
-        // Add facts as context
+        // 1. Context Injection (Facts, Insights, Themes, Goals)
         if (facts.value.length > 0) {
           const factsString = facts.value
             .map((f) => `${f.key}: ${f.value}`)
@@ -575,16 +562,11 @@ createApp({
             .join("\n");
           contents.unshift({
             role: "user",
-            parts: [
-              {
-                text: `INSIGHTS:\n${reflectionsString}`,
-              },
-            ],
+            parts: [{ text: `INSIGHTS:\n${reflectionsString}` }],
           });
         }
 
         if (themes.value.length > 0) {
-          // Take the top 5 most frequent themes
           const themeContext = themes.value
             .slice(0, 5)
             .map((t) => t.name)
@@ -612,64 +594,54 @@ createApp({
         const payload = {
           contents,
           ...(finalSystemInstruction && {
-            systemInstruction: {
-              parts: [{ text: finalSystemInstruction }],
-            },
+            systemInstruction: { parts: [{ text: finalSystemInstruction }] },
           }),
-        };
-
-        // Add generationConfig with temperature and JSON response
-        // thinking MINIMAL or HIGH
-        payload.generationConfig = {
-          temperature: 0.9,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              thought: { type: "string" },
-              response: { type: "string" },
-              reflection: { type: "string" },
-              facts: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    key: { type: "string" },
-                    value: { type: "string" },
-                  },
-                  required: ["key", "value"],
-                },
-              },
-              themes: {
-                type: "array",
-                items: { type: "string" },
-              },
-              goals: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    status: {
-                      type: "string",
-                      enum: ["active", "completed", "paused"],
+          generationConfig: {
+            temperature: 0.9,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                thought: { type: "string" },
+                response: { type: "string" },
+                reflection: { type: "string" },
+                facts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      key: { type: "string" },
+                      value: { type: "string" },
                     },
+                    required: ["key", "value"],
                   },
-                  required: ["title", "status"],
+                },
+                themes: { type: "array", items: { type: "string" } },
+                goals: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      status: {
+                        type: "string",
+                        enum: ["active", "completed", "paused"],
+                      },
+                    },
+                    required: ["title", "status"],
+                  },
                 },
               },
+              required: [
+                "thought",
+                "response",
+                "reflection",
+                "facts",
+                "themes",
+                "goals",
+              ],
             },
-            required: [
-              "thought",
-              "response",
-              "reflection",
-              "facts",
-              "themes",
-              "goals",
-            ],
-          },
-          thinkingConfig: {
-            thinkingLevel: "MINIMAL",
+            thinkingConfig: { thinkingLevel: "MINIMAL" },
           },
         };
 
@@ -688,14 +660,6 @@ createApp({
 
         let responseText = "";
         let thoughtText = "";
-
-        // console.log(
-        //   "candidatesTokenCount: ",
-        //   data.usageMetadata.candidatesTokenCount,
-        // );
-        // console.log("promptTokenCount: ", data.usageMetadata.promptTokenCount);
-        //console.log("Token Count: ", data.usageMetadata.totalTokenCount);
-
         totalTokens.value =
           data.usageMetadata.totalTokenCount.toLocaleString("en-US");
 
@@ -705,7 +669,6 @@ createApp({
               thoughtText += (part.text || "") + "\n\n";
             } else if (part.text) {
               let text = part.text;
-              // Clean up any <think> tags embedded in the text
               text = text.replace(
                 /<think>([\s\S]*?)<\/think>/gi,
                 (m, inner) => {
@@ -718,9 +681,6 @@ createApp({
           }
         }
 
-        console.log(responseText);
-
-        // Try to parse as JSON and extract "response", "reflection", and "facts" fields
         let finalResponse = responseText.trim() || "*(No response text)*";
         let finalInsight = null;
         let extractedFacts = [];
@@ -728,44 +688,23 @@ createApp({
         let extractedGoals = [];
 
         try {
-          // Find the actual JSON boundaries in case the model added markdown fences or text
           const jsonStartIndex = finalResponse.indexOf("{");
           const jsonEndIndex = finalResponse.lastIndexOf("}");
-
           if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
             const jsonString = finalResponse.substring(
               jsonStartIndex,
               jsonEndIndex + 1,
             );
             const parsed = JSON.parse(jsonString);
-
-            if (parsed.thought) {
-              thoughtText = parsed.thought; // Grab the thought from the JSON!
-            }
-
-            if (parsed.response) {
-              finalResponse = cleanGlitch(parsed.response);
-            }
-
-            if (parsed.reflection) {
-              finalInsight = parsed.reflection;
-            }
-
-            if (parsed.facts && Array.isArray(parsed.facts)) {
-              extractedFacts = parsed.facts;
-            }
-
-            if (parsed.themes && Array.isArray(parsed.themes)) {
-              extractedThemes = parsed.themes;
-            }
-
-            if (parsed.goals && Array.isArray(parsed.goals)) {
-              extractedGoals = parsed.goals;
-            }
+            if (parsed.thought) thoughtText = parsed.thought;
+            if (parsed.response) finalResponse = cleanGlitch(parsed.response);
+            if (parsed.reflection) finalInsight = parsed.reflection;
+            if (parsed.facts) extractedFacts = parsed.facts;
+            if (parsed.themes) extractedThemes = parsed.themes;
+            if (parsed.goals) extractedGoals = parsed.goals;
           }
         } catch (e) {
-          console.error("JSON Parse error, showing raw response", e);
-          // If it fails, finalResponse remains the raw text for safety
+          console.error("JSON Parse error", e);
         }
 
         const pathFact = extractedFacts.find(
@@ -776,40 +715,29 @@ createApp({
         const topicFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "current_topic",
         );
-        if (topicFact) {
-          currentTopic.value = topicFact.value;
-        }
+        if (topicFact) currentTopic.value = topicFact.value;
 
-        const finalThought = thoughtText.trim();
+        const modelId = await saveToDb(
+          "model",
+          finalResponse,
+          thoughtText.trim(),
+        );
+        if (finalInsight) await saveReflection(modelId, finalInsight);
 
-        const modelId = await saveToDb("model", finalResponse, finalThought);
-
-        if (finalInsight) {
-          await saveReflection(modelId, finalInsight);
-        }
-
-        // Save any extracted facts
         for (const fact of extractedFacts) {
-          if (fact.key && fact.value) {
-            await upsertFact(fact.key, fact.value);
-          }
+          if (fact.key && fact.value) await upsertFact(fact.key, fact.value);
         }
-
-        for (const theme of extractedThemes) {
-          await upsertTheme(theme);
-        }
-
+        for (const theme of extractedThemes) await upsertTheme(theme);
         for (const goal of extractedGoals) {
-          if (goal.title && goal.status) {
+          if (goal.title && goal.status)
             await upsertGoal(goal.title, goal.status);
-          }
         }
 
         messages.value.push({
           id: modelId,
           role: "model",
           text: finalResponse,
-          thought: finalThought,
+          thought: thoughtText.trim(),
           path: currentPath,
         });
       } catch (error) {
@@ -821,8 +749,30 @@ createApp({
         scrollToBottom();
         nextTick(() => inputArea.value?.focus());
       }
-
       await updateCounts();
+    };
+
+    // This is what your "Send" button calls
+    const sendMessage = async () => {
+      const userText = currentInput.value.trim();
+      if (!userText || isLoading.value) return;
+
+      const userId = await saveToDb("user", userText);
+      messages.value.push({ id: userId, role: "user", text: userText });
+
+      currentInput.value = "";
+      nextTick(() => {
+        if (inputArea.value) inputArea.value.style.height = "auto";
+      });
+
+      await triggerAIResponse();
+    };
+
+    // This is what the new "Retry" button calls
+    const retryMessage = async (index) => {
+      if (isLoading.value) return;
+      await deleteMessage(index); // Remove the error/bad message
+      await triggerAIResponse(); // Try again
     };
 
     return {
@@ -830,7 +780,6 @@ createApp({
       currentTopic,
       selectedModel,
       isConfigured,
-      //saveSettings,
       renderMarkdown,
       messages,
       currentInput,
@@ -838,6 +787,7 @@ createApp({
       isSummarizing,
       messagesContainer,
       sendMessage,
+      retryMessage,
       inputArea,
       deleteMessage,
       systemPrompt,

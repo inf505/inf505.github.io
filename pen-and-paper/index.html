@@ -246,13 +246,27 @@
                             class="bubble"
                             :style="msg.path ? { border: '3px solid ' + getPathColor(msg.path) } : {}"
                         >
-                            <!-- Individual Delete Button -->
-                            <button
-                                class="delete-msg-btn"
-                                @click="deleteMessage(index)"
-                            >
-                                &times;
-                            </button>
+                            <!-- Action Buttons Container -->
+                            <div class="msg-actions">
+                                <!-- Retry Button (Only for the last model message) -->
+                                <button
+                                    v-if="msg.role === 'model' && index === messages.length - 1"
+                                    class="action-msg-btn retry-btn"
+                                    @click="retryMessage(index)"
+                                    title="Retry / Regenerate"
+                                >
+                                    ↻
+                                </button>
+
+                                <!-- Delete Button -->
+                                <button
+                                    class="action-msg-btn delete-btn"
+                                    @click="deleteMessage(index)"
+                                    title="Delete Message"
+                                >
+                                    &times;
+                                </button>
+                            </div>
 
                             <!-- Thought Process -->
                             <div v-if="msg.thought" class="thought-box">

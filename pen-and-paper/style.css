@@ -712,3 +712,55 @@ button.small-btn.summarize-btn:hover {
     background-color: rgba(255, 179, 0, 0.15); /* Subtle Amber background */
     color: #ffb300; /* The Amber color */
 }
+/* Message Action Buttons */
+.msg-actions {
+    position: absolute;
+    top: -12px;
+    display: none; /* Hidden unless parent bubble is hovered */
+    gap: 6px;
+    z-index: 10;
+}
+
+/* Show buttons on bubble hover */
+.bubble:hover .msg-actions {
+    display: flex;
+}
+
+.user .msg-actions {
+    left: -10px;
+}
+
+.model .msg-actions {
+    right: -10px;
+}
+
+.action-msg-btn {
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition:
+        transform 0.2s,
+        background 0.2s;
+}
+
+.action-msg-btn.delete-btn:hover {
+    background: #ff4444;
+    transform: scale(1.1);
+}
+
+.action-msg-btn.retry-btn:hover {
+    background: #42b883;
+    color: #121212;
+    transform: scale(1.1);
+}
