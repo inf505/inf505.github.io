@@ -696,6 +696,9 @@ createApp({
               jsonEndIndex + 1,
             );
             const parsed = JSON.parse(jsonString);
+
+            console.log(parsed);
+
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = cleanGlitch(parsed.response);
             if (parsed.reflection) finalInsight = parsed.reflection;
@@ -732,8 +735,6 @@ createApp({
           if (goal.title && goal.status)
             await upsertGoal(goal.title, goal.status);
         }
-
-        console.log(data);
 
         messages.value.push({
           id: modelId,
