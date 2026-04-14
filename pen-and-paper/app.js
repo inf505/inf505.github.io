@@ -185,11 +185,9 @@ createApp({
 
       // Load Themes
       try {
-        // We sort by count so the most important themes are at the top
-        const themesArray = await db.themes
-          .orderBy("count")
-          .reverse()
-          .toArray();
+        // Sort by most recently updated/added
+        const themesArray = await db.themes.toArray();
+        themesArray.sort((a, b) => b.timestamp - a.timestamp);
         themes.value = themesArray;
       } catch (err) {
         console.error("Dexie Themes Load Error:", err);
@@ -342,8 +340,10 @@ createApp({
       } else {
         await db.themes.add({ name, count: 1, timestamp: Date.now() });
       }
-      // Refresh the ref so it's always up to date
-      themes.value = await db.themes.orderBy("count").reverse().toArray();
+      // Refresh and sort by most recent
+      const themesArray = await db.themes.toArray();
+      themesArray.sort((a, b) => b.timestamp - a.timestamp);
+      themes.value = themesArray;
     };
 
     const getPathColor = (path) => {
