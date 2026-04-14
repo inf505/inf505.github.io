@@ -733,7 +733,7 @@ createApp({
             await upsertGoal(goal.title, goal.status);
         }
 
-        console.log(finalResponse);
+        console.log(data);
 
         messages.value.push({
           id: modelId,
