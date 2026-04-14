@@ -658,6 +658,8 @@ createApp({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
+        console.log(response);
+
         let responseText = "";
         let thoughtText = "";
         totalTokens.value =
@@ -696,8 +698,6 @@ createApp({
               jsonEndIndex + 1,
             );
             const parsed = JSON.parse(jsonString);
-
-            console.log(jsonString);
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = cleanGlitch(parsed.response);
