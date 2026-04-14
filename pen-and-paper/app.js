@@ -25,13 +25,7 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
 
 ### Example JSON
 {
-  "response": "That sounds like a great way to spend time together! Exercising with your son not only promotes physical health but is also a wonderful way to bond.",
-  "reflection": "User sharing a personal detail about their day and seems happy about exercising with their son.",
-  "facts": []
-}
-
-### Example with new facts
-{
+  "thought": "Let's see, how should I respond... ",
   "response": "Nice to meet you, Paul! I'm glad you're enjoying the new project.",
   "reflection": "User shared name and current project status.",
   "facts": [
@@ -39,7 +33,8 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
     {"key": "name", "value": "Paul"},
     {"key": "project", "value": "User started new project last week"},
     {"key": "current_topic", "value": "Paul's new project"}
-  ]
+  ],
+  "goals": []
 }
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
