@@ -729,9 +729,8 @@ createApp({
           .join("\n");
 
         console.log(
-          `DEBUG\n` +
-            `THOUGHT: ${thoughtText.trim()}\n` +
-            `\nREFLECTION: ${finalInsight}\n` +
+          `\nTHOUGHT:\n${thoughtText.trim()}\n` +
+            `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
             `\nTHEMES:\n${logThemes || "- none"}\n` +
             `\nGOALS:\n${logGoals || "- none"}`,
