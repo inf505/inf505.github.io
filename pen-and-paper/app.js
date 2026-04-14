@@ -266,12 +266,12 @@ createApp({
       showSettings.value = false;
     };
 
-    const saveSettings = () => {
-      if (!apiKey.value.trim() || !selectedModel.value.trim()) return;
-      localStorage.setItem("gemini_api_key", apiKey.value.trim());
-      localStorage.setItem("gemini_model", selectedModel.value.trim());
-      isConfigured.value = true;
-    };
+    // const saveSettings = () => {
+    //   if (!apiKey.value.trim() || !selectedModel.value.trim()) return;
+    //   localStorage.setItem("gemini_api_key", apiKey.value.trim());
+    //   localStorage.setItem("gemini_model", selectedModel.value.trim());
+    //   isConfigured.value = true;
+    // };
 
     const scrollToBottom = () => {
       // Wait 300ms for the mobile keyboard animation to finish sliding up
@@ -365,6 +365,33 @@ createApp({
         await db.goals.add({ title, status, timestamp: Date.now() });
       }
       await loadGoals();
+    };
+
+    const exportDatabase = async () => {
+      try {
+        const backup = {
+          chats: await db.chats.toArray(),
+          reflections: await db.reflections.toArray(),
+          facts: await db.facts.toArray(),
+          themes: await db.themes.toArray(),
+          goals: await db.goals.toArray(),
+        };
+
+        const dataStr = JSON.stringify(backup, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `pen_and_paper_backup_${new Date().toISOString().split("T")[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Export failed:", err);
+        alert("Failed to export database.");
+      }
     };
 
     const summarizeAndArchive = async () => {
@@ -795,7 +822,7 @@ createApp({
       currentTopic,
       selectedModel,
       isConfigured,
-      saveSettings,
+      //saveSettings,
       renderMarkdown,
       messages,
       currentInput,
@@ -821,7 +848,7 @@ createApp({
       totalTokens,
       scrollToBottom,
       getPathColor,
-      // NEW EXPORTS
+      exportDatabase,
       activeTab,
       goalTitle,
       goalStatus,

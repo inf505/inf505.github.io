@@ -119,6 +119,16 @@
                             ></textarea>
                         </div>
 
+                        <div class="settings-group">
+                            <label>Data Management:</label>
+                            <button
+                                class="small-btn summarize-btn"
+                                @click="exportDatabase"
+                            >
+                                💾 Export Database to JSON
+                            </button>
+                        </div>
+
                         <button
                             class="small-btn apply-btn"
                             @click="saveAllSettings"
