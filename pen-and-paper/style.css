@@ -287,7 +287,7 @@ button.small-btn.summarize-btn:hover {
     color: white;
 }
 
-/* System Prompt Styling */
+/* System Prompt & Settings Styling */
 .setup-container textarea {
     width: 100%;
     padding: 0.8rem;
@@ -343,7 +343,8 @@ button.small-btn.summarize-btn:hover {
 .settings-group {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .inline-group {
@@ -384,22 +385,78 @@ button.small-btn.summarize-btn:hover {
     background: #444;
 }
 
-/* Facts Panel */
+/* TABS STYLING */
+.tabs-header {
+    display: flex;
+    border-bottom: 1px solid #444;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-weight: normal;
+}
+
+.tab-btn:hover {
+    color: #ddd;
+    background: transparent;
+}
+
+.tab-btn.active {
+    color: #42b883;
+    border-bottom-color: #42b883;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.apply-btn {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+}
+
+/* Facts & Goals Panel */
 .facts-list {
     background: #1a1a1a;
     border: 1px solid #444;
     border-radius: 6px;
     padding: 0.5rem;
     margin-bottom: 0.5rem;
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
 }
 
 .fact-item {
-    padding: 0.3rem 0;
+    padding: 0.4rem 0;
     border-bottom: 1px solid #333;
     font-size: 0.85rem;
     color: #ccc;
+    display: flex;
+    align-items: center;
 }
 
 .fact-item:last-child {
@@ -410,11 +467,13 @@ button.small-btn.summarize-btn:hover {
     color: #666;
     font-style: italic;
     font-size: 0.85rem;
+    padding: 0.5rem 0;
 }
 
 .fact-inputs {
     display: flex;
     gap: 0.5rem;
+    align-items: stretch;
 }
 
 .fact-inputs input {
@@ -425,10 +484,24 @@ button.small-btn.summarize-btn:hover {
     background: #1a1a1a;
     color: white;
     font-size: 0.85rem;
+    min-width: 0; /* Prevents flex items from overflowing */
+}
+
+.fact-inputs select.status-select {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    font-size: 0.85rem;
+    min-height: auto;
 }
 
 .fact-inputs button {
     padding: 0.5rem 1rem;
+    flex-shrink: 0;
 }
 
 /* Message Content Markdown Styling */

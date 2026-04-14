@@ -49,93 +49,170 @@
 
                 <!-- SETTINGS PANEL -->
                 <div v-if="showSettings" class="settings-panel">
-                    <div class="settings-group inline-group">
-                        <div class="model-selector">
-                            <label>Gemma 4 Model:</label>
-                            <div class="radio-group">
-                                <label>
-                                    <input
-                                        type="radio"
-                                        value="gemma-4-31b-it"
-                                        v-model="selectedModel"
-                                    />
-                                    31B Dense
-                                </label>
-                                <label title="Currently unavailable">
-                                    <input
-                                        type="radio"
-                                        value="gemma-4-26b-a4b-it"
-                                        v-model="selectedModel"
-                                        disabled
-                                    />
-                                    26B MOE
-                                </label>
+                    <!-- TABS NAVIGATION -->
+                    <div class="tabs-header">
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'settings' }]"
+                            @click="activeTab = 'settings'"
+                        >
+                            Settings
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'facts' }]"
+                            @click="activeTab = 'facts'"
+                        >
+                            Facts
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'goals' }]"
+                            @click="activeTab = 'goals'"
+                        >
+                            Goals
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: SETTINGS -->
+                    <div v-if="activeTab === 'settings'" class="tab-content">
+                        <div class="settings-group inline-group">
+                            <div class="model-selector">
+                                <label>Gemma 4 Model:</label>
+                                <div class="radio-group">
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            value="gemma-4-31b-it"
+                                            v-model="selectedModel"
+                                        />
+                                        31B Dense
+                                    </label>
+                                    <label title="Currently unavailable">
+                                        <input
+                                            type="radio"
+                                            value="gemma-4-26b-a4b-it"
+                                            v-model="selectedModel"
+                                            disabled
+                                        />
+                                        26B MOE
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="settings-group">
-                        <label>API Key:</label>
-                        <input
-                            type="password"
-                            v-model="apiKey"
-                            placeholder="AIzaSy..."
-                        />
-                    </div>
+                        <div class="settings-group">
+                            <label>API Key:</label>
+                            <input
+                                type="password"
+                                v-model="apiKey"
+                                placeholder="AIzaSy..."
+                            />
+                        </div>
 
-                    <div class="settings-group">
-                        <label
-                            >Personality / Tone (Customize how the assistant
-                            speaks)</label
-                        >
-                        <textarea
-                            v-model="systemPrompt"
-                            rows="4"
-                            placeholder="You are a helpful assistant..."
-                        ></textarea>
-                    </div>
-
-                    <div class="settings-group">
-                        <label>Facts:</label>
-                        <div class="facts-list">
-                            <div
-                                v-for="fact in facts"
-                                :key="fact.id"
-                                class="fact-item"
+                        <div class="settings-group">
+                            <label
+                                >Personality / Tone (Customize how the assistant
+                                speaks)</label
                             >
-                                <span class="fact-text"
-                                    >{{ fact.key }}: {{ fact.value }}</span
+                            <textarea
+                                v-model="systemPrompt"
+                                rows="4"
+                                placeholder="You are a helpful assistant..."
+                            ></textarea>
+                        </div>
+
+                        <button
+                            class="small-btn apply-btn"
+                            @click="saveAllSettings"
+                        >
+                            Apply Settings
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: FACTS -->
+                    <div v-if="activeTab === 'facts'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Facts Database:</label>
+                            <div class="facts-list">
+                                <div
+                                    v-for="fact in facts"
+                                    :key="fact.id"
+                                    class="fact-item"
                                 >
-                                <button
-                                    class="fact-delete-btn"
-                                    @click="deleteFact(fact.id)"
-                                    title="Delete fact"
-                                >
-                                    &times;
+                                    <span class="fact-text"
+                                        >{{ fact.key }}: {{ fact.value }}</span
+                                    >
+                                    <button
+                                        class="fact-delete-btn"
+                                        @click="deleteFact(fact.id)"
+                                        title="Delete fact"
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                <div v-if="facts.length === 0" class="no-facts">
+                                    No facts stored
+                                </div>
+                            </div>
+                            <div class="fact-inputs">
+                                <input
+                                    v-model="factKey"
+                                    placeholder="Key (e.g. name)"
+                                />
+                                <input
+                                    v-model="factValue"
+                                    placeholder="Value (e.g. Paul)"
+                                />
+                                <button class="small-btn" @click="addFact">
+                                    Add
                                 </button>
                             </div>
-                            <div v-if="facts.length === 0" class="no-facts">
-                                No facts stored
-                            </div>
-                        </div>
-                        <div class="fact-inputs">
-                            <input
-                                v-model="factKey"
-                                placeholder="Key (e.g. name)"
-                            />
-                            <input
-                                v-model="factValue"
-                                placeholder="Value (e.g. Paul)"
-                            />
-                            <button class="small-btn" @click="addFact">
-                                Add
-                            </button>
                         </div>
                     </div>
 
-                    <button class="small-btn" @click="saveAllSettings">
-                        Apply
-                    </button>
+                    <!-- TAB CONTENT: GOALS -->
+                    <div v-if="activeTab === 'goals'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Active & Past Goals:</label>
+                            <div class="facts-list">
+                                <div
+                                    v-for="goal in goals"
+                                    :key="goal.id"
+                                    class="fact-item"
+                                >
+                                    <span class="fact-text"
+                                        >[{{ goal.status.toUpperCase() }}] {{
+                                        goal.title }}</span
+                                    >
+                                    <button
+                                        class="fact-delete-btn"
+                                        @click="deleteGoal(goal.id)"
+                                        title="Delete goal"
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                <div v-if="goals.length === 0" class="no-facts">
+                                    No goals stored
+                                </div>
+                            </div>
+                            <div class="fact-inputs">
+                                <input
+                                    v-model="goalTitle"
+                                    placeholder="Goal title"
+                                />
+                                <select
+                                    v-model="goalStatus"
+                                    class="status-select"
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                                <button class="small-btn" @click="addGoal">
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SCROLLING MESSAGES -->

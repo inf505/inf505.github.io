@@ -61,6 +61,12 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
+
+    // NEW UI STATE VARIABLES
+    const activeTab = ref("settings");
+    const goalTitle = ref("");
+    const goalStatus = ref("active");
+
     const reflections = ref([]);
     const facts = ref([]);
     const goals = ref([]);
@@ -238,6 +244,14 @@ createApp({
 
     const loadGoals = async () => {
       goals.value = await db.goals.orderBy("timestamp").reverse().toArray();
+    };
+
+    const addGoal = () => {
+      if (goalTitle.value.trim() && goalStatus.value) {
+        upsertGoal(goalTitle.value.trim(), goalStatus.value);
+        goalTitle.value = "";
+        goalStatus.value = "active"; // reset to default
+      }
     };
 
     const deleteGoal = async (id) => {
@@ -807,6 +821,13 @@ createApp({
       totalTokens,
       scrollToBottom,
       getPathColor,
+      // NEW EXPORTS
+      activeTab,
+      goalTitle,
+      goalStatus,
+      goals,
+      addGoal,
+      deleteGoal,
     };
   },
 }).mount("#app");
