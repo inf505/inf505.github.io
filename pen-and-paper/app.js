@@ -708,34 +708,37 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
-        // --- PRO LOGGING START ---
-        console.group("🤖 AI Extraction Results");
+        const compactFacts =
+          extractedFacts.map((f) => `${f.key}:${f.value}`).join(" · ") ||
+          "none";
+        const compactGoals =
+          extractedGoals.map((g) => `${g.title}(${g.status})`).join(" · ") ||
+          "none";
 
         console.log(
-          "%c💭 THOUGHT",
-          "color: #aaa; font-weight: bold;",
-          thoughtText.trim(),
-        );
-        console.log(
-          "%c📝 REFLECTION",
+          `%c🤖 AI %c| %cPATH: %c${currentPath || "??"} %c| %cTHEMES: %c${extractedThemes.join(", ") || "none"}\n` +
+            `%cTHOUGHT: %c${thoughtText.trim()}\n` +
+            `%cREFLECT: %c${finalInsight}\n` +
+            `%cFACTS:   %c${compactFacts}\n` +
+            `%cGOALS:   %c${compactGoals}`,
+          // Header Styles
           "color: #42b883; font-weight: bold;",
-          finalInsight,
+          "color: #444;",
+          "color: #aaa;",
+          "color: #fff; font-weight: bold;",
+          "color: #444;",
+          "color: #aaa;",
+          "color: #eee;",
+          // Body Styles (Alternate Labels and Values)
+          "color: #888;",
+          "color: #ccc;", // Thought
+          "color: #888;",
+          "color: #ccc;", // Reflect
+          "color: #888;",
+          "color: #42b883;", // Facts (Greenish)
+          "color: #888;",
+          "color: #ffb300;", // Goals (Amber)
         );
-
-        console.log("%c📊 FACTS", "color: #2196F3; font-weight: bold;");
-        console.table(extractedFacts);
-
-        console.log(
-          "%c🏷️ THEMES",
-          "color: #FF9800; font-weight: bold;",
-          extractedThemes.join(", "),
-        );
-
-        console.log("%c🎯 GOALS", "color: #E91E63; font-weight: bold;");
-        console.table(extractedGoals);
-
-        console.groupEnd();
-        // --- PRO LOGGING END ---
 
         const pathFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "path",
