@@ -708,6 +708,14 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
+        console.group("🤖 AI Extraction Results");
+        console.log("💭 Thought:", thoughtText.trim());
+        console.log("📝 Reflection (Internal):", finalInsight);
+        console.log("📊 Facts:", extractedFacts);
+        console.log("🏷️ Themes:", extractedThemes);
+        console.log("🎯 Goals:", extractedGoals);
+        console.groupEnd();
+
         const pathFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "path",
         );
@@ -717,14 +725,6 @@ createApp({
           (f) => f.key.toLowerCase() === "current_topic",
         );
         if (topicFact) currentTopic.value = topicFact.value;
-
-        if (true) {
-          console.log("Thought: ".thoughtText);
-          console.log("Reflection: ".finalInsight);
-          console.log("Facts: ".extractedFacts);
-          console.log("Themes: ".extractedThemes);
-          console.log("Goals: ".extractedGoals);
-        }
 
         const modelId = await saveToDb(
           "model",
