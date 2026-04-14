@@ -715,6 +715,11 @@ createApp({
           extractedGoals.map((g) => `${g.title}(${g.status})`).join(" · ") ||
           "none";
 
+        const pathFact = extractedFacts.find(
+          (f) => f.key.toLowerCase() === "path",
+        );
+        const currentPath = pathFact ? pathFact.value : null;
+
         console.log(
           `%c🤖 AI %c| %cPATH: %c${currentPath || "??"} %c| %cTHEMES: %c${extractedThemes.join(", ") || "none"}\n` +
             `%cTHOUGHT: %c${thoughtText.trim()}\n` +
@@ -739,11 +744,6 @@ createApp({
           "color: #888;",
           "color: #ffb300;", // Goals (Amber)
         );
-
-        const pathFact = extractedFacts.find(
-          (f) => f.key.toLowerCase() === "path",
-        );
-        const currentPath = pathFact ? pathFact.value : null;
 
         const topicFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "current_topic",
