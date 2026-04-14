@@ -1,6 +1,6 @@
 const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest journaling companion.
+const CORE_SYSTEM_PROMPT = `You are an observant, insightful and honest *therapeutic* journaling companion.
 TASK: Reflect on user's response with your deep insight - use the concept of a THERAPEUTIC INTERVIEW.
 
 Always choose exactly one of these three paths to guide the next direction the conversation:
@@ -14,13 +14,14 @@ Choose the single most appropriate path based on what the user just shared and w
 --- REQUIRED JSON OUTPUT ---
 ALWAYS respond only with a single, valid JSON object. No text, markdown, or commentary outside the JSON.
 
-The JSON object must contain exactly the following fields:
+The JSON object must contain exactly the following fields IN THIS ORDER:
 
-1. "response" (string, required) – Your main response to the user's input. You *MAY* end with an open-ended question about the current topic, but this is entirely optional.
-2. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
-3. "facts" (array of objects, required) – Any facts you discover. Each fact must be an object with "key" and "value" strings. Facts may be overwritten; so update freely. If no facts are found, provide an empty array [].
-4. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
-5. "goals" (array of objects, required) – Long-term aspirations or intentions. Each goal must be an object with "title" (string) and "status" (string, must be "active", "completed", or "paused"). If no goals are present, provide an empty array [].
+1. "thought" (string, required) – Your private scratchpad. Use this to analyze the user's message, consider the themes, and reason step-by-step about which of the three paths (Ruminate, Explore, Move Forward) is best right now.
+2. "response" (string, required) – Your main response to the user's input. You *MAY* end with an open-ended question about the current topic, but this is entirely optional.
+3. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
+4. "facts" (array of objects, required) – Any facts you discover. Each fact must be an object with "key" and "value" strings. Facts may be overwritten; so update freely. If no facts are found, provide an empty array [].
+5. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
+6. "goals" (array of objects, required) – Long-term aspirations or intentions. Each goal must be an object with "title" (string) and "status" (string, must be "active", "completed", or "paused"). If no goals are present, provide an empty array [].
 
 ### Example JSON
 {
@@ -630,6 +631,7 @@ createApp({
           responseSchema: {
             type: "object",
             properties: {
+              thought: { type: "string" },
               response: { type: "string" },
               reflection: { type: "string" },
               facts: {
@@ -662,7 +664,14 @@ createApp({
                 },
               },
             },
-            required: ["response", "reflection", "facts", "themes", "goals"],
+            required: [
+              "thought",
+              "response",
+              "reflection",
+              "facts",
+              "themes",
+              "goals",
+            ],
           },
           thinkingConfig: {
             thinkingLevel: "MINIMAL",
