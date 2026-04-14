@@ -720,29 +720,21 @@ createApp({
         );
         const currentPath = pathFact ? pathFact.value : null;
 
+        const logFacts = extractedFacts
+          .map((f) => `- ${f.key}: ${f.value}`)
+          .join("\n");
+        const logThemes = extractedThemes.map((t) => `- ${t}`).join("\n");
+        const logGoals = extractedGoals
+          .map((g) => `- ${g.title} (${g.status})`)
+          .join("\n");
+
         console.log(
-          `%c🤖 AI %c| %cPATH: %c${currentPath || "??"} %c| %cTHEMES: %c${extractedThemes.join(", ") || "none"}\n` +
-            `%cTHOUGHT: %c${thoughtText.trim()}\n` +
-            `%cREFLECT: %c${finalInsight}\n` +
-            `%cFACTS:   %c${compactFacts}\n` +
-            `%cGOALS:   %c${compactGoals}`,
-          // Header Styles
-          "color: #42b883; font-weight: bold;",
-          "color: #444;",
-          "color: #aaa;",
-          "color: #fff; font-weight: bold;",
-          "color: #444;",
-          "color: #aaa;",
-          "color: #eee;",
-          // Body Styles (Alternate Labels and Values)
-          "color: #888;",
-          "color: #ccc;", // Thought
-          "color: #888;",
-          "color: #ccc;", // Reflect
-          "color: #888;",
-          "color: #42b883;", // Facts (Greenish)
-          "color: #888;",
-          "color: #ffb300;", // Goals (Amber)
+          `AI EXTRACTION\n` +
+            `THOUGHT: ${thoughtText.trim()}\n` +
+            `REFLECTION: ${finalInsight}\n` +
+            `FACTS:\n${logFacts || "- none"}\n` +
+            `THEMES:\n${logThemes || "- none"}\n` +
+            `GOALS:\n${logGoals || "- none"}`,
         );
 
         const topicFact = extractedFacts.find(
