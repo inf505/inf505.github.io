@@ -69,6 +69,19 @@
                         >
                             Goals
                         </button>
+                        <!-- NEW TABS -->
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'reflections' }]"
+                            @click="activeTab = 'reflections'"
+                        >
+                            Reflections
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'themes' }]"
+                            @click="activeTab = 'themes'"
+                        >
+                            Themes
+                        </button>
                     </div>
 
                     <!-- TAB CONTENT: SETTINGS -->
@@ -220,6 +233,71 @@
                                 <button class="small-btn" @click="addGoal">
                                     Add
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: REFLECTIONS -->
+                <div v-if="activeTab === 'reflections'" class="tab-content">
+                    <div class="settings-group">
+                        <label>Past Insights & Reflections:</label>
+                        <div class="facts-list">
+                            <div
+                                v-for="ref in reflections"
+                                :key="ref.id"
+                                class="fact-item"
+                            >
+                                <span class="fact-text">{{ ref.insight }}</span>
+                                <button
+                                    class="fact-delete-btn"
+                                    @click="deleteReflection(ref.id)"
+                                    title="Delete reflection"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            <div
+                                v-if="reflections.length === 0"
+                                class="no-facts"
+                            >
+                                No reflections stored
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: THEMES -->
+                <div v-if="activeTab === 'themes'" class="tab-content">
+                    <div class="settings-group">
+                        <label>Life Themes:</label>
+                        <div class="facts-list">
+                            <div
+                                v-for="theme in themes"
+                                :key="theme.id"
+                                class="fact-item"
+                            >
+                                <span class="fact-text">
+                                    {{ theme.name }}
+                                    <span
+                                        style="
+                                            color: #666;
+                                            font-size: 0.8em;
+                                            margin-left: 6px;
+                                        "
+                                        >(Seen {{ theme.count }}x)</span
+                                    >
+                                </span>
+                                <button
+                                    class="fact-delete-btn"
+                                    @click="deleteTheme(theme.id)"
+                                    title="Delete theme"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            <div v-if="themes.length === 0" class="no-facts">
+                                No themes stored
                             </div>
                         </div>
                     </div>

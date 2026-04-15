@@ -53,7 +53,6 @@ createApp({
   setup() {
     const apiKey = ref("");
     const selectedModel = ref("gemma-4-31b-it");
-    //gemma-4-26b-a4b-it (doesn't work anymore), gemma-4-31b-it
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
@@ -253,6 +252,19 @@ createApp({
       await loadGoals();
     };
 
+    const deleteReflection = async (id) => {
+      await db.reflections.delete(id);
+      reflections.value = await db.reflections.orderBy("timestamp").toArray();
+    };
+
+    const deleteTheme = async (id) => {
+      await db.themes.delete(id);
+      // Refresh and sort by most recent
+      const themesArray = await db.themes.toArray();
+      themesArray.sort((a, b) => b.timestamp - a.timestamp);
+      themes.value = themesArray;
+    };
+
     const saveAllSettings = () => {
       if (apiKey.value.trim())
         localStorage.setItem("gemini_api_key", apiKey.value.trim());
@@ -261,13 +273,6 @@ createApp({
       localStorage.setItem("gemini_system_prompt", systemPrompt.value);
       showSettings.value = false;
     };
-
-    // const saveSettings = () => {
-    //   if (!apiKey.value.trim() || !selectedModel.value.trim()) return;
-    //   localStorage.setItem("gemini_api_key", apiKey.value.trim());
-    //   localStorage.setItem("gemini_model", selectedModel.value.trim());
-    //   isConfigured.value = true;
-    // };
 
     const scrollToBottom = () => {
       // Wait 300ms for the mobile keyboard animation to finish sliding up
@@ -838,6 +843,8 @@ createApp({
       goals,
       addGoal,
       deleteGoal,
+      deleteReflection,
+      deleteTheme,
     };
   },
 }).mount("#app");
