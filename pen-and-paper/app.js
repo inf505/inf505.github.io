@@ -414,7 +414,7 @@ createApp({
     const summarizeAndArchive = async () => {
       if (
         !confirm(
-          "Summarize conversation and archive? This will clear all messages.",
+          "Summarize conversation, clean up facts, and archive? This will clear all messages.",
         )
       ) {
         return;
@@ -440,90 +440,126 @@ createApp({
             .join("\n");
         }
 
+        let factsContent = "CURRENT FACTS DATABASE:\n";
+        if (facts.value.length > 0) {
+          factsContent += facts.value
+            .map((f) => `- ${f.key}: ${f.value}`)
+            .join("\n");
+        } else {
+          factsContent += "No facts currently stored.";
+        }
+
         const payload = {
           contents: [
             {
               role: "user",
               parts: [
                 {
-                  text: `Provide a comprehensive and detailed summary of this conversation and reflections.
-  The goal is to compress the dialogue into a dense narrative without losing
-  any specific information.
+                  text: `You have two tasks.
 
-  Ensure you retain:
-  - Names and roles of all people mentioned.
-  - Specific technical details or project statuses.
-  - Contextual details (like living arrangements or specific events).
+    TASK 1: Provide a comprehensive and detailed narrative summary of the CONVERSATION and REFLECTIONS. Compress the dialogue into a dense narrative retaining specific information, names, and contexts.
 
-  Return the result strictly as a JSON object with a single key "summary".
+    TASK 2: Review the CURRENT FACTS DATABASE. Act as a database curator.
+    - Merge and deduplicate overlapping facts (e.g., if there are three facts about work stress, combine them into one concise fact).
+    - Purge "ephemeral" facts that only mattered for this specific conversation (e.g., "current_topic", "going to the store").
+    - Retain core, long-term facts (traits, relationships, ongoing conditions).
+    Return the cleaned, optimized list of facts.
 
-  CONVERSATION AND REFLECTIONS:
-  ${summaryContent}`,
+    ${summaryContent}
+
+    ${factsContent}`,
                 },
               ],
             },
           ],
           generationConfig: {
-            temperature: 0.3,
+            temperature: 0.2, // Low temp for analytical tasks
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
               properties: {
                 summary: { type: "string" },
+                curated_facts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      key: { type: "string" },
+                      value: { type: "string" },
+                    },
+                    required: ["key", "value"],
+                  },
+                },
               },
-              required: ["summary"],
+              required: ["summary", "curated_facts"],
             },
           },
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-        });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || "API Error");
-
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 3; // Initial try + 2 retries
         let summaryText = "Conversation summary unavailable";
+        let newFacts = [];
 
-        if (data.candidates && data.candidates[0].content.parts) {
-          const rawText = data.candidates[0].content.parts[0].text;
-
+        // RETRY LOOP
+        while (attempts < maxAttempts && !success) {
           try {
-            const jsonStartIndex = rawText.indexOf("{");
-            const jsonEndIndex = rawText.lastIndexOf("}");
+            attempts++;
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey.value,
+              },
+              body: JSON.stringify(payload),
+            });
 
-            if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-              const jsonString = rawText.substring(
-                jsonStartIndex,
-                jsonEndIndex + 1,
-              );
-              const parsed = JSON.parse(jsonString);
-              if (parsed.summary) summaryText = parsed.summary;
+            const data = await response.json();
+            if (!response.ok)
+              throw new Error(data.error?.message || "API Error");
+
+            if (data.candidates && data.candidates[0].content.parts) {
+              const rawText = data.candidates[0].content.parts[0].text;
+
+              const jsonStartIndex = rawText.indexOf("{");
+              const jsonEndIndex = rawText.lastIndexOf("}");
+
+              if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                const jsonString = rawText.substring(
+                  jsonStartIndex,
+                  jsonEndIndex + 1,
+                );
+                const parsed = JSON.parse(jsonString);
+
+                if (parsed.summary) summaryText = parsed.summary;
+                if (parsed.curated_facts) newFacts = parsed.curated_facts;
+
+                success = true; // Mark as successful to break the loop
+              } else {
+                throw new Error("Invalid JSON structure returned by AI.");
+              }
             } else {
-              // If no JSON found, fall back to the raw text cleaned of quotes
-              summaryText = rawText.replace(/^["'`]*|["'`]*$/g, "").trim();
+              throw new Error("No candidates returned from API.");
             }
           } catch (e) {
-            console.error("JSON Parse error, falling back to raw text", e);
-            summaryText = rawText.trim();
+            console.warn(`Summarize attempt ${attempts} failed:`, e.message);
+            if (attempts >= maxAttempts) {
+              throw new Error(
+                `Failed after ${maxAttempts} attempts. Last error: ${e.message}`,
+              );
+            }
+            // Optional: Wait 1 second before retrying to give the network a breath
+            await new Promise((res) => setTimeout(res, 1000));
           }
         }
 
-        // 4. TARGETED DELETE: Delete everything EXCEPT 'system' messages
-        // This assumes you have an index on 'role'. If not, use:
-        // await db.chats.filter(m => m.role !== 'system').delete();
-        await db.chats
-          .where("role")
-          .anyOf(["user", "model", "assistant"])
-          .delete();
+        // --- ONLY PROCEED WITH DELETIONS IF API WAS SUCCESSFUL ---
 
-        // 5. Save the new summary
+        // 1. Wipe old chats and save the new summary
+        await db.chats.clear();
         const summaryId = await db.chats.add({
           role: "system",
           text: summaryText,
@@ -531,7 +567,14 @@ createApp({
           timestamp: Date.now(),
         });
 
-        // 6. UPDATE UI STATE: Keep existing system messages and add the new one
+        // 2. Wipe old facts and save the new curated facts
+        await db.facts.clear();
+        const timestamp = Date.now();
+        for (const fact of newFacts) {
+          await db.facts.add({ key: fact.key, value: fact.value, timestamp });
+        }
+
+        // 3. UPDATE UI STATE
         messages.value = [
           {
             id: summaryId,
@@ -540,13 +583,12 @@ createApp({
             thought: "",
           },
         ];
+        facts.value = await db.facts.orderBy("timestamp").toArray();
 
-        // await db.reflections.clear();
-        // reflections.value = [];
         scrollToBottom();
       } catch (error) {
         alert(`❌ Error: ${error.message}`);
-        console.error("Summarize error:", error);
+        console.error("Summarize & Archive error:", error);
       } finally {
         setTimeout(() => {
           isSummarizing.value = false;
