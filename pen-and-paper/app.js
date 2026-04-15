@@ -985,6 +985,7 @@ createApp({
       deleteGoal,
       deleteReflection,
       deleteTheme,
+      curateReflections,
     };
   },
 }).mount("#app");
