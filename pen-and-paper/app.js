@@ -751,12 +751,11 @@ createApp({
         const topicFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "current_topic",
         );
+
         if (topicFact) {
           currentTopic.value = topicFact.value;
-        } else {
-          // does this ever happen?
-          console.log("no current_topic");
         }
+
         console.log(
           `\nTOPIC:\n${currentTopic}\n` +
             `\nTHOUGHT:\n${thoughtText.trim()}\n` +
