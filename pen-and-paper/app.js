@@ -752,7 +752,7 @@ createApp({
           (f) => f.key.toLowerCase() === "current_topic",
         );
 
-        if (topicFact) {
+        if (topicFact && topicFact.value) {
           currentTopic.value = topicFact.value;
         }
 
