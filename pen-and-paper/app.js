@@ -149,10 +149,26 @@ createApp({
       // Load History from Dexie
       try {
         const history = await db.chats.orderBy("timestamp").toArray();
-        messages.value = history;
+
+        // Find the index of the last (most recent) 'system' message
+        const lastSystemIndex = history
+          .map((m) => m.role)
+          .lastIndexOf("system");
+
+        if (lastSystemIndex !== -1) {
+          // Filter out any system messages that came BEFORE the last one
+          messages.value = history.filter((msg, index) => {
+            if (msg.role === "system" && index !== lastSystemIndex)
+              return false;
+            return true;
+          });
+        } else {
+          messages.value = history;
+        }
+
         scrollToBottom();
       } catch (err) {
-        console.error("Dexie Facts Load Error:", err);
+        console.error("Dexie Chats Load Error:", err);
       }
 
       // Load Reflections
@@ -517,7 +533,6 @@ createApp({
 
         // 6. UPDATE UI STATE: Keep existing system messages and add the new one
         messages.value = [
-          ...messages.value.filter((msg) => msg.role === "system"),
           {
             id: summaryId,
             role: "system",
