@@ -411,6 +411,86 @@ createApp({
       }
     };
 
+    const curateReflections = async () => {
+      if (
+        !confirm(
+          "Curate reflections? This will merge and refine your insights.",
+        )
+      )
+        return;
+
+      isSummarizing.value = true;
+
+      try {
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a therapeutic assistant and editor.
+                  Review the current list of REFLECTIONS.
+                  - Merge redundant or similar entries into a single, more comprehensive insight.
+                  - Preserve the emotional nuance and personal growth captured in each.
+                  - Do not delete anything that represents a distinct, unique realization.
+                  - Return an array of the refined insights.
+
+                  REFLECTIONS: ${JSON.stringify(reflections.value.map((r) => r.insight))}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                curated_reflections: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+              },
+              required: ["curated_reflections"],
+            },
+          },
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        // Using the same retry logic/fetch pattern as before
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || "API Error");
+
+        const newInsights = JSON.parse(
+          data.candidates[0].content.parts[0].text,
+        ).curated_reflections;
+
+        // Perform the update
+        await db.reflections.clear();
+        for (const insight of newInsights) {
+          await db.reflections.add({ insight, timestamp: Date.now() });
+        }
+
+        reflections.value = await db.reflections.orderBy("timestamp").toArray();
+        alert("Reflections curated successfully.");
+      } catch (err) {
+        console.error(err);
+        alert("Cleanup failed: " + err.message);
+      } finally {
+        isSummarizing.value = false;
+      }
+    };
+
     const summarizeAndArchive = async () => {
       if (
         !confirm(

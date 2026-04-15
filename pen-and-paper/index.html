@@ -242,6 +242,16 @@
                 <div v-if="activeTab === 'reflections'" class="tab-content">
                     <div class="settings-group">
                         <label>Past Insights & Reflections:</label>
+                        <!-- The New Cleanup Button -->
+                        <button
+                            class="small-btn summarize-btn"
+                            @click="curateReflections"
+                            :disabled="isSummarizing || reflections.length < 2"
+                            style="margin-bottom: 10px"
+                        >
+                            ✨ Consolidate Reflections
+                        </button>
+
                         <div class="facts-list">
                             <div
                                 v-for="ref in reflections"
