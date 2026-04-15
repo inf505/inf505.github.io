@@ -758,7 +758,7 @@ createApp({
           console.log("no current_topic");
         }
         console.log(
-          `\nTOPIC:\n${currentTopic.value}\n` +
+          `\nTOPIC:\n${currentTopic}\n` +
             `\nTHOUGHT:\n${thoughtText.trim()}\n` +
             `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
