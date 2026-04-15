@@ -879,7 +879,7 @@ createApp({
         }
 
         console.log(
-          `\nTOPIC:\n${currentTopic}\n` +
+          `\nTOPIC:\n${currentTopic.value}\n` +
             `\nTHOUGHT:\n${thoughtText.trim()}\n` +
             `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
