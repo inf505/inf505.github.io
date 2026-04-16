@@ -470,24 +470,59 @@ createApp({
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
 
-        // Using the same retry logic/fetch pattern as before
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-        });
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+        let newInsights = [];
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || "API Error");
+        // RETRY LOOP
+        while (attempts < maxAttempts && !success) {
+          try {
+            attempts++;
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey.value,
+              },
+              body: JSON.stringify(payload),
+            });
 
-        const newInsights = JSON.parse(
-          data.candidates[0].content.parts[0].text,
-        ).curated_reflections;
+            const data = await response.json();
+            if (!response.ok)
+              throw new Error(data.error?.message || "API Error");
 
-        // Perform the update
+            if (data.candidates && data.candidates[0].content.parts) {
+              const rawText = data.candidates[0].content.parts[0].text;
+              const jsonStartIndex = rawText.indexOf("{");
+              const jsonEndIndex = rawText.lastIndexOf("}");
+
+              if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                const jsonString = rawText.substring(
+                  jsonStartIndex,
+                  jsonEndIndex + 1,
+                );
+                const parsed = JSON.parse(jsonString);
+                if (parsed.curated_reflections)
+                  newInsights = parsed.curated_reflections;
+                success = true;
+              } else {
+                throw new Error("Invalid JSON structure returned by AI.");
+              }
+            } else {
+              throw new Error("No candidates returned from API.");
+            }
+          } catch (e) {
+            console.warn(`Curate attempt ${attempts} failed:`, e.message);
+            if (attempts >= maxAttempts)
+              throw new Error(
+                `Failed after ${maxAttempts} attempts. Last error: ${e.message}`,
+              );
+            await new Promise((res) => setTimeout(res, 1000));
+          }
+        }
+
+        // Perform the DB update ONLY if successful
         await db.reflections.clear();
         for (const insight of newInsights) {
           await db.reflections.add({ insight, timestamp: Date.now() });
