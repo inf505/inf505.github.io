@@ -236,47 +236,48 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- TAB CONTENT: REFLECTIONS -->
-                <div v-if="activeTab === 'reflections'" class="tab-content">
-                    <div class="settings-group">
-                        <label>Past Insights & Reflections:</label>
-                        <!-- The New Cleanup Button -->
-                        <button
-                            class="small-btn summarize-btn"
-                            @click="curateReflections"
-                            :disabled="isSummarizing || reflections.length < 2"
-                            style="margin-bottom: 10px"
-                        >
-                            ✨ Consolidate Reflections
-                        </button>
-
-                        <div class="facts-list">
-                            <div
-                                v-for="ref in reflections"
-                                :key="ref.id"
-                                class="fact-item"
+                    <!-- TAB CONTENT: REFLECTIONS -->
+                    <div v-if="activeTab === 'reflections'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Past Insights & Reflections:</label>
+                            <!-- The New Cleanup Button -->
+                            <button
+                                class="small-btn summarize-btn"
+                                @click="curateReflections"
+                                :disabled="isSummarizing || reflections.length < 2"
+                                style="margin-bottom: 10px"
                             >
-                                <span class="fact-text">{{ ref.insight }}</span>
-                                <button
-                                    class="fact-delete-btn"
-                                    @click="deleteReflection(ref.id)"
-                                    title="Delete reflection"
+                                ✨ Consolidate Reflections
+                            </button>
+
+                            <div class="facts-list">
+                                <div
+                                    v-for="ref in reflections"
+                                    :key="ref.id"
+                                    class="fact-item"
                                 >
-                                    &times;
-                                </button>
-                            </div>
-                            <div
-                                v-if="reflections.length === 0"
-                                class="no-facts"
-                            >
-                                No reflections stored
+                                    <span class="fact-text"
+                                        >{{ ref.insight }}</span
+                                    >
+                                    <button
+                                        class="fact-delete-btn"
+                                        @click="deleteReflection(ref.id)"
+                                        title="Delete reflection"
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                <div
+                                    v-if="reflections.length === 0"
+                                    class="no-facts"
+                                >
+                                    No reflections stored
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <!-- TAB CONTENT: THEMES -->
                 <div v-if="activeTab === 'themes'" class="tab-content">
                     <div class="settings-group">
