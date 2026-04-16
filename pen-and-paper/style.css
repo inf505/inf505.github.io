@@ -683,16 +683,6 @@ button.small-btn.summarize-btn:hover {
     letter-spacing: 0.5px;
 }
 
-.topic-text {
-    font-size: 0.85rem;
-    color: #42b883; /* Green to match the theme */
-    font-weight: 500;
-    max-width: 99%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .topic-container {
     flex: 1;
     min-width: 0;
