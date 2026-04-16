@@ -39,10 +39,7 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
   "goals": []
 }
 
-CURRENT DATE: ${new Date().toLocaleDateString()}.
-You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline.
-
-Use the relative timestamps provided in the context to hold me accountable to the passage of time and the actual frequency of my progress.
+TIME: You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline. Use the relative timestamps provided in the context to hold me accountable to the passage of time and the actual frequency of my progress.
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
@@ -749,9 +746,15 @@ createApp({
         }
 
         const userTone = systemPrompt.value.trim();
+        const todayDate = new Date().toLocaleDateString();
+
         const finalSystemInstruction = userTone
-          ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-          : CORE_SYSTEM_PROMPT;
+          ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
+          : `CURRENT DATE: ${todayDate}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
+
+        // const finalSystemInstruction = userTone
+        //   ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
+        //   : CORE_SYSTEM_PROMPT;
 
         const payload = {
           contents,
