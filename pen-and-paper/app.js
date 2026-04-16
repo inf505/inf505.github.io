@@ -42,6 +42,8 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
 CURRENT DATE: ${new Date().toLocaleDateString()}.
 You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline.
 
+Use the relative timestamps provided in the context to hold me accountable to the passage of time and the actual frequency of my progress.
+
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
 
@@ -53,6 +55,14 @@ db.version(4).stores({
   themes: "++id, name, count, last_seen",
   goals: "++id, title, status, timestamp",
 });
+
+const formatRelativeTime = (timestamp) => {
+  const diff = Date.now() - timestamp;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  return `${days} days ago`;
+};
 
 createApp({
   setup() {
@@ -112,14 +122,6 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
-
-    const formatRelativeTime = (timestamp) => {
-      const diff = Date.now() - timestamp;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      if (days === 0) return "today";
-      if (days === 1) return "yesterday";
-      return `${days} days ago`;
-    };
 
     const cleanGlitch = (text) => {
       if (!text) return "";
@@ -709,7 +711,9 @@ createApp({
 
         if (reflections.value.length > 0) {
           const reflectionsString = reflections.value
-            .map((ref) => `- ${ref.insight}`)
+            .map(
+              (ref) => `[${formatRelativeTime(ref.timestamp)}] ${ref.insight}`,
+            )
             .join("\n");
           contents.unshift({
             role: "user",
@@ -718,9 +722,13 @@ createApp({
         }
 
         if (themes.value.length > 0) {
+          // Themes don't have a single timestamp, but we can use the last_seen if available
           const themeContext = themes.value
             .slice(0, 5)
-            .map((t) => t.name)
+            .map(
+              (t) =>
+                `${t.name} (last seen: ${formatRelativeTime(t.last_seen || t.timestamp)})`,
+            )
             .join(", ");
           contents.unshift({
             role: "system",
@@ -730,10 +738,13 @@ createApp({
 
         const activeGoals = goals.value.filter((g) => g.status === "active");
         if (activeGoals.length > 0) {
-          const goalsString = activeGoals.map((g) => g.title).join(", ");
+          // Assuming you want to know how long the goal has been active
+          const goalsString = activeGoals
+            .map((g) => `${g.title} (set: ${formatRelativeTime(g.timestamp)})`)
+            .join(", ");
           contents.unshift({
             role: "system",
-            parts: [{ text: `ACTIVE GOALS: ${goalsString}` }],
+            parts: [{ text: `ACTIVE GOALS:\n${goalsString}` }],
           });
         }
 
