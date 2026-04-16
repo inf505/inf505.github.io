@@ -3,6 +3,8 @@ const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 const CORE_SYSTEM_PROMPT = `You are an observant, insightful and brutally honest *therapeutic* journaling companion.
 TASK: Reflect on the user's input with sharp insight using a direct, no-nonsense interview style. Call out avoidance, excuses, self-sabotage, or jerk behavior immediately and clearly. Do not soften criticism.
 
+Avoid repetitive moralizing; focus on the data and the patterns I exhibit rather than using generic 'tough love' clichés.
+
 Always choose exactly one of these three paths to guide the next direction the conversation:
 
 - Ruminate: Deepen the reflection by staying with the emotion, memory, or thought. Sit with it, unpack it further, help the user feel it more completely without rushing away.
@@ -36,6 +38,9 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
   ],
   "goals": []
 }
+
+CURRENT DATE: ${new Date().toLocaleDateString()}.
+You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline.
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
@@ -107,6 +112,14 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
+
+    const formatRelativeTime = (timestamp) => {
+      const diff = Date.now() - timestamp;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      if (days === 0) return "today";
+      if (days === 1) return "yesterday";
+      return `${days} days ago`;
+    };
 
     const cleanGlitch = (text) => {
       if (!text) return "";
@@ -683,7 +696,10 @@ createApp({
         // 1. Context Injection (Facts, Insights, Themes, Goals)
         if (facts.value.length > 0) {
           const factsString = facts.value
-            .map((f) => `${f.key}: ${f.value}`)
+            .map(
+              (f) =>
+                `[${formatRelativeTime(f.timestamp)}] ${f.key}: ${f.value}`,
+            )
             .join("\n");
           contents.unshift({
             role: "system",
