@@ -687,7 +687,7 @@ button.small-btn.summarize-btn:hover {
     font-size: 0.85rem;
     color: #42b883; /* Green to match the theme */
     font-weight: 500;
-    max-width: 400px;
+    max-width: 99%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
