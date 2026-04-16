@@ -513,13 +513,6 @@ createApp({
             .join("\n\n");
         }
 
-        if (reflections.value.length > 0) {
-          summaryContent += "\n\nREFLECTIONS:\n";
-          summaryContent += reflections.value
-            .map((ref) => `- ${ref.insight}`)
-            .join("\n");
-        }
-
         let factsContent = "CURRENT FACTS DATABASE:\n";
         if (facts.value.length > 0) {
           factsContent += facts.value
@@ -553,7 +546,7 @@ createApp({
             },
           ],
           generationConfig: {
-            temperature: 0.2, // Low temp for analytical tasks
+            temperature: 0.3, // Low temp for analytical tasks
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
