@@ -506,10 +506,10 @@ createApp({
                 await db.seeds.add({ value: s });
               }
               await rollTheDice();
-              console.log(
-                "✅ Seed pool refreshed. Current seed:",
-                currentSeed.value,
-              );
+              // console.log(
+              //   "✅ Seed pool refreshed. Current seed:",
+              //   currentSeed.value,
+              // );
             }
           } else {
             throw new Error("Could not find JSON object in AI response.");
