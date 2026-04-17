@@ -895,14 +895,6 @@ createApp({
           ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
           : `CURRENT DATE: ${todayDate}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
 
-        // const finalSystemInstruction = userTone
-        //   ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-        //   : `CURRENT DATE: ${todayDate}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
-
-        // const finalSystemInstruction = userTone
-        //   ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-        //   : CORE_SYSTEM_PROMPT;
-
         const payload = {
           contents,
           ...(finalSystemInstruction && {
