@@ -132,7 +132,7 @@ createApp({
         const randomIndex = Math.floor(Math.random() * count);
         const allSeeds = await db.seeds.toArray();
         currentSeed.value = allSeeds[randomIndex].value;
-        console.log("🎲 Current Session Seed:", currentSeed.value);
+        //console.log("🎲 Current Session Seed:", currentSeed.value);
       }
     };
 
