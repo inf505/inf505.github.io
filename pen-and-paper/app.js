@@ -475,6 +475,9 @@ createApp({
 
         const data = await response.json();
         const rawText = data.candidates[0].content.parts[0].text;
+
+        console.log(rawText);
+
         const newSeeds = JSON.parse(rawText);
 
         if (Array.isArray(newSeeds)) {
