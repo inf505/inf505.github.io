@@ -46,12 +46,14 @@ CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON stri
 `;
 
 const db = new Dexie("GeminiLocalDB");
-db.version(4).stores({
+db.version(5).stores({
+  // Increment version to 5
   chats: "++id, role, text, thought, timestamp",
   reflections: "++id, chatId, insight, timestamp",
   facts: "++id, key, value, timestamp",
   themes: "++id, name, count, last_seen",
   goals: "++id, title, status, timestamp",
+  seeds: "++id, value", // New table for random seeds
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -90,6 +92,8 @@ createApp({
     const isSummarizing = ref(false);
     const messagesContainer = ref(null);
     const inputArea = ref(null);
+    const currentSeed = ref("");
+    const isRefreshingSeeds = ref(false);
 
     const renderMarkdown = (text) => marked.parse(text);
     const updateCounts = async () => {
@@ -120,6 +124,17 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
+
+    // Pick a random seed from the DB pool
+    const rollTheDice = async () => {
+      const count = await db.seeds.count();
+      if (count > 0) {
+        const randomIndex = Math.floor(Math.random() * count);
+        const allSeeds = await db.seeds.toArray();
+        currentSeed.value = allSeeds[randomIndex].value;
+        console.log("🎲 Current Session Seed:", currentSeed.value);
+      }
+    };
 
     const cleanGlitch = (text) => {
       if (!text) return "";
@@ -233,6 +248,9 @@ createApp({
       await loadGoals();
 
       await updateCounts();
+
+      await rollTheDice();
+
       // --- NEW UNIFIED KEYBOARD RESIZE LOGIC ---
       if (window.visualViewport) {
         const handleResize = () => {
@@ -421,6 +439,55 @@ createApp({
       } catch (err) {
         console.error("Export failed:", err);
         alert("Failed to export database.");
+      }
+    };
+
+    // Fetch new seeds from Gemma and replace the table content
+    const refreshSeeds = async () => {
+      isRefreshingSeeds.value = true;
+      try {
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: "Generate a JSON array of 20 highly specific abstract concepts or physical phenomena (e.g., 'Tidal forces', 'Stained glass', 'Corrosion', 'Entropy', 'Capillary action', 'Mycelial networks') to be used as hidden atmospheric metaphors. Output ONLY the JSON array.",
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.9,
+            responseMimeType: "application/json",
+          },
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        const rawText = data.candidates[0].content.parts[0].text;
+        const newSeeds = JSON.parse(rawText);
+
+        if (Array.isArray(newSeeds)) {
+          await db.seeds.clear(); // Wipe the old ones
+          for (const s of newSeeds) {
+            await db.seeds.add({ value: s });
+          }
+          await rollTheDice(); // Pick one immediately
+        }
+      } catch (err) {
+        console.error("Seed Refresh Error:", err);
+      } finally {
+        isRefreshingSeeds.value = false;
       }
     };
 
@@ -784,9 +851,18 @@ createApp({
         const userTone = systemPrompt.value.trim();
         const todayDate = new Date().toLocaleDateString();
 
+        // The "Hidden Character" injection
+        const seedFlavor = currentSeed.value
+          ? `\n\nATMOSPHERIC UNDERTONE: Subtly weave themes of "${currentSeed.value}" into your metaphors and word choice. Remain a therapeutic assistant, but let this concept color your perspective. Do not mention it by name.`
+          : "";
+
         const finalSystemInstruction = userTone
-          ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-          : `CURRENT DATE: ${todayDate}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
+          ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
+          : `CURRENT DATE: ${todayDate}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
+
+        // const finalSystemInstruction = userTone
+        //   ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
+        //   : `CURRENT DATE: ${todayDate}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
 
         // const finalSystemInstruction = userTone
         //   ? `TONE/STYLE SETTINGS: ${userTone}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
@@ -1045,6 +1121,10 @@ createApp({
       deleteReflection,
       deleteTheme,
       curateReflections,
+      currentSeed,
+      refreshSeeds,
+      isRefreshingSeeds,
+      rollTheDice,
     };
   },
 }).mount("#app");
