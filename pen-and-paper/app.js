@@ -503,12 +503,15 @@ createApp({
             if (parsed.seeds && Array.isArray(parsed.seeds)) {
               await db.seeds.clear();
 
-              // Filter out any empty or whitespace-only strings
-              const validSeeds = parsed.seeds
-                .map((s) => s.trim())
-                .filter((s) => s.length > 0);
+              // 1. Trim and remove empty strings
+              // 2. Use a Set to remove duplicates within this specific response
+              const uniqueSeeds = [
+                ...new Set(
+                  parsed.seeds.map((s) => s.trim()).filter((s) => s.length > 0),
+                ),
+              ];
 
-              for (const s of validSeeds) {
+              for (const s of uniqueSeeds) {
                 await db.seeds.add({ value: s });
               }
 
