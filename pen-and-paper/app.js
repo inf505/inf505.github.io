@@ -40,7 +40,7 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
   "goals": []
 }
 
-TIME: You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline. Use the relative timestamps provided in the context to hold me accountable to the passage of time and the actual frequency of my progress.
+TIME: You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns of stagnation, cycles of progress, or lapses in self-discipline. Use the relative timestamps provided in the context to hold me accountable to the passage of time and the actual frequency of my progress. DO NOT bother making a fact for "current_date"
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
