@@ -889,9 +889,12 @@ createApp({
         const userTone = systemPrompt.value.trim();
         const todayDate = new Date().toLocaleDateString();
 
-        // The "Hidden Character" injection
         const seedFlavor = currentSeed.value
-          ? `\n\nATMOSPHERIC UNDERTONE: Subtly weave themes of "${currentSeed.value}" into your metaphors and word choice. Remain a therapeutic assistant, but let this concept color your perspective. Do not mention it by name.`
+          ? `\n\nHIDDEN ATMOSPHERIC SEED: "${currentSeed.value}".
+               Use this concept as a structural metaphor for your insight.
+               If the seed is "Viscosity," let your tone be heavy and focused on resistance.
+               If it is "Bioluminescence," focus on finding light in deep darkness.
+               Do not name the seed, but let it haunt your word choice.`
           : "";
 
         const finalSystemInstruction = userTone
