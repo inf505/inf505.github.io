@@ -19,8 +19,8 @@ ALWAYS respond only with a single, valid JSON object. No text, markdown, or comm
 
 The JSON object must contain exactly the following fields IN THIS ORDER:
 
-1. "thought" (string, required) – Your condensed internal logic. In 2 or 3 brief sentences, quickly identify the user's core emotion/need and justify your chosen path.
-2. "response" (string, required) – Your main response to the user's input. You *MAY* end with an open-ended question about the current topic, but this is entirely optional.
+1. "thought" (string, required) – Your internal logic. In 1 or 2 sentences, identify the user's core emotion/need and justify your chosen path.
+2. "response" (string, required) – Your main response to the user's input. Use as many words as you need. You MAY end with an open-ended question about the current topic, but this is entirely optional.
 3. "reflection" (string or null, required) – A deep insight about the message. These are YOUR internal notes about the user; keep them as brief if possible. (Using shorthand is allowed)
 4. "facts" (array of objects, required) – Any facts you discover. Each fact must be an object with "key" and "value" strings. Facts may be overwritten; so update freely. If no facts are found, provide an empty array [].
 5. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
