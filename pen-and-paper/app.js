@@ -502,14 +502,17 @@ createApp({
 
             if (parsed.seeds && Array.isArray(parsed.seeds)) {
               await db.seeds.clear();
-              for (const s of parsed.seeds) {
+
+              // Filter out any empty or whitespace-only strings
+              const validSeeds = parsed.seeds
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+
+              for (const s of validSeeds) {
                 await db.seeds.add({ value: s });
               }
+
               await rollTheDice();
-              // console.log(
-              //   "✅ Seed pool refreshed. Current seed:",
-              //   currentSeed.value,
-              // );
             }
           } else {
             throw new Error("Could not find JSON object in AI response.");
