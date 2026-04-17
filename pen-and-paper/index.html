@@ -112,6 +112,27 @@
                         </div>-->
 
                         <div class="settings-group">
+                            <label>API Key:</label>
+                            <input
+                                type="password"
+                                v-model="apiKey"
+                                placeholder="AIzaSy..."
+                            />
+                        </div>
+
+                        <div class="settings-group">
+                            <label
+                                >Personality / Tone (Customize how the assistant
+                                speaks)</label
+                            >
+                            <textarea
+                                v-model="systemPrompt"
+                                rows="4"
+                                placeholder="You are a helpful assistant..."
+                            ></textarea>
+                        </div>
+
+                        <div class="settings-group">
                             <label
                                 >Atmospheric Randomness (Current: {{ currentSeed
                                 || 'None' }})</label
@@ -140,27 +161,6 @@
                                 Refreshing generates 20 new concepts via AI.
                                 Shuffle picks one from your current database.
                             </small>
-                        </div>
-
-                        <div class="settings-group">
-                            <label>API Key:</label>
-                            <input
-                                type="password"
-                                v-model="apiKey"
-                                placeholder="AIzaSy..."
-                            />
-                        </div>
-
-                        <div class="settings-group">
-                            <label
-                                >Personality / Tone (Customize how the assistant
-                                speaks)</label
-                            >
-                            <textarea
-                                v-model="systemPrompt"
-                                rows="4"
-                                placeholder="You are a helpful assistant..."
-                            ></textarea>
                         </div>
 
                         <div class="settings-group">
