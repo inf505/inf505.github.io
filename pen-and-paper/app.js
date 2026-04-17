@@ -442,7 +442,6 @@ createApp({
       }
     };
 
-    // Fetch new seeds from Gemma and replace the table content
     const refreshSeeds = async () => {
       isRefreshingSeeds.value = true;
 
@@ -453,13 +452,13 @@ createApp({
               role: "user",
               parts: [
                 {
-                  text: "Generate 20 highly specific abstract concepts, physical phenomena, or evocative sensory metaphors (e.g., 'Tidal forces', 'Stained glass', 'Corrosion', 'Entropy', 'Capillary action', 'Mycelial networks') to be used as hidden atmospheric metaphors in a therapeutic context.",
+                  text: "Generate a list of 20 highly specific abstract concepts, physical phenomena, or sensory metaphors (e.g., 'Tidal forces', 'Stained glass', 'Corrosion', 'Entropy', 'Capillary action', 'Mycelial networks') to be used as hidden atmospheric metaphors. Output only the JSON.",
                 },
               ],
             },
           ],
           generationConfig: {
-            temperature: 0.95, // Higher temp for more variety in randomness
+            temperature: 0.95,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -488,18 +487,32 @@ createApp({
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
         if (data.candidates && data.candidates[0].content.parts) {
-          const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+          const rawText = data.candidates[0].content.parts[0].text;
 
-          if (parsed.seeds && Array.isArray(parsed.seeds)) {
-            // Clear old seeds and save new ones to Dexie
-            await db.seeds.clear();
-            for (const s of parsed.seeds) {
-              await db.seeds.add({ value: s });
+          // USE SUBSTRING EXTRACTION (Matches your other logic)
+          const jsonStartIndex = rawText.indexOf("{");
+          const jsonEndIndex = rawText.lastIndexOf("}");
+
+          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+            const jsonString = rawText.substring(
+              jsonStartIndex,
+              jsonEndIndex + 1,
+            );
+            const parsed = JSON.parse(jsonString);
+
+            if (parsed.seeds && Array.isArray(parsed.seeds)) {
+              await db.seeds.clear();
+              for (const s of parsed.seeds) {
+                await db.seeds.add({ value: s });
+              }
+              await rollTheDice();
+              console.log(
+                "✅ Seed pool refreshed. Current seed:",
+                currentSeed.value,
+              );
             }
-
-            // Immediately pick one for the current session
-            await rollTheDice();
-            console.log("✅ Seed pool refreshed and new seed selected.");
+          } else {
+            throw new Error("Could not find JSON object in AI response.");
           }
         }
       } catch (err) {
