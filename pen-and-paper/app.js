@@ -834,6 +834,7 @@ createApp({
         }));
 
         // 1. Context Injection (Facts, Insights, Themes, Goals)
+        // 1. Context Injection (Facts, Insights, Themes, Goals)
         if (facts.value.length > 0) {
           const factsString = facts.value
             .map(
@@ -899,12 +900,13 @@ createApp({
 
         // 2. Assemble the instruction so the Seed is the "Final Word"
         const finalSystemInstruction = `
-        ${CORE_SYSTEM_PROMPT}
+                ${CORE_SYSTEM_PROMPT}
+                ${dynamicContext}
 
-        CURRENT DATE: ${todayDate}
-        ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-        ${seedSection}
-        `.trim();
+                CURRENT DATE: ${todayDate}
+                ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+                ${seedSection}
+                `.trim();
 
         const payload = {
           contents,
