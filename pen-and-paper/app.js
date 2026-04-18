@@ -897,9 +897,18 @@ createApp({
                Do not name the seed, but let it haunt your word choice.`
           : "";
 
-        const finalSystemInstruction = userTone
-          ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-          : `CURRENT DATE: ${todayDate}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
+        // const finalSystemInstruction = userTone
+        //   ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
+        //   : `CURRENT DATE: ${todayDate}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
+
+        const finalSystemInstruction = `
+          ${userTone ? "TONE SETTINGS: " + userTone : ""}
+          CORE RULES: ${CORE_SYSTEM_PROMPT}
+          CURRENT DATE: ${todayDate}
+
+          CURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
+          Don't be literal, but ensure your "response" field leans heavily into metaphors of ${currentSeed.value}.
+        `;
 
         const payload = {
           contents,
