@@ -146,7 +146,7 @@ createApp({
 
           // 2. DELETE the "a a-priori" hallucination completely
           // This catches "a a-priori", "a a priori", "A a-priori", etc.
-          .replace(/\ba\s+a-?priori\b/gi, "")
+          .replace(/\ba\s+a-?priori\b/gi, " ")
 
           .replace(/\b\s+a-?priori\b/gi, "pre-existing")
           // 3. COLLAPSE the "stutter" if it just says "a a" elsewhere
