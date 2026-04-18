@@ -833,8 +833,9 @@ createApp({
           parts: [{ text: msg.text }],
         }));
 
-        // 1. Context Injection (Facts, Insights, Themes, Goals)
-        // 1. Context Injection (Facts, Insights, Themes, Goals)
+        // 1. Context Injection: Build a dynamic context string
+        let dynamicContext = "";
+
         if (facts.value.length > 0) {
           const factsString = facts.value
             .map(
@@ -842,10 +843,7 @@ createApp({
                 `[${formatRelativeTime(f.timestamp)}] ${f.key}: ${f.value}`,
             )
             .join("\n");
-          contents.unshift({
-            role: "system",
-            parts: [{ text: `FACTS:\n${factsString}` }],
-          });
+          dynamicContext += `\n\nFACTS:\n${factsString}`;
         }
 
         if (reflections.value.length > 0) {
@@ -854,14 +852,10 @@ createApp({
               (ref) => `[${formatRelativeTime(ref.timestamp)}] ${ref.insight}`,
             )
             .join("\n");
-          contents.unshift({
-            role: "user",
-            parts: [{ text: `INSIGHTS:\n${reflectionsString}` }],
-          });
+          dynamicContext += `\n\nPAST INSIGHTS:\n${reflectionsString}`;
         }
 
         if (themes.value.length > 0) {
-          // Themes don't have a single timestamp, but we can use the last_seen if available
           const themeContext = themes.value
             .slice(0, 5)
             .map(
@@ -869,22 +863,15 @@ createApp({
                 `${t.name} (last seen: ${formatRelativeTime(t.last_seen || t.timestamp)})`,
             )
             .join(", ");
-          contents.unshift({
-            role: "system",
-            parts: [{ text: `RECURRING LIFE THEMES: ${themeContext}` }],
-          });
+          dynamicContext += `\n\nRECURRING LIFE THEMES:\n${themeContext}`;
         }
 
         const activeGoals = goals.value.filter((g) => g.status === "active");
         if (activeGoals.length > 0) {
-          // Assuming you want to know how long the goal has been active
           const goalsString = activeGoals
             .map((g) => `${g.title} (set: ${formatRelativeTime(g.timestamp)})`)
             .join(", ");
-          contents.unshift({
-            role: "system",
-            parts: [{ text: `ACTIVE GOALS:\n${goalsString}` }],
-          });
+          dynamicContext += `\n\nACTIVE GOALS:\n${goalsString}`;
         }
 
         const userTone = systemPrompt.value.trim();
