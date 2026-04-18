@@ -956,9 +956,10 @@ createApp({
                 "goals",
               ],
             },
-            thinkingConfig: { thinkingLevel: "MINIMAL" },
           },
         };
+
+        //thinkingConfig: { thinkingLevel: "MINIMAL" },
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
         const response = await fetch(url, {
