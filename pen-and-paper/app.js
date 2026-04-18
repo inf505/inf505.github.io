@@ -889,26 +889,22 @@ createApp({
         const userTone = systemPrompt.value.trim();
         const todayDate = new Date().toLocaleDateString();
 
-        const seedFlavor = currentSeed.value
-          ? `\n\nHIDDEN ATMOSPHERIC SEED: "${currentSeed.value}".
-               Use this concept as a structural metaphor for your insight.
-               If the seed is "Viscosity," let your tone be heavy and focused on resistance.
-               If it is "Bioluminescence," focus on finding light in deep darkness.
-               Do not name the seed, but let it haunt your word choice.`
+        // 1. Create the Seed Section with more assertive language
+        const seedSection = currentSeed.value
+          ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
+               You are required to use this concept as a structural metaphor for your "response".
+               Do not mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
+               pacing, and imagery lean heavily into the physical properties of this concept.`
           : "";
 
-        // const finalSystemInstruction = userTone
-        //   ? `CURRENT DATE: ${todayDate}\n\nTONE/STYLE SETTINGS: ${userTone}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`
-        //   : `CURRENT DATE: ${todayDate}${seedFlavor}\n\nCORE RULES: ${CORE_SYSTEM_PROMPT}`;
-
+        // 2. Assemble the instruction so the Seed is the "Final Word"
         const finalSystemInstruction = `
-          ${userTone ? "TONE SETTINGS: " + userTone : ""}
-          CORE RULES: ${CORE_SYSTEM_PROMPT}
-          CURRENT DATE: ${todayDate}
+        ${CORE_SYSTEM_PROMPT}
 
-          CURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
-          Don't be literal, but ensure your "response" field leans heavily into metaphors of ${currentSeed.value}.
-        `;
+        CURRENT DATE: ${todayDate}
+        ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+        ${seedSection}
+        `.trim();
 
         const payload = {
           contents,
