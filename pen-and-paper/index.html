@@ -86,30 +86,24 @@
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
-                        <!--<div class="settings-group inline-group">
-                            <div class="model-selector">
-                                <label>Gemma 4 Model:</label>
-                                <div class="radio-group">
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            value="gemma-4-31b-it"
-                                            v-model="selectedModel"
-                                        />
-                                        31B Dense
-                                    </label>
-                                    <label title="Currently unavailable">
-                                        <input
-                                            type="radio"
-                                            value="gemma-4-26b-a4b-it"
-                                            v-model="selectedModel"
-                                            disabled
-                                        />
-                                        26B MOE
-                                    </label>
-                                </div>
-                            </div>
-                        </div>-->
+                        <!-- NEW TEXT INPUT FOR MODEL -->
+                        <div class="settings-group">
+                            <label>Model Name:</label>
+                            <input
+                                type="text"
+                                v-model="selectedModel"
+                                placeholder="e.g., gemma-4-31b-it"
+                            />
+                            <small
+                                style="
+                                    color: #666;
+                                    margin-top: 4px;
+                                    display: block;
+                                "
+                            >
+                                Enter a valid Gemini API model ID.
+                            </small>
+                        </div>
 
                         <div class="settings-group">
                             <label>API Key:</label>
