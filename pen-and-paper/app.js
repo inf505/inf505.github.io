@@ -249,7 +249,8 @@ createApp({
 
       await updateCounts();
 
-      await rollTheDice();
+      // Don't want refresh to cause this to re roll
+      //await rollTheDice();
 
       // --- NEW UNIFIED KEYBOARD RESIZE LOGIC ---
       if (window.visualViewport) {
