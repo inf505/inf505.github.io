@@ -124,7 +124,6 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
-
     // Pick a random seed from the DB pool
     const rollTheDice = async () => {
       const count = await db.seeds.count();
@@ -132,7 +131,9 @@ createApp({
         const randomIndex = Math.floor(Math.random() * count);
         const allSeeds = await db.seeds.toArray();
         currentSeed.value = allSeeds[randomIndex].value;
-        //console.log("🎲 Current Session Seed:", currentSeed.value);
+
+        // NEW: Save the active seed so it persists across page reloads
+        localStorage.setItem("gemini_current_seed", currentSeed.value);
       }
     };
 
@@ -173,6 +174,10 @@ createApp({
 
       const storedSystemPrompt = localStorage.getItem("gemini_system_prompt");
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
+
+      // NEW: Load the saved seed
+      const storedSeed = localStorage.getItem("gemini_current_seed");
+      if (storedSeed !== null) currentSeed.value = storedSeed;
 
       // Load History from Dexie
       try {
