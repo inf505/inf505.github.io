@@ -962,7 +962,7 @@ createApp({
 
         // NEW: Setup AbortController for a 45-second timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45,000 ms = 45 seconds
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 45,000 ms = 45 seconds
 
         const response = await fetch(url, {
           method: "POST",
