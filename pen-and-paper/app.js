@@ -882,7 +882,7 @@ createApp({
           ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
                You are required to use this concept as a structural metaphor for your "response".
                Do not mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
-               pacing, and imagery lean heavily into the physical properties of this concept.`
+               pacing, and imagery lean heavily into the "flavor" of this concept.`
           : "";
 
         // 2. Assemble the instruction so the Seed is the "Final Word"
