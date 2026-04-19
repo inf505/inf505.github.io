@@ -959,6 +959,11 @@ createApp({
         //thinkingConfig: { thinkingLevel: "MINIMAL" },
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        // NEW: Setup AbortController for a 45-second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45,000 ms = 45 seconds
+
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -966,7 +971,10 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
+          signal: controller.signal, // NEW: Attach the abort signal to the fetch request
         });
+
+        clearTimeout(timeoutId); // NEW: Clear the timeout if the request finishes successfully
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
@@ -1082,7 +1090,13 @@ createApp({
           path: currentPath,
         });
       } catch (error) {
-        const errorMsg = `❌ Error: ${error.message}`;
+        // NEW: Catch the specific abort error
+        let errorMsg = `❌ Error: ${error.message}`;
+        if (error.name === "AbortError") {
+          errorMsg =
+            "⏳ Request timed out. The AI took too long to respond. Please hit the retry button.";
+        }
+
         const errId = await saveToDb("model", errorMsg);
         messages.value.push({ id: errId, role: "model", text: errorMsg });
       } finally {
