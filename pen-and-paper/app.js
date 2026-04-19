@@ -96,6 +96,7 @@ createApp({
     const isRefreshingSeeds = ref(false);
 
     const renderMarkdown = (text) => marked.parse(text);
+
     const updateCounts = async () => {
       try {
         // 1. Fetch counts and data in parallel
@@ -124,6 +125,7 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
+
     // Pick a random seed from the DB pool
     const rollTheDice = async () => {
       const count = await db.seeds.count();
@@ -147,11 +149,11 @@ createApp({
 
           // 2. DELETE the "a a-priori" hallucination completely
           // This catches "a a-priori", "a a priori", "A a-priori", etc.
-          .replace(/\ba\s+a-?priori\b/gi, " ")
+          //.replace(/\ba\s+a-?priori\b/gi, " ")
 
-          .replace(/\b\s+a-?priori\b/gi, "pre-existing")
+          //.replace(/\b\s+a-?priori\b/gi, " pre-existing ")
           // 3. COLLAPSE the "stutter" if it just says "a a" elsewhere
-          .replace(/\b\sa\s+a\s\b/gi, "a")
+          //.replace(/\b\sa\s+a\s\b/gi, "a")
 
           // 4. CLEAN UP resulting double spaces or triple spaces
           .replace(/\s\s+/g, " ")
