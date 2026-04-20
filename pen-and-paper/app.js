@@ -889,7 +889,7 @@ createApp({
         const seedSection = currentSeed.value
           ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
                You are required to use this concept as a structural metaphor for your "response".
-               Do not mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
+               DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
                pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
           : "";
 
