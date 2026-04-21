@@ -69,6 +69,7 @@
                         >
                             Goals
                         </button>
+                        <!-- NEW TABS -->
                         <button
                             :class="['tab-btn', { active: activeTab === 'reflections' }]"
                             @click="activeTab = 'reflections'"
@@ -81,16 +82,11 @@
                         >
                             Themes
                         </button>
-                        <button
-                            :class="['tab-btn', { active: activeTab === 'foods' }]"
-                            @click="activeTab = 'foods'"
-                        >
-                            Foods
-                        </button>
                     </div>
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
+                        <!-- NEW TEXT INPUT FOR MODEL -->
                         <div class="settings-group">
                             <label>Model Name:</label>
                             <input
@@ -98,7 +94,13 @@
                                 v-model="selectedModel"
                                 placeholder="e.g., gemma-4-31b-it"
                             />
-                            <small>
+                            <small
+                                style="
+                                    color: #666;
+                                    margin-top: 4px;
+                                    display: block;
+                                "
+                            >
                                 Enter a valid Gemini API model ID.
                                 (gemma-4-31b-it, gemini-2.5-flash,
                                 gemini-2.5-flash-lite, gemini-3-flash-preview,
@@ -116,7 +118,10 @@
                         </div>
 
                         <div class="settings-group">
-                            <label>User Prompt Area</label>
+                            <label
+                                >Personality / Tone (Customize how the assistant
+                                speaks)</label
+                            >
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
@@ -144,11 +149,15 @@
                                 <button
                                     class="small-btn"
                                     @click="rollTheDice"
-                                    title="Shuffle"
+                                    title="Pick a different seed from the current pool"
                                 >
-                                    🎲
+                                    🎲 Shuffle
                                 </button>
                             </div>
+                            <small style="color: #666; margin-top: 4px">
+                                Refreshing generates 20 new concepts via AI.
+                                Shuffle picks one from your current database.
+                            </small>
                         </div>
 
                         <div class="settings-group">
@@ -185,6 +194,7 @@
                                     <button
                                         class="fact-delete-btn"
                                         @click="deleteFact(fact.id)"
+                                        title="Delete fact"
                                     >
                                         &times;
                                     </button>
@@ -194,10 +204,13 @@
                                 </div>
                             </div>
                             <div class="fact-inputs">
-                                <input v-model="factKey" placeholder="Key" />
+                                <input
+                                    v-model="factKey"
+                                    placeholder="Key (e.g. name)"
+                                />
                                 <input
                                     v-model="factValue"
-                                    placeholder="Value"
+                                    placeholder="Value (e.g. Paul)"
                                 />
                                 <button class="small-btn" @click="addFact">
                                     Add
@@ -209,7 +222,7 @@
                     <!-- TAB CONTENT: GOALS -->
                     <div v-if="activeTab === 'goals'" class="tab-content">
                         <div class="settings-group">
-                            <label>Goals List:</label>
+                            <label>Active & Past Goals:</label>
                             <div class="facts-list">
                                 <div
                                     v-for="goal in goals"
@@ -223,6 +236,7 @@
                                     <button
                                         class="fact-delete-btn"
                                         @click="deleteGoal(goal.id)"
+                                        title="Delete goal"
                                     >
                                         &times;
                                     </button>
@@ -254,7 +268,8 @@
                     <!-- TAB CONTENT: REFLECTIONS -->
                     <div v-if="activeTab === 'reflections'" class="tab-content">
                         <div class="settings-group">
-                            <label>Past Insights:</label>
+                            <label>Past Insights & Reflections:</label>
+                            <!-- The New Cleanup Button -->
                             <button
                                 class="small-btn summarize-btn"
                                 @click="curateReflections"
@@ -263,6 +278,7 @@
                             >
                                 ✨ Consolidate Reflections
                             </button>
+
                             <div class="facts-list">
                                 <div
                                     v-for="ref in reflections"
@@ -275,77 +291,52 @@
                                     <button
                                         class="fact-delete-btn"
                                         @click="deleteReflection(ref.id)"
-                                    >
-                                        &times;
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB CONTENT: THEMES -->
-                    <div v-if="activeTab === 'themes'" class="tab-content">
-                        <div class="settings-group">
-                            <label>Recurring Life Themes:</label>
-                            <div class="facts-list">
-                                <div
-                                    v-for="theme in themes"
-                                    :key="theme.id"
-                                    class="fact-item"
-                                >
-                                    <span class="fact-text">
-                                        {{ theme.name }}
-                                        <span
-                                            style="
-                                                color: #666;
-                                                font-size: 0.8em;
-                                                margin-left: 6px;
-                                            "
-                                            >(Seen {{ theme.count }}x)</span
-                                        >
-                                    </span>
-                                    <button
-                                        class="fact-delete-btn"
-                                        @click="deleteTheme(theme.id)"
+                                        title="Delete reflection"
                                     >
                                         &times;
                                     </button>
                                 </div>
                                 <div
-                                    v-if="themes.length === 0"
+                                    v-if="reflections.length === 0"
                                     class="no-facts"
                                 >
-                                    No themes detected.
+                                    No reflections stored
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- TAB CONTENT: FOODS -->
-                    <div v-if="activeTab === 'foods'" class="tab-content">
-                        <div class="settings-group">
-                            <label>Recent Food Log (Auto-detected):</label>
-                            <div class="facts-list">
-                                <div
-                                    v-for="f in foods"
-                                    :key="f.id"
-                                    class="fact-item"
+                </div>
+                <!-- TAB CONTENT: THEMES -->
+                <div v-if="activeTab === 'themes'" class="tab-content">
+                    <div class="settings-group">
+                        <label>Life Themes:</label>
+                        <div class="facts-list">
+                            <div
+                                v-for="theme in themes"
+                                :key="theme.id"
+                                class="fact-item"
+                            >
+                                <span class="fact-text">
+                                    {{ theme.name }}
+                                    <span
+                                        style="
+                                            color: #666;
+                                            font-size: 0.8em;
+                                            margin-left: 6px;
+                                        "
+                                        >(Seen {{ theme.count }}x)</span
+                                    >
+                                </span>
+                                <button
+                                    class="fact-delete-btn"
+                                    @click="deleteTheme(theme.id)"
+                                    title="Delete theme"
                                 >
-                                    <span class="fact-text"
-                                        >{{ f.foodName }} ({{
-                                        formatRelativeTime(f.timestamp)
-                                        }})</span
-                                    >
-                                    <button
-                                        class="fact-delete-btn"
-                                        @click="db.foods.delete(f.id); loadFoods();"
-                                    >
-                                        &times;
-                                    </button>
-                                </div>
-                                <div v-if="foods.length === 0" class="no-facts">
-                                    No food logs in the last 14 days.
-                                </div>
+                                    &times;
+                                </button>
+                            </div>
+                            <div v-if="themes.length === 0" class="no-facts">
+                                No themes stored
                             </div>
                         </div>
                     </div>
