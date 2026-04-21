@@ -1179,6 +1179,7 @@ createApp({
       selectedModel,
       isConfigured,
       renderMarkdown,
+      formatRelativeTime,
       messages,
       currentInput,
       isLoading,
