@@ -68,9 +68,15 @@ db.version(6).stores({
 });
 
 const formatRelativeTime = (timestamp) => {
-  const diff = Date.now() - timestamp;
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  if (days === 0) return "today";
+
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
   if (days === 1) return "yesterday";
   return `${days} days ago`;
 };
@@ -1015,10 +1021,19 @@ createApp({
       scrollToBottom();
 
       try {
-        const contents = messages.value.map((msg) => ({
-          role: msg.role === "user" ? "user" : "model",
-          parts: [{ text: msg.text }],
-        }));
+        const contents = messages.value.map((msg) => {
+          // Determine the role for the API (system summaries are sent as 'model' or 'user' with a label)
+          let role = msg.role === "user" ? "user" : "model";
+
+          // Prepend the relative time to the text so the AI has temporal context
+          const timeLabel = formatRelativeTime(msg.timestamp || Date.now());
+          const formattedText = `[${timeLabel}] ${msg.text}`;
+
+          return {
+            role: role,
+            parts: [{ text: formattedText }],
+          };
+        });
 
         // 1. Context Injection: Build a dynamic context string
         let dynamicContext = "";
