@@ -1063,13 +1063,6 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
-        const compactFacts =
-          extractedFacts.map((f) => `${f.key}:${f.value}`).join(" · ") ||
-          "none";
-        const compactGoals =
-          extractedGoals.map((g) => `${g.title}(${g.status})`).join(" · ") ||
-          "none";
-
         for (const fName of extractedFoods) {
           await db.foods.add({ foodName: fName, timestamp: Date.now() });
         }
@@ -1088,7 +1081,7 @@ createApp({
           .map((g) => `- ${g.title} (${g.status})`)
           .join("\n");
         const logFoods = extractedFoods
-          .map((g) => `- ${g.foodName}`)
+          .map((food) => `- ${food}`) // No .foodName needed, 'food' is the string itself
           .join("\n");
 
         const topicFact = extractedFacts.find(
