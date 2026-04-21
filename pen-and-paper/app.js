@@ -792,8 +792,9 @@ createApp({
 
         // --- ONLY PROCEED WITH DELETIONS IF API WAS SUCCESSFUL ---
 
-        // 1. Wipe old chats and save the new summary
-        await db.chats.clear();
+        // 1. Wipe old conversational chats but KEEP all past system summaries
+        await db.chats.where("role").anyOf("user", "model").delete();
+
         const summaryId = await db.chats.add({
           role: "system",
           text: summaryText,
