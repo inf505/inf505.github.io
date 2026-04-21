@@ -1076,13 +1076,14 @@ createApp({
         const logFacts = extractedFacts
           .map((f) => `- ${f.key}: ${f.value}`)
           .join("\n");
+
         const logThemes = extractedThemes.map((t) => `- ${t}`).join("\n");
+
         const logGoals = extractedGoals
           .map((g) => `- ${g.title} (${g.status})`)
           .join("\n");
-        const logFoods = extractedFoods
-          .map((food) => `- ${food}`) // No .foodName needed, 'food' is the string itself
-          .join("\n");
+
+        const logFoods = extractedFoods.map((food) => `- ${food}`).join("\n");
 
         const topicFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "current_topic",
