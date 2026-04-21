@@ -469,6 +469,8 @@ createApp({
           facts: await db.facts.toArray(),
           themes: await db.themes.toArray(),
           goals: await db.goals.toArray(),
+          seeds: await db.seeds.toArray(),
+          foods: await db.foods.toArray(),
         };
 
         const dataStr = JSON.stringify(backup, null, 2);
