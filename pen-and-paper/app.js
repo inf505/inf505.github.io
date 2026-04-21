@@ -134,6 +134,11 @@ createApp({
       nextTick(adjustHeight);
     });
 
+    const deleteFood = async (id) => {
+      await db.foods.delete(id);
+      await loadFoods();
+    };
+
     const loadFoods = async () => {
       // We'll grab the last 14 days of food to keep context relevant but lean
       const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
@@ -1213,6 +1218,9 @@ createApp({
       refreshSeeds,
       isRefreshingSeeds,
       rollTheDice,
+      foods,
+      loadFoods,
+      deleteFood,
     };
   },
 }).mount("#app");
