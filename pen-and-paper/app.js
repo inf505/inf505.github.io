@@ -35,6 +35,7 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
 - Monitor the relationship between food intake and the user's subsequent mood, energy, or physical complaints over the following days.
 - If you notice a correlation (e.g., "User eats dairy and reports brain fog 24 hours later"), call it out directly in your response or reflection.
 - When the user reports physical discomfort (headache, bloating, fatigue) or sudden mood shifts, cross-reference the RECENT FOOD INTAKE for potential triggers from the last 48-72 hours.
+- THRESHOLD SENSITIVITY: Look for cumulative effects. Note if a symptom (e.g., fatigue, skin issues, mood dips) only emerges when a specific food is consumed on consecutive days or with high frequency, even if the user seems to tolerate isolated instances.
 
 ### Example JSON
 {
