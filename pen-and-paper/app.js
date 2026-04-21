@@ -26,6 +26,12 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
 5. "themes" (array of strings, required) – High-level recurring topics or life pillars (e.g., "Parenting Challenges", "Career Growth", "Creative Passion"). If no themes are present, provide an empty array [].
 6. "goals" (array of objects, required) – Long-term aspirations or intentions. Each goal must be an object with "title" (string) and "status" (string, must be "active", "completed", or "paused"). If no goals are present, provide an empty array [].
 
+# FOOD & SENSITIVITY TRACKING:
+- If the user mentions eating or drinking something, extract the specific food items and include them in the "foods" array in your JSON output.
+- Monitor the relationship between food intake and the user's subsequent mood, energy, or physical complaints over the following days.
+- If you notice a correlation (e.g., "User eats dairy and reports brain fog 24 hours later"), call it out directly in your response or reflection.
+- When the user reports physical discomfort (headache, bloating, fatigue) or sudden mood shifts, cross-reference the RECENT FOOD INTAKE for potential triggers from the last 48-72 hours.
+
 ### Example JSON
 {
   "thought": "Let's see, how should I respond... ",
@@ -37,7 +43,8 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
     {"key": "project", "value": "User started new project last week"},
     {"key": "current_topic", "value": "Paul's new project"}
   ],
-  "goals": []
+  "goals": [],
+  "foods": ["Greek yogurt", "Walnuts"]
 }
 
 TIME: You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns.
@@ -46,14 +53,14 @@ CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON stri
 `;
 
 const db = new Dexie("GeminiLocalDB");
-db.version(5).stores({
-  // Increment version to 5
+db.version(6).stores({
   chats: "++id, role, text, thought, timestamp",
   reflections: "++id, chatId, insight, timestamp",
   facts: "++id, key, value, timestamp",
   themes: "++id, name, count, last_seen",
   goals: "++id, title, status, timestamp",
   seeds: "++id, value",
+  foods: "++id, foodName, timestamp",
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -94,6 +101,7 @@ createApp({
     const inputArea = ref(null);
     const currentSeed = ref("");
     const isRefreshingSeeds = ref(false);
+    const foods = ref([]);
 
     const renderMarkdown = (text) => marked.parse(text);
 
@@ -125,6 +133,15 @@ createApp({
     watch(currentInput, () => {
       nextTick(adjustHeight);
     });
+
+    const loadFoods = async () => {
+      // We'll grab the last 14 days of food to keep context relevant but lean
+      const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      foods.value = await db.foods
+        .where("timestamp")
+        .above(fourteenDaysAgo)
+        .toArray();
+    };
 
     // Pick a random seed from the DB pool
     const rollTheDice = async () => {
@@ -256,8 +273,7 @@ createApp({
 
       await updateCounts();
 
-      // Don't want refresh to cause this to re roll
-      //await rollTheDice();
+      await loadFoods();
 
       // --- NEW UNIFIED KEYBOARD RESIZE LOGIC ---
       if (window.visualViewport) {
@@ -883,6 +899,14 @@ createApp({
           dynamicContext += `\n\nACTIVE GOALS:\n${goalsString}`;
         }
 
+        if (foods.value.length > 0) {
+          const foodString = foods.value
+            .map((f) => `[${formatRelativeTime(f.timestamp)}] ${f.foodName}`)
+            .join(", ");
+          dynamicContext += `\n\nRECENT FOOD INTAKE (Last 14 Days):\n${foodString}`;
+          dynamicContext += `\n(Analyze these food entries against the user's reported physical or emotional symptoms to find delayed sensitivities.)`;
+        }
+
         const userTone = systemPrompt.value.trim();
         const todayDate = new Date().toLocaleDateString();
 
@@ -944,6 +968,12 @@ createApp({
                     required: ["title", "status"],
                   },
                 },
+                foods: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "List of specific food items mentioned as being consumed in the current message.",
+                },
               },
               required: [
                 "thought",
@@ -952,6 +982,7 @@ createApp({
                 "facts",
                 "themes",
                 "goals",
+                "foods",
               ],
             },
           },
@@ -1008,6 +1039,7 @@ createApp({
         let extractedFacts = [];
         let extractedThemes = [];
         let extractedGoals = [];
+        let extractedFoods = [];
 
         try {
           const jsonStartIndex = finalResponse.indexOf("{");
@@ -1025,6 +1057,7 @@ createApp({
             if (parsed.facts) extractedFacts = parsed.facts;
             if (parsed.themes) extractedThemes = parsed.themes;
             if (parsed.goals) extractedGoals = parsed.goals;
+            if (parsed.foods) extractedFoods = parsed.foods;
           }
         } catch (e) {
           console.error("JSON Parse error", e);
@@ -1037,6 +1070,11 @@ createApp({
           extractedGoals.map((g) => `${g.title}(${g.status})`).join(" · ") ||
           "none";
 
+        for (const fName of extractedFoods) {
+          await db.foods.add({ foodName: fName, timestamp: Date.now() });
+        }
+        await loadFoods();
+
         const pathFact = extractedFacts.find(
           (f) => f.key.toLowerCase() === "path",
         );
@@ -1048,6 +1086,9 @@ createApp({
         const logThemes = extractedThemes.map((t) => `- ${t}`).join("\n");
         const logGoals = extractedGoals
           .map((g) => `- ${g.title} (${g.status})`)
+          .join("\n");
+        const logFoods = extractedFoods
+          .map((g) => `- ${g.foodName}`)
           .join("\n");
 
         const topicFact = extractedFacts.find(
@@ -1064,7 +1105,8 @@ createApp({
             `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
             `\nTHEMES:\n${logThemes || "- none"}\n` +
-            `\nGOALS:\n${logGoals || "- none"}`,
+            `\nGOALS:\n${logGoals || "- none"}\n`,
+          `\nFOODS:\n${logFoods || "- none"}\n`,
         );
 
         const modelId = await saveToDb(
@@ -1106,6 +1148,7 @@ createApp({
         nextTick(() => inputArea.value?.focus());
       }
       await updateCounts();
+      await loadFoods();
     };
 
     // This is what your "Send" button calls
