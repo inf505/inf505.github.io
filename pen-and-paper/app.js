@@ -1050,23 +1050,31 @@ createApp({
         // 1. Context Injection: Build a dynamic context string
         let dynamicContext = "";
 
+        // 1. FACTS: Sorted alphabetically by Key (Groups related topics together)
         if (facts.value.length > 0) {
-          const factsString = facts.value
+          const sortedFacts = [...facts.value].sort((a, b) =>
+            a.key.localeCompare(b.key),
+          );
+          const factsString = sortedFacts
             .map(
               (f) =>
                 `[${formatRelativeTime(f.timestamp)}] ${f.key}: ${f.value}`,
             )
             .join("\n");
-          dynamicContext += `\n\nFACTS:\n${factsString}`;
+          dynamicContext += `\n\nFACTS (Categorized):\n${factsString}`;
         }
 
+        // 2. PAST INSIGHTS: Sorted Chronologically (Oldest to Newest)
         if (reflections.value.length > 0) {
-          const reflectionsString = reflections.value
+          const sortedReflections = [...reflections.value].sort(
+            (a, b) => a.timestamp - b.timestamp,
+          );
+          const reflectionsString = sortedReflections
             .map(
               (ref) => `[${formatRelativeTime(ref.timestamp)}] ${ref.insight}`,
             )
             .join("\n");
-          dynamicContext += `\n\nPAST INSIGHTS:\n${reflectionsString}`;
+          dynamicContext += `\n\nPAST INSIGHTS (Chronological Narrative):\n${reflectionsString}`;
         }
 
         if (themes.value.length > 0) {
