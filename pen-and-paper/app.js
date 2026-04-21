@@ -107,17 +107,34 @@ createApp({
 
     const updateCounts = async () => {
       try {
-        // 1. Fetch counts and data in parallel
-        const [chats, reflections, facts] = await Promise.all([
-          db.chats.toArray(),
-          db.reflections.toArray(),
-          db.facts.toArray(),
-        ]);
+        // 1. Fetch data from ALL tables in parallel
+        const [chats, reflections, facts, themes, goals, seeds, foods] =
+          await Promise.all([
+            db.chats.toArray(),
+            db.reflections.toArray(),
+            db.facts.toArray(),
+            db.themes.toArray(),
+            db.goals.toArray(),
+            db.seeds.toArray(),
+            db.foods.toArray(),
+          ]);
 
-        // 3. Calculate total size
-        const fullDb = { chats, reflections, facts };
+        // 2. Create a full representation of the database state
+        const fullDb = {
+          chats,
+          reflections,
+          facts,
+          themes,
+          goals,
+          seeds,
+          foods,
+        };
+
+        // 3. Calculate total size in bytes, then convert to KB
         const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
+
+        // Note: totalTokens is updated separately during the AI response cycle
       } catch (err) {
         console.error("Error updating stats:", err);
       }
@@ -829,6 +846,20 @@ createApp({
         for (const fact of newFacts) {
           await db.facts.add({ key: fact.key, value: fact.value, timestamp });
         }
+
+        // --- NEW: PURGE OLD FOOD DATA ---
+        const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+        const deletedFoodCount = await db.foods
+          .where("timestamp")
+          .below(fourteenDaysAgo)
+          .delete();
+        if (deletedFoodCount > 0) {
+          console.log(
+            `Maintenance: Purged ${deletedFoodCount} food records older than 14 days.`,
+          );
+        }
+        // Refresh the local food state
+        await loadFoods();
 
         // 3. UPDATE UI STATE
         messages.value = [
