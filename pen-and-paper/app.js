@@ -849,7 +849,10 @@ createApp({
           summaryContent += "CONVERSATION:\n";
           summaryContent += messages.value
             .filter((msg) => msg.role !== "system")
-            .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
+            .map(
+              (msg) =>
+                `[${formatRelativeTime(msg.timestamp)}] ${msg.role.toUpperCase()}: ${msg.text}`,
+            )
             .join("\n\n");
         }
 
@@ -870,7 +873,7 @@ createApp({
                 {
                   text: `You have two tasks.
 
-    TASK 1: Provide a comprehensive and detailed narrative summary of the CONVERSATION and REFLECTIONS. Compress the dialogue into a dense narrative retaining specific information, names, and contexts.
+    TASK 1: Provide a comprehensive and detailed narrative summary. Use the provided timestamps to identify the TEMPORAL NARRATIVE (e.g., "The user started the morning with anxiety but reached a breakthrough 3 hours later"). Identify if patterns are morning-heavy, evening-heavy, or triggered after specific durations of time. Compress the dialogue into a dense, time-aware narrative.
 
     TASK 2: Review the CURRENT FACTS DATABASE. Act as a database curator.
     - Merge and deduplicate overlapping facts (e.g., if there are three facts about work stress, combine them into one concise fact).
