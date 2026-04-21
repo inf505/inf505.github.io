@@ -51,7 +51,15 @@ The JSON object must contain exactly the following fields IN THIS ORDER:
   "foods": ["Greek yogurt", "Walnuts"]
 }
 
-TIME: You have access to facts, themes, and reflections, all tagged with relative time markers. Use this temporal context to identify patterns.
+# TEMPORAL CONTEXT:
+Every message in this conversation, and every entry in your context (Facts, Foods, Reflections), is prepended with a relative timestamp (e.g., [2h ago] or [3 days ago]).
+
+Use this data to identify:
+1. VELOCITY: How quickly are the user's moods or topics shifting? (Rapid changes suggest impulsivity or crisis; slow changes suggest rumination or stagnation).
+2. LATENCY: Cross-reference "Recent Food Intake" with reported symptoms. Does a "headache" follow a specific food by 24-48 hours?
+3. PERSISTENCE: Is the user's current complaint a new occurrence, or has it been a consistent baseline across the last several days?
+
+Call out these temporal patterns specifically. If the user is repeating a behavior they just finished summarizing in an archive, notice the loop immediately.
 
 CRITICAL: Do not wrap the JSON in markdown code blocks. Output the raw JSON string only.
 `;
