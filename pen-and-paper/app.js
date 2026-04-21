@@ -696,6 +696,126 @@ createApp({
       }
     };
 
+    const curateGoals = async () => {
+      if (
+        !confirm(
+          "Curate goals? This will merge duplicate or similar goals and clean up the list.",
+        )
+      )
+        return;
+
+      isSummarizing.value = true;
+
+      try {
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a therapeutic life-coach and editor.
+                  Review the current list of GOALS.
+                  - Merge redundant or nearly identical goals into a single entry.
+                  - Resolve status conflicts: If one goal is 'completed' and its duplicate is 'active', the 'completed' status wins.
+                  - Retain the most descriptive and clear title for the merged goal.
+                  - Return an array of the refined goal objects.
+
+                  CURRENT GOALS: ${JSON.stringify(goals.value.map((g) => ({ title: g.title, status: g.status })))}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                curated_goals: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      status: {
+                        type: "string",
+                        enum: ["active", "completed", "paused"],
+                      },
+                    },
+                    required: ["title", "status"],
+                  },
+                },
+              },
+              required: ["curated_goals"],
+            },
+          },
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+        let newGoals = [];
+
+        while (attempts < maxAttempts && !success) {
+          try {
+            attempts++;
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey.value,
+              },
+              body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+            if (!response.ok)
+              throw new Error(data.error?.message || "API Error");
+
+            if (data.candidates && data.candidates[0].content.parts) {
+              const rawText = data.candidates[0].content.parts[0].text;
+              const jsonStartIndex = rawText.indexOf("{");
+              const jsonEndIndex = rawText.lastIndexOf("}");
+
+              if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+                const jsonString = rawText.substring(
+                  jsonStartIndex,
+                  jsonEndIndex + 1,
+                );
+                const parsed = JSON.parse(jsonString);
+                if (parsed.curated_goals) newGoals = parsed.curated_goals;
+                success = true;
+              }
+            }
+          } catch (e) {
+            console.warn(`Curate Goals attempt ${attempts} failed:`, e.message);
+            if (attempts >= maxAttempts) throw e;
+            await new Promise((res) => setTimeout(res, 1000));
+          }
+        }
+
+        // Update the DB
+        await db.goals.clear();
+        for (const goal of newGoals) {
+          await db.goals.add({
+            title: goal.title,
+            status: goal.status,
+            timestamp: Date.now(),
+          });
+        }
+
+        await loadGoals();
+        alert("Goals curated successfully.");
+      } catch (err) {
+        console.error(err);
+        alert("Cleanup failed: " + err.message);
+      } finally {
+        isSummarizing.value = false;
+      }
+    };
+
     const summarizeAndArchive = async () => {
       if (
         !confirm(
@@ -1252,6 +1372,7 @@ createApp({
       deleteReflection,
       deleteTheme,
       curateReflections,
+      curateGoals,
       currentSeed,
       refreshSeeds,
       isRefreshingSeeds,

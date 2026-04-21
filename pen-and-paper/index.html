@@ -211,6 +211,16 @@
                     <div v-if="activeTab === 'goals'" class="tab-content">
                         <div class="settings-group">
                             <label>Goals List:</label>
+
+                            <button
+                                class="small-btn summarize-btn"
+                                @click="curateGoals"
+                                :disabled="isSummarizing || goals.length < 2"
+                                style="margin-bottom: 10px"
+                            >
+                                ✨ Consolidate Goals
+                            </button>
+
                             <div class="facts-list">
                                 <div
                                     v-for="goal in goals"
