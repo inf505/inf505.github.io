@@ -1189,24 +1189,56 @@ createApp({
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
 
-        // NEW: Setup AbortController for a 45-second timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 45,000 ms = 45 seconds
+        let data;
+        let attempt = 0;
+        const retryDelays = [250, 500, 1000]; // 1st retry: .25s, 2nd: .5s, 3rd: 1s
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal, // NEW: Attach the abort signal to the fetch request
-        });
+        while (attempt <= retryDelays.length) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        clearTimeout(timeoutId); // NEW: Clear the timeout if the request finishes successfully
+          try {
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey.value,
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || "API Error");
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              // ONLY retry on 500 Internal Server Error
+              if (response.status === 500 && attempt < retryDelays.length) {
+                console.warn(
+                  `API 500 Error. Retrying in ${retryDelays[attempt]}ms... (Retry ${attempt + 1}/${retryDelays.length})`,
+                );
+                await new Promise((res) =>
+                  setTimeout(res, retryDelays[attempt]),
+                );
+                attempt++;
+                continue; // Loop again
+              }
+
+              // If it's a 4xx error, or we ran out of retries, process and throw
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(
+                errorData.error?.message || `API Error: ${response.status}`,
+              );
+            }
+
+            // Success: Parse the JSON and break out of the retry loop
+            data = await response.json();
+            break;
+          } catch (error) {
+            clearTimeout(timeoutId);
+            // If we caught a network failure, AbortError, or the Error we manually threw above, pass it to the main catch block
+            throw error;
+          }
+        }
 
         let responseText = "";
         let thoughtText = "";
