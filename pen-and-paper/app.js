@@ -1196,7 +1196,7 @@ createApp({
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          const timeoutId = setTimeout(() => controller.abort(), 45000);
 
           try {
             const response = await fetch(url, {
