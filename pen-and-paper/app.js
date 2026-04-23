@@ -1192,7 +1192,7 @@ createApp({
 
         let data;
         let attempt = 0;
-        const retryDelays = [1000, 2000, 3000];
+        const retryDelays = [2000, 2500, 3000];
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
