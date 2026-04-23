@@ -1192,11 +1192,11 @@ createApp({
 
         let data;
         let attempt = 0;
-        const retryDelays = [2000, 4000, 6000];
+        const retryDelays = [5000, 10000, 15000];
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 40000);
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
           try {
             const response = await fetch(url, {
