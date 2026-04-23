@@ -363,7 +363,12 @@
                 </div>
 
                 <!-- SCROLLING MESSAGES -->
-                <div class="chat-messages" ref="messagesContainer">
+                <div
+                    class="chat-messages"
+                    ref="messagesContainer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
                     <!-- Conversation Summary -->
                     <div v-if="reflections.length > 0" class="summary-box">
                         <h3>Conversation Summary</h3>
@@ -449,6 +454,7 @@
                         <button
                             @click="sendMessage"
                             :disabled="isLoading || !currentInput.trim()"
+                            aria-label="Send message"
                         >
                             Send
                         </button>
