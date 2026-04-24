@@ -814,6 +814,6 @@ button.small-btn.summarize-btn:hover {
 }
 
 .topic-label {
-    color: var(--accent-color); /* Maybe a subtle highlight */
+    color: #444; /* Maybe a subtle highlight */
     margin-right: 4px;
 }
