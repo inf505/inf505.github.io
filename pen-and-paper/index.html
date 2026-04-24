@@ -39,29 +39,6 @@
                     </button>
                 </div>
 
-                <!-- HEADER -->
-                <!--<div class="chat-header">
-
-                    <button
-                        :disabled="isSummarizing"
-                        class="small-btn icon-btn"
-                        @click="summarizeAndArchive"
-                        :title="'Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
-                    >
-                        <span v-if="isSummarizing">⏳</span>
-                        <span v-else>☀️</span>
-                    </button>
-
-
-                    <button
-                        class="small-btn settings-btn"
-                        @click="showSettings = !showSettings"
-                    >
-                        ⚙️
-                    </button>
-                </div>
-                -->
-
                 <!-- SETTINGS PANEL -->
                 <div v-if="showSettings" class="settings-panel">
                     <!-- TABS NAVIGATION -->
@@ -115,8 +92,9 @@
                                 placeholder="e.g., gemma-4-31b-it"
                             />
                             <small
-                                >Used for the active therapeutic
-                                conversation.</small
+                                >Used for the active therapeutic conversation...
+                                gemma-4-26b-a4b-it gemini-2.5-flash-lite
+                                gemini-3.1-flash-lite-preview</small
                             >
                         </div>
 
@@ -129,7 +107,8 @@
                             />
                             <small
                                 >Used for Archive, Curation, and long-term
-                                memory synthesis.</small
+                                memory synthesis... gemma-4-31b-it
+                                gemini-2.5-flash gemini-3-flash-preview</small
                             >
                         </div>
 
