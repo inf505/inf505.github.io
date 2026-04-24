@@ -1072,12 +1072,12 @@ createApp({
         const todayDate = new Date().toLocaleDateString();
 
         // 1. Create the Seed Section with more assertive language
-        // const seedSection = currentSeed.value
-        //   ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
-        //        You are required to use this concept as a structural metaphor for your "response".
-        //        DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
-        //        pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
-        //   : "";
+        const seedSection = currentSeed.value
+          ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
+               You are required to use this concept as a structural metaphor for your "response".
+               DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
+               pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
+          : "";
 
         // 2. Assemble the instruction so the Seed is the "Final Word"
         const finalSystemInstruction = `
@@ -1086,7 +1086,7 @@ createApp({
 
                 CURRENT DATE: ${todayDate}
                 ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-
+${seedSection}
                 `.trim();
 
         const payload = {
