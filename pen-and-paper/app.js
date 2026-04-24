@@ -520,7 +520,6 @@ createApp({
         if (data.candidates && data.candidates[0].content.parts) {
           const rawText = data.candidates[0].content.parts[0].text;
 
-          // USE SUBSTRING EXTRACTION (Matches your other logic)
           const jsonStartIndex = rawText.indexOf("{");
           const jsonEndIndex = rawText.lastIndexOf("}");
 
@@ -534,11 +533,23 @@ createApp({
             if (parsed.seeds && Array.isArray(parsed.seeds)) {
               await db.seeds.clear();
 
-              // 1. Trim and remove empty strings
-              // 2. Use a Set to remove duplicates within this specific response
+              // CLEANING LOGIC:
+              // 1. Replace dashes with spaces
+              // 2. Collapse double spaces
+              // 3. Trim whitespace
+              // 4. Filter out empty strings
+              // 5. Use Set to keep unique
               const uniqueSeeds = [
                 ...new Set(
-                  parsed.seeds.map((s) => s.trim()).filter((s) => s.length > 0),
+                  parsed.seeds
+                    .map(
+                      (s) =>
+                        s
+                          .replace(/-/g, " ") // Replace dashes with spaces
+                          .replace(/\s\s+/g, " ") // Eliminate double spaces
+                          .trim(), // Remove leading/trailing
+                    )
+                    .filter((s) => s.length > 0), // Eliminate empty entries
                 ),
               ];
 
