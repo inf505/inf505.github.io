@@ -141,33 +141,6 @@
                         </div>
 
                         <div class="settings-group">
-                            <label
-                                >Atmospheric Randomness (Current: {{ currentSeed
-                                || 'None' }})</label
-                            >
-                            <div class="fact-inputs">
-                                <button
-                                    class="small-btn summarize-btn"
-                                    @click="refreshSeeds"
-                                    :disabled="isRefreshingSeeds"
-                                    style="flex: 1"
-                                >
-                                    <span v-if="isRefreshingSeeds"
-                                        >⏳ Refreshing Pool...</span
-                                    >
-                                    <span v-else>🔄 Regenerate Seed Pool</span>
-                                </button>
-                                <button
-                                    class="small-btn"
-                                    @click="rollTheDice"
-                                    title="Shuffle"
-                                >
-                                    🎲
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
                             <label>Data Management:</label>
                             <button
                                 class="small-btn summarize-btn"

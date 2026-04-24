@@ -82,8 +82,6 @@ createApp({
     const isSummarizing = ref(false);
     const messagesContainer = ref(null);
     const inputArea = ref(null);
-    const currentSeed = ref("");
-    const isRefreshingSeeds = ref(false);
     const foods = ref([]);
 
     const renderMarkdown = (text) => marked.parse(text);
@@ -91,14 +89,13 @@ createApp({
     const updateCounts = async () => {
       try {
         // 1. Fetch data from ALL tables in parallel
-        const [chats, reflections, facts, themes, goals, seeds, foods] =
+        const [chats, reflections, facts, themes, goals, foods] =
           await Promise.all([
             db.chats.toArray(),
             db.reflections.toArray(),
             db.facts.toArray(),
             db.themes.toArray(),
             db.goals.toArray(),
-            db.seeds.toArray(),
             db.foods.toArray(),
           ]);
 
@@ -109,7 +106,6 @@ createApp({
           facts,
           themes,
           goals,
-          seeds,
           foods,
         };
 
@@ -146,19 +142,6 @@ createApp({
         .where("timestamp")
         .above(fourteenDaysAgo)
         .toArray();
-    };
-
-    // Pick a random seed from the DB pool
-    const rollTheDice = async () => {
-      const count = await db.seeds.count();
-      if (count > 0) {
-        const randomIndex = Math.floor(Math.random() * count);
-        const allSeeds = await db.seeds.toArray();
-        currentSeed.value = allSeeds[randomIndex].value;
-
-        // NEW: Save the active seed so it persists across page reloads
-        localStorage.setItem("gemini_current_seed", currentSeed.value);
-      }
     };
 
     const cleanGlitch = (text) => {
@@ -198,10 +181,6 @@ createApp({
 
       const storedSystemPrompt = localStorage.getItem("gemini_system_prompt");
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
-
-      // NEW: Load the saved seed
-      const storedSeed = localStorage.getItem("gemini_current_seed");
-      if (storedSeed !== null) currentSeed.value = storedSeed;
 
       // Load History from Dexie
       try {
@@ -452,7 +431,6 @@ createApp({
           facts: await db.facts.toArray(),
           themes: await db.themes.toArray(),
           goals: await db.goals.toArray(),
-          seeds: await db.seeds.toArray(),
           foods: await db.foods.toArray(),
         };
 
@@ -470,110 +448,6 @@ createApp({
       } catch (err) {
         console.error("Export failed:", err);
         alert("Failed to export database.");
-      }
-    };
-
-    const refreshSeeds = async () => {
-      isRefreshingSeeds.value = true;
-
-      // 1. Create a timeout controller
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      try {
-        const payload = {
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: "Generate a list of 10 highly specific abstract concepts, physical phenomena, or sensory metaphors to be used as hidden atmospheric metaphors. Output only the JSON.",
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.95,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                seeds: {
-                  type: "array",
-                  items: { type: "string" },
-                },
-              },
-              required: ["seeds"],
-            },
-          },
-        };
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal, // Attach signal
-        });
-
-        clearTimeout(timeoutId); // Success, clear the timeout
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || "API Error");
-
-        if (data.candidates && data.candidates[0].content.parts) {
-          const rawText = data.candidates[0].content.parts[0].text;
-          const jsonStartIndex = rawText.indexOf("{");
-          const jsonEndIndex = rawText.lastIndexOf("}");
-
-          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-            const jsonString = rawText.substring(
-              jsonStartIndex,
-              jsonEndIndex + 1,
-            );
-            const parsed = JSON.parse(jsonString);
-
-            if (parsed.seeds && Array.isArray(parsed.seeds)) {
-              await db.seeds.clear();
-
-              // THE CLEANING LOGIC YOU REQUESTED
-              const uniqueSeeds = [
-                ...new Set(
-                  parsed.seeds
-                    .map((s) =>
-                      s
-                        .replace(/-/g, " ") // Dash -> Space
-                        .replace(/\s\s+/g, " ") // Collapse double spaces
-                        .trim(),
-                    )
-                    .filter((s) => s.length > 0),
-                ),
-              ];
-
-              for (const s of uniqueSeeds) {
-                await db.seeds.add({ value: s });
-              }
-
-              await rollTheDice();
-            }
-          }
-        }
-      } catch (err) {
-        clearTimeout(timeoutId);
-        console.error("Seed Refresh Error:", err);
-        // Alert if it timed out or failed
-        if (err.name === "AbortError") {
-          alert(
-            "Seed refresh timed out. The model took too long to generate the list.",
-          );
-        } else {
-          alert("Failed to refresh seeds: " + err.message);
-        }
-      } finally {
-        isRefreshingSeeds.value = false;
       }
     };
 
@@ -1088,22 +962,12 @@ createApp({
         const userTone = systemPrompt.value.trim();
         const todayDate = new Date().toLocaleDateString();
 
-        // 1. Create the Seed Section with more assertive language
-        const seedSection = currentSeed.value
-          ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
-               You are required to use this concept as a structural metaphor for your "response".
-               DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
-               pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
-          : "";
-
-        // 2. Assemble the instruction so the Seed is the "Final Word"
         const finalSystemInstruction = `
                 ${CORE_SYSTEM_PROMPT}
                 ${dynamicContext}
 
                 CURRENT DATE: ${todayDate}
                 ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-${seedSection}
                 `.trim();
 
         const payload = {
@@ -1421,10 +1285,6 @@ ${seedSection}
       deleteTheme,
       curateReflections,
       curateGoals,
-      currentSeed,
-      refreshSeeds,
-      isRefreshingSeeds,
-      rollTheDice,
       foods,
       loadFoods,
       deleteFood,
