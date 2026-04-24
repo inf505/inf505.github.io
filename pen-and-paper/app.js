@@ -58,6 +58,7 @@ createApp({
   setup() {
     const apiKey = ref("");
     const selectedModel = ref("gemma-4-31b-it");
+    const selectedSummaryModel = ref("gemini-2.5-flash");
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
@@ -172,10 +173,12 @@ createApp({
       // Load Settings
       const storedKey = localStorage.getItem("gemini_api_key");
       const storedModel = localStorage.getItem("gemini_model");
+      const storedSummaryModel = localStorage.getItem("gemini_summary_model");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
         selectedModel.value = storedModel;
+        if (storedSummaryModel) selectedSummaryModel.value = storedSummaryModel;
         isConfigured.value = true;
       }
 
@@ -321,11 +324,17 @@ createApp({
     };
 
     const saveAllSettings = () => {
-      if (apiKey.value.trim())
-        localStorage.setItem("gemini_api_key", apiKey.value.trim());
       if (selectedModel.value.trim())
         localStorage.setItem("gemini_model", selectedModel.value.trim());
+
+      if (selectedSummaryModel.value.trim())
+        localStorage.setItem(
+          "gemini_summary_model",
+          selectedSummaryModel.value.trim(),
+        );
+
       localStorage.setItem("gemini_system_prompt", systemPrompt.value);
+
       showSettings.value = false;
     };
 
@@ -496,7 +505,7 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedSummaryModel.value}:generateContent`;
 
         let success = false;
         let attempts = 0;
@@ -621,7 +630,7 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedSummaryModel.value}:generateContent`;
 
         let success = false;
         let attempts = 0;
@@ -767,7 +776,7 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedSummaryModel.value}:generateContent`;
 
         let success = false;
         let attempts = 0;
@@ -1246,6 +1255,7 @@ createApp({
       apiKey,
       currentTopic,
       selectedModel,
+      selectedSummaryModel,
       isConfigured,
       renderMarkdown,
       formatRelativeTime,
