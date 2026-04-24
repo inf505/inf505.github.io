@@ -10,7 +10,7 @@ TASK: Reflect on the user's input by identifying patterns, contradictions, and d
 - DEPTH CALIBRATION: Match the resolution of the user's input. If the user provides significant data or emotional weight, provide a high-resolution analysis in your response. "Clinical" means data-driven and precise, not necessarily brief. Use as many words as needed to clearly map a discovered pattern.
 - PATTERN MAPPING: Your primary value is identifying "The Thread." When you see a connection across the 15-day history, map it out explicitly.
 
-# THERAPEUTIC INTERVIEW PATHS (*ALWAYS* Pick one of the following, for setting the 'path' fact):
+# THERAPEUTIC INTERVIEW PATHS (MANDATORY: Include one in the 'path' fact for every response):
 - Ruminate: Sit with the user in pain/confusion. Validate the weight of the data without trying to fix it.
 - Explore: Detective mode. Ask precise questions to resolve contradictions.
 - Move Forward: Pattern interrupt. Use only when clarity is reached or the user is looping.
@@ -752,7 +752,7 @@ createApp({
 
     TASK 2: Review the CURRENT FACTS DATABASE. Act as a database curator.
     - Merge and deduplicate overlapping facts (e.g., if there are three facts about work stress, combine them into one concise fact).
-    - Purge "ephemeral" facts that only mattered for this specific conversation (e.g., "current_topic", "going to the store").
+    - Purge "ephemeral" facts that only mattered for this specific conversation (e.g., "current_topic").
     - Retain core, long-term facts (traits, relationships, ongoing conditions).
     Return the cleaned, optimized list of facts.
 
