@@ -421,12 +421,7 @@
 
                     <!-- NEW: Context Anchor -->
                     <div v-if="messages.length > 0" class="topic-anchor">
-                        <div class="topic-line"></div>
-                        <div class="topic-pill">
-                            <span class="topic-label">CURRENT FOCUS:</span> {{
-                            currentTopic }}
-                        </div>
-                        <div class="topic-line"></div>
+                        <div class="topic-pill">{{ currentTopic }}</div>
                     </div>
 
                     <!-- Typing -->
