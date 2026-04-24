@@ -810,7 +810,7 @@ button.small-btn.summarize-btn:hover {
 }
 .topic-anchor {
     text-align: center;
-    margin: 20px 0 10px 0;
+    margin: 5px 0 10px 0;
     font-size: 0.75rem;
     color: #666;
     text-transform: uppercase;
