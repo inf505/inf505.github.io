@@ -419,11 +419,6 @@
                         </div>
                     </div>
 
-                    <!-- NEW: Context Anchor -->
-                    <div v-if="messages.length > 0" class="topic-anchor">
-                        <div class="topic-pill">{{ currentTopic }}</div>
-                    </div>
-
                     <!-- Typing -->
                     <div v-if="isLoading" class="message model">
                         <div class="bubble typing">
@@ -432,6 +427,11 @@
                             <span class="dot"></span>
                         </div>
                     </div>
+                </div>
+
+                <!-- NEW: Context Anchor -->
+                <div v-if="messages.length > 0" class="topic-anchor">
+                    <div class="topic-pill">{{ currentTopic }}</div>
                 </div>
 
                 <!-- FOOTER -->
