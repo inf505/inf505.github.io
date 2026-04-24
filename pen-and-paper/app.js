@@ -4,7 +4,6 @@ const CORE_SYSTEM_PROMPT = `# CLINICAL RULES:
 - OBSERVATION OVER ACCUSATION: If you see self-sabotage, do not judge. Point out the conflict between [Data Point A] and [Behavior B].
 - SOCRATIC FALLBACK: If the user is resistant, move to 'Explore' mode. Ask sharp, curious questions; do not make assertions.
 - LOW-INTEREST RESPONSES: If the user gives a short/unimportant reply, acknowledge it briefly and wait for their lead. Do not probe.
-- METAPHOR: Subtly use the CURRENT ATMOSPHERIC LENS in your vocabulary/imagery.
 
 # INTERVIEW PATHS (Pick one for the 'path' fact):
 - Ruminate: Sit with the user in pain/confusion. Validate the weight of the data without trying to fix it.
@@ -1071,12 +1070,12 @@ createApp({
         const todayDate = new Date().toLocaleDateString();
 
         // 1. Create the Seed Section with more assertive language
-        const seedSection = currentSeed.value
-          ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
-               You are required to use this concept as a structural metaphor for your "response".
-               DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
-               pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
-          : "";
+        // const seedSection = currentSeed.value
+        //   ? `\n\nCURRENT ATMOSPHERIC LENS: "${currentSeed.value}".
+        //        You are required to use this concept as a structural metaphor for your "response".
+        //        DO NOT mention "${currentSeed.value}" explicitly, but ensure your vocabulary,
+        //        pacing, and imagery lean *gently* into the "flavor" of this LENS. Be subtle.`
+        //   : "";
 
         // 2. Assemble the instruction so the Seed is the "Final Word"
         const finalSystemInstruction = `
@@ -1085,7 +1084,7 @@ createApp({
 
                 CURRENT DATE: ${todayDate}
                 ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-                ${seedSection}
+
                 `.trim();
 
         const payload = {
