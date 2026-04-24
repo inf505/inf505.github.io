@@ -482,7 +482,7 @@ createApp({
                 {
                   text: `You are a therapeutic assistant and editor.
                   Review the current list of REFLECTIONS.
-                  - Merge redundant or similar entries into a single, more comprehensive insight.
+                  - Merge redundant or similar entries into a single, more comprehensive insight. (Rewrite so it is shorter!)
                   - Preserve the emotional nuance and personal growth captured in each.
                   - Do not delete anything that represents a distinct, unique realization.
                   - Return an array of the refined insights.
