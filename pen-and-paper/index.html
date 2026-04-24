@@ -19,9 +19,29 @@
         <div id="app">
             <!-- CHAT INTERFACE -->
             <div class="chat-container">
+                <!-- FLOATING CONTROLS -->
+                <div class="floating-header">
+                    <button
+                        :disabled="isSummarizing"
+                        class="float-btn archive-btn"
+                        @click="summarizeAndArchive"
+                        :title="'Archive - ' + totalSizeKb + ' KB'"
+                    >
+                        <span v-if="isSummarizing">⏳</span>
+                        <span v-else>☀️</span>
+                    </button>
+
+                    <button
+                        class="float-btn settings-btn"
+                        @click="showSettings = !showSettings"
+                    >
+                        ⚙️
+                    </button>
+                </div>
+
                 <!-- HEADER -->
-                <div class="chat-header">
-                    <!-- Left: The Sun Button -->
+                <!--<div class="chat-header">
+
                     <button
                         :disabled="isSummarizing"
                         class="small-btn icon-btn"
@@ -32,7 +52,7 @@
                         <span v-else>☀️</span>
                     </button>
 
-                    <!-- Right: Settings -->
+
                     <button
                         class="small-btn settings-btn"
                         @click="showSettings = !showSettings"
@@ -40,6 +60,7 @@
                         ⚙️
                     </button>
                 </div>
+                -->
 
                 <!-- SETTINGS PANEL -->
                 <div v-if="showSettings" class="settings-panel">

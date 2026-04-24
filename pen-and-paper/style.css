@@ -345,6 +345,9 @@ button.small-btn.summarize-btn:hover {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    z-index: 200; /* Higher than floating header */
+    top: 0;
+    height: 100%;
 }
 
 .system-prompt-editor label,
@@ -816,4 +819,40 @@ button.small-btn.summarize-btn:hover {
 .topic-pill {
     /* Maybe a subtle highlight */
     margin-right: 4px;
+}
+/* Floating Header Wrapper */
+.floating-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px; /* Area where buttons live */
+    pointer-events: none; /* Allows you to scroll even if you touch the gap between buttons */
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+/* The Actual Buttons */
+.float-btn {
+    pointer-events: auto; /* Re-enable clicking for the buttons themselves */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(20, 20, 20, 0.5); /* Semi-transparent background */
+    backdrop-filter: blur(10px); /* The "Glass" effect */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.float-btn:active {
+    transform: scale(0.9);
 }
