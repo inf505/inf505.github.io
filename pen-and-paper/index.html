@@ -106,20 +106,31 @@
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
+                        <!-- Inside TAB CONTENT: SETTINGS -->
                         <div class="settings-group">
-                            <label>Model Name:</label>
+                            <label>Chat/Persona Model:</label>
                             <input
                                 type="text"
                                 v-model="selectedModel"
                                 placeholder="e.g., gemma-4-31b-it"
                             />
-                            <small>
-                                Enter a valid Gemini API model ID.
-                                (gemma-4-31b-it, gemma-4-26b-a4b-it,
-                                gemini-2.5-flash-lite, gemini-2.5-flash,
-                                gemini-3-flash-preview,
-                                gemini-3.1-flash-lite-preview)
-                            </small>
+                            <small
+                                >Used for the active therapeutic conversation
+                                and atmospheric seeds.</small
+                            >
+                        </div>
+
+                        <div class="settings-group">
+                            <label>Summary/Logic Model:</label>
+                            <input
+                                type="text"
+                                v-model="selectedSummaryModel"
+                                placeholder="e.g., gemini-1.5-flash"
+                            />
+                            <small
+                                >Used for Archive, Curation, and long-term
+                                memory synthesis.</small
+                            >
                         </div>
 
                         <div class="settings-group">
