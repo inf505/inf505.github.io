@@ -32,13 +32,6 @@
                         <span v-else>☀️</span>
                     </button>
 
-                    <!-- Center: The Reactive Topic -->
-                    <div class="topic-container">
-                        <span class="topic-text"
-                            >{{ currentTopic || 'New Session' }}</span
-                        >
-                    </div>
-
                     <!-- Right: Settings -->
                     <button
                         class="small-btn settings-btn"
@@ -369,6 +362,15 @@
                     aria-live="polite"
                     aria-atomic="true"
                 >
+                    <!-- NEW: Current Topic Anchor -->
+                    <div
+                        v-if="messages.length > 0"
+                        class="current-topic-anchor"
+                    >
+                        <span class="topic-label">Focus:</span> {{ currentTopic
+                        }}
+                    </div>
+
                     <!-- Conversation Summary -->
                     <div v-if="reflections.length > 0" class="summary-box">
                         <h3>Conversation Summary</h3>

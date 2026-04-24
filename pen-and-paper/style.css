@@ -802,3 +802,18 @@ button.small-btn.summarize-btn:hover {
     color: #121212;
     transform: scale(1.1);
 }
+.current-topic-anchor {
+    text-align: center;
+    margin: 20px 0 10px 0;
+    font-size: 0.75rem;
+    color: var(--text-dim); /* Use your dim/muted color */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.topic-label {
+    color: var(--accent-color); /* Maybe a subtle highlight */
+    margin-right: 4px;
+}
