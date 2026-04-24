@@ -172,6 +172,14 @@ createApp({
       );
     };
 
+    const formatTopicString = (str) => {
+      if (!str) return "";
+      return str
+        .replace(/[-_]+/g, " ") // Replace dashes/underscores with spaces
+        .replace(/\b\w/g, (char) => char.toUpperCase()) // Title Case (optional, but looks good in the UI)
+        .trim();
+    };
+
     onMounted(async () => {
       // Load Settings
       const storedKey = localStorage.getItem("gemini_api_key");
@@ -228,7 +236,7 @@ createApp({
 
         const existingTopic = factsArray.find((f) => f.key === "current_topic");
         if (existingTopic) {
-          currentTopic.value = existingTopic.value;
+          currentTopic.value = formatTopicString(existingTopic.value);
         } else {
           currentTopic.value = "New Conversation";
         }
@@ -1176,12 +1184,11 @@ createApp({
         );
 
         if (topicFact && topicFact.value) {
-          currentTopic.value = topicFact.value;
+          currentTopic.value = formatTopicString(topicFact.value);
         }
 
         console.log(
-          `\nTOPIC:\n${currentTopic.value}\n` +
-            `\nTHOUGHT:\n${thoughtText.trim()}\n` +
+          `\nTHOUGHT:\n${thoughtText.trim()}\n` +
             `\nREFLECTION:\n${finalInsight}\n` +
             `\nFACTS:\n${logFacts || "- none"}\n` +
             `\nTHEMES:\n${logThemes || "- none"}\n` +
