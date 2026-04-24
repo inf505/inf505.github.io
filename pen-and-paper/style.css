@@ -345,6 +345,9 @@ button.small-btn.summarize-btn:hover {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.settings-panel {
     z-index: 200; /* Higher than floating header */
     top: 0;
     height: 100%;
