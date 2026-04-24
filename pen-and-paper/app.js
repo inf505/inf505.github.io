@@ -487,7 +487,7 @@ createApp({
               role: "user",
               parts: [
                 {
-                  text: "Generate a list of 5 highly specific abstract concepts, physical phenomena, or sensory metaphors to be used as hidden atmospheric metaphors. Output only the JSON.",
+                  text: "Generate a list of 10 highly specific abstract concepts, physical phenomena, or sensory metaphors to be used as hidden atmospheric metaphors. Output only the JSON.",
                 },
               ],
             },
