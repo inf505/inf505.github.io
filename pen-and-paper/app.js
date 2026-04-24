@@ -476,6 +476,10 @@ createApp({
     const refreshSeeds = async () => {
       isRefreshingSeeds.value = true;
 
+      // 1. Create a timeout controller
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
       try {
         const payload = {
           contents: [
@@ -512,14 +516,16 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
+          signal: controller.signal, // Attach signal
         });
+
+        clearTimeout(timeoutId); // Success, clear the timeout
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
         if (data.candidates && data.candidates[0].content.parts) {
           const rawText = data.candidates[0].content.parts[0].text;
-
           const jsonStartIndex = rawText.indexOf("{");
           const jsonEndIndex = rawText.lastIndexOf("}");
 
@@ -533,23 +539,17 @@ createApp({
             if (parsed.seeds && Array.isArray(parsed.seeds)) {
               await db.seeds.clear();
 
-              // CLEANING LOGIC:
-              // 1. Replace dashes with spaces
-              // 2. Collapse double spaces
-              // 3. Trim whitespace
-              // 4. Filter out empty strings
-              // 5. Use Set to keep unique
+              // THE CLEANING LOGIC YOU REQUESTED
               const uniqueSeeds = [
                 ...new Set(
                   parsed.seeds
-                    .map(
-                      (s) =>
-                        s
-                          .replace(/-/g, " ") // Replace dashes with spaces
-                          .replace(/\s\s+/g, " ") // Eliminate double spaces
-                          .trim(), // Remove leading/trailing
+                    .map((s) =>
+                      s
+                        .replace(/-/g, " ") // Dash -> Space
+                        .replace(/\s\s+/g, " ") // Collapse double spaces
+                        .trim(),
                     )
-                    .filter((s) => s.length > 0), // Eliminate empty entries
+                    .filter((s) => s.length > 0),
                 ),
               ];
 
@@ -559,13 +559,19 @@ createApp({
 
               await rollTheDice();
             }
-          } else {
-            throw new Error("Could not find JSON object in AI response.");
           }
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error("Seed Refresh Error:", err);
-        alert("Failed to refresh seeds: " + err.message);
+        // Alert if it timed out or failed
+        if (err.name === "AbortError") {
+          alert(
+            "Seed refresh timed out. The model took too long to generate the list.",
+          );
+        } else {
+          alert("Failed to refresh seeds: " + err.message);
+        }
       } finally {
         isRefreshingSeeds.value = false;
       }
