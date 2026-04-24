@@ -25,7 +25,7 @@
                         :disabled="isSummarizing"
                         class="float-btn archive-btn"
                         @click="summarizeAndArchive"
-                        :title="'Archive - ' + totalSizeKb + ' KB'"
+                        :title="'Archive - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
                     >
                         <span v-if="isSummarizing">⏳</span>
                         <span v-else>☀️</span>
