@@ -23,21 +23,28 @@
                 <!-- Sidebar -->
                 <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
                     <div class="sidebar-header">
-                        <strong>MyProject</strong>
+                        <strong>Life Engine</strong>
                     </div>
-                    <div class="controls">
-                        <!-- A PrimeVue Slider for Speed -->
-                        <p>Speed: {{ speed }}ms</p>
-                        <p-slider
-                            v-model="speed"
-                            :min="10"
-                            :max="1000"
-                            class="w-full"
-                        ></p-slider>
 
-                        <!-- Simple Button with Lucide Icon -->
+                    <!-- Game Controls Section -->
+                    <div class="controls">
+                        <div>
+                            <label style="font-size: 0.8rem; color: #666"
+                                >Simulation Speed</label
+                            >
+                            <p style="margin-bottom: 10px">{{ speed }}ms</p>
+                            <p-slider
+                                v-model="speed"
+                                :min="10"
+                                :max="1000"
+                            ></p-slider>
+                        </div>
+
                         <button @click="togglePlay" class="play-btn">
                             <i :data-lucide="isPlaying ? 'pause' : 'play'"></i>
+                            <span style="margin-left: 8px"
+                                >{{ isPlaying ? 'Stop' : 'Start' }}</span
+                            >
                         </button>
                     </div>
                 </aside>

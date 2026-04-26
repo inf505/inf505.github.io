@@ -51,7 +51,7 @@ body {
     width: var(--sidebar-width);
     background: #fff;
     border-right: 1px solid #ddd;
-    position: fixed;sdghjk;
+    position: fixed;
     top: 0;
     bottom: 0;
     left: calc(-1 * var(--sidebar-width));
