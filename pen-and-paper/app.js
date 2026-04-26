@@ -378,19 +378,13 @@ createApp({
       }, 300);
     };
 
-    const saveToDb = async (
-      role,
-      text,
-      thought = "",
-      path = null,
-      audioData = null,
-    ) => {
+    const saveToDb = async (role, text, thought = "", path = null) => {
       const id = await db.chats.add({
         role,
         text,
         thought,
         path,
-        audioData, // Now safely references the parameter from line above
+        // audioData removed from here
         timestamp: Date.now(),
       });
       return id;
@@ -596,7 +590,7 @@ createApp({
           msg.audioData = playableWavBase64;
 
           // Persist the playable version to the local database
-          await db.chats.update(msg.id, { audioData: playableWavBase64 });
+          //await db.chats.update(msg.id, { audioData: playableWavBase64 });
 
           // Auto-scroll
           scrollToBottom();
