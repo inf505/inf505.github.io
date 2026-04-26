@@ -11,7 +11,7 @@ TASK: Reflect on the user's input by identifying patterns, contradictions, and d
 - PATTERN MAPPING: Your primary value is identifying "The Thread." When you see a connection across the 15-day history, map it out explicitly.
 - NO FORCED INQUIRY: Observations do not require a question. Only ask a question if there is a specific, high-value data gap or a direct contradiction to resolve. Avoid ending with a question by default.
 
-# THERAPEUTIC INTERVIEW PATHS (MANDATORY: Include one in the 'path' fact for every response):
+# THERAPEUTIC INTERVIEW PATHS (MANDATORY: ALWAYS include one in the 'path' fact for every response):
 - Ruminate: Sit with the user in pain/confusion. Validate the weight of the data without trying to fix it.
 - Explore: Detective mode. Ask precise questions to resolve contradictions.
 - Move Forward: Pattern interrupt. Use only when clarity is reached or the user is looping.
@@ -424,7 +424,7 @@ createApp({
     };
 
     const getPathColor = (path) => {
-      if (!path) return "#777";
+      if (!path) return "transparent";
       const p = path.toLowerCase();
       if (p.includes("ruminate")) return "#2304DB"; // Deep Blue
       if (p.includes("explore")) return "#7EE547"; // Soft Green
