@@ -502,6 +502,46 @@ createApp({
       }
     };
 
+    const addWavHeader = (base64Pcm) => {
+      // Decode the base64 PCM data into a binary string
+      const binaryString = atob(base64Pcm);
+      const dataSize = binaryString.length;
+
+      // Create a 44-byte WAV header
+      const buffer = new ArrayBuffer(44);
+      const view = new DataView(buffer);
+
+      const writeString = (offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+
+      writeString(0, "RIFF");
+      view.setUint32(4, 36 + dataSize, true);
+      writeString(8, "WAVE");
+      writeString(12, "fmt ");
+      view.setUint32(16, 16, true); // PCM format chunk size
+      view.setUint16(20, 1, true); // Audio format: 1 (PCM)
+      view.setUint16(22, 1, true); // Channels: 1 (Mono)
+      view.setUint32(24, 24000, true); // Sample rate: 24000Hz
+      view.setUint32(28, 24000 * 2, true); // Byte rate: SampleRate * NumChannels * BitsPerSample/8
+      view.setUint16(32, 2, true); // Block align
+      view.setUint16(34, 16, true); // Bits per sample: 16
+      writeString(36, "data");
+      view.setUint32(40, dataSize, true);
+
+      // Convert header to binary string
+      let headerString = "";
+      const headerBytes = new Uint8Array(buffer);
+      for (let i = 0; i < headerBytes.length; i++) {
+        headerString += String.fromCharCode(headerBytes[i]);
+      }
+
+      // Combine header + raw PCM, then encode back to Base64
+      return btoa(headerString + binaryString);
+    };
+
     const generateAudio = async (textToRead, dbId, messageIndex) => {
       // Flag the UI to show the "Synthesizing..." loading state
       messages.value[messageIndex].isGeneratingAudio = true;
@@ -549,10 +589,14 @@ createApp({
           data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
         if (base64Audio) {
-          // Update UI State
-          messages.value[messageIndex].audioData = base64Audio;
-          // Persist to local database
-          await db.chats.update(dbId, { audioData: base64Audio });
+          // Convert Raw PCM to playable WAV Base64
+          const playableWavBase64 = addWavHeader(base64Audio);
+
+          // Update UI State with the correctly formatted audio
+          messages.value[messageIndex].audioData = playableWavBase64;
+
+          // Persist the playable version to the local database
+          await db.chats.update(dbId, { audioData: playableWavBase64 });
 
           // Auto-scroll to ensure the audio player is visible
           scrollToBottom();
