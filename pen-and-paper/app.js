@@ -90,7 +90,6 @@ createApp({
     const inputArea = ref(null);
     const foods = ref([]);
 
-    const enableTTS = ref(false);
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
     const selectedVoice = ref("Charon"); // Charon provides a deep, detached baseline
     const ttsProsodyNudge = ref(
@@ -195,8 +194,6 @@ createApp({
       const storedModel = localStorage.getItem("gemini_model");
       const storedSummaryModel = localStorage.getItem("gemini_summary_model");
 
-      if (localStorage.getItem("gemini_enable_tts") === "true")
-        enableTTS.value = true;
       if (localStorage.getItem("gemini_tts_model"))
         selectedTTSModel.value = localStorage.getItem("gemini_tts_model");
       if (localStorage.getItem("gemini_tts_voice"))
@@ -542,9 +539,13 @@ createApp({
       return btoa(headerString + binaryString);
     };
 
-    const generateAudio = async (textToRead, dbId, messageIndex) => {
-      // Flag the UI to show the "Synthesizing..." loading state
-      messages.value[messageIndex].isGeneratingAudio = true;
+    const triggerTTS = async (messageIndex) => {
+      const msg = messages.value[messageIndex];
+
+      // Prevent double-clicks or trying to read empty/user messages
+      if (!msg || !msg.text || msg.isGeneratingAudio) return;
+
+      msg.isGeneratingAudio = true;
 
       try {
         const payload = {
@@ -552,7 +553,7 @@ createApp({
             {
               role: "user",
               parts: [
-                { text: `${ttsProsodyNudge.value}\n\nTEXT:\n${textToRead}` },
+                { text: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}` },
               ],
             },
           ],
@@ -584,27 +585,28 @@ createApp({
         if (!response.ok)
           throw new Error(data.error?.message || "TTS API Error");
 
-        // Extract base64 inline audio data
+        // Extract base64 inline audio data (Raw PCM)
         const base64Audio =
           data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
         if (base64Audio) {
-          // Convert Raw PCM to playable WAV Base64
+          // Convert Raw PCM to playable WAV Base64 (using the helper we added)
           const playableWavBase64 = addWavHeader(base64Audio);
 
           // Update UI State with the correctly formatted audio
-          messages.value[messageIndex].audioData = playableWavBase64;
+          msg.audioData = playableWavBase64;
 
           // Persist the playable version to the local database
-          await db.chats.update(dbId, { audioData: playableWavBase64 });
+          await db.chats.update(msg.id, { audioData: playableWavBase64 });
 
-          // Auto-scroll to ensure the audio player is visible
+          // Auto-scroll
           scrollToBottom();
         }
       } catch (err) {
         console.error("Audio Synthesis Pipeline Failed:", err);
+        alert("Failed to synthesize audio: " + err.message);
       } finally {
-        messages.value[messageIndex].isGeneratingAudio = false;
+        msg.isGeneratingAudio = false;
       }
     };
 
@@ -1359,12 +1361,6 @@ createApp({
           audioData: null,
           isGeneratingAudio: false,
         });
-
-        // [NEW TTS INJECTION]
-        const newMsgIndex = messages.value.length - 1;
-        if (enableTTS.value && finalResponse) {
-          generateAudio(finalResponse, modelId, newMsgIndex);
-        }
       } catch (error) {
         // NEW: Catch the specific abort error
         let errorMsg = `❌ Error: ${error.message}`;
@@ -1454,10 +1450,10 @@ createApp({
       foods,
       loadFoods,
       deleteFood,
-      enableTTS,
       selectedTTSModel,
       selectedVoice,
       ttsProsodyNudge,
+      triggerTTS,
     };
   },
 }).mount("#app");

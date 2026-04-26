@@ -429,6 +429,16 @@
                         >
                             <!-- Action Buttons Container -->
                             <div class="msg-actions">
+                                <!-- NEW: Speaker / Read Aloud Button -->
+                                <button
+                                    v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
+                                    class="action-msg-btn speaker-btn"
+                                    @click="triggerTTS(index)"
+                                    title="Synthesize Audio"
+                                >
+                                    🔊
+                                </button>
+
                                 <!-- Retry Button (Only for the last model message) -->
                                 <button
                                     v-if="msg.role === 'model' && index === messages.length - 1"
@@ -463,6 +473,7 @@
                                 v-html="renderMarkdown(msg.text)"
                             ></div>
 
+                            <!-- 1. AUDIO LOADING STATE -->
                             <div
                                 v-if="msg.isGeneratingAudio"
                                 class="audio-loading"
@@ -474,6 +485,8 @@
                             >
                                 <i>Synthesizing audio...</i>
                             </div>
+
+                            <!-- 2. AUDIO PLAYER (WITH AUTOPLAY) -->
                             <div
                                 v-if="msg.audioData"
                                 class="audio-player"
@@ -481,6 +494,7 @@
                             >
                                 <audio
                                     controls
+                                    autoplay
                                     :src="'data:audio/wav;base64,' + msg.audioData"
                                     style="width: 100%; height: 36px"
                                 ></audio>
