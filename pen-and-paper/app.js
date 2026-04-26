@@ -361,7 +361,6 @@ createApp({
 
       localStorage.setItem("gemini_system_prompt", systemPrompt.value);
 
-      localStorage.setItem("gemini_enable_tts", enableTTS.value);
       localStorage.setItem("gemini_tts_model", selectedTTSModel.value);
       localStorage.setItem("gemini_tts_voice", selectedVoice.value);
       localStorage.setItem("gemini_tts_prosody", ttsProsodyNudge.value);

@@ -158,22 +158,6 @@
                     <!-- TAB CONTENT: AUDIO / TTS -->
                     <div v-if="activeTab === 'audio'" class="tab-content">
                         <div class="settings-group">
-                            <label>Enable Voice Synthesizer:</label>
-                            <div style="margin-top: 5px">
-                                <input
-                                    type="checkbox"
-                                    id="ttsToggle"
-                                    v-model="enableTTS"
-                                />
-                                <label
-                                    for="ttsToggle"
-                                    style="display: inline; margin-left: 8px"
-                                    >Active</label
-                                >
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
                             <label>Native TTS Model (Slot 3):</label>
                             <input
                                 type="text"
@@ -184,16 +168,15 @@
 
                         <div class="settings-group">
                             <label>Voice Profile:</label>
-                            <select
+                            <input
+                                type="text"
                                 v-model="selectedVoice"
-                                class="status-select"
+                                placeholder="e.g., Charon, Aoede, Puck"
+                            />
+                            <small
+                                >Standard voices: Aoede, Charon, Fenrir, Kore,
+                                Puck.</small
                             >
-                                <option value="Aoede">Aoede</option>
-                                <option value="Charon">Charon</option>
-                                <option value="Fenrir">Fenrir</option>
-                                <option value="Kore">Kore</option>
-                                <option value="Puck">Puck</option>
-                            </select>
                         </div>
 
                         <div class="settings-group">
