@@ -1527,6 +1527,7 @@ createApp({
       saveAllSettings,
       reflections,
       summarizeAndArchive,
+      importDatabase,
       facts,
       themes,
       upsertFact,
