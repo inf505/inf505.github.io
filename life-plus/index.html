@@ -5,7 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vue CDN Project</title>
         <link rel="stylesheet" href="style.css" />
-        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <link
+            href="https://unpkg.com/primevue/resources/themes/lara-light-green/theme.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://unpkg.com/primevue/resources/primevue.min.css"
+            rel="stylesheet"
+        />
     </head>
     <body>
         <div id="app">
@@ -18,14 +25,21 @@
                     <div class="sidebar-header">
                         <strong>MyProject</strong>
                     </div>
-                    <nav>
-                        <ul>
-                            <li><a href="#">Dashboard</a></li>
-                            <li><a href="#">Projects</a></li>
-                            <li><a href="#">Settings</a></li>
-                            <li><a href="#">Profile</a></li>
-                        </ul>
-                    </nav>
+                    <div class="controls">
+                        <!-- A PrimeVue Slider for Speed -->
+                        <p>Speed: {{ speed }}ms</p>
+                        <p-slider
+                            v-model="speed"
+                            :min="10"
+                            :max="1000"
+                            class="w-full"
+                        ></p-slider>
+
+                        <!-- Simple Button with Lucide Icon -->
+                        <button @click="togglePlay" class="play-btn">
+                            <i :data-lucide="isPlaying ? 'pause' : 'play'"></i>
+                        </button>
+                    </div>
                 </aside>
 
                 <!-- Main Content Area -->
@@ -46,6 +60,17 @@
             ></div>
         </div>
 
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+        <!-- 2. UI Libraries (The Tools) -->
+        <!-- PrimeVue (Optional, if you use it) -->
+        <script src="https://unpkg.com/primevue/core/core.min.js"></script>
+        <script src="https://unpkg.com/primevue/slider/slider.min.js"></script>
+
+        <!-- Lucide Icons (Item #3) -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <!-- 3. Your Code (The Logic) -->
         <script src="app.js"></script>
     </body>
 </html>
