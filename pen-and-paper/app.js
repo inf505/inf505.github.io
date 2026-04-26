@@ -27,7 +27,8 @@ Return a single JSON object. Do not use markdown blocks.
 1. "thought": Internal logic (1-2 sentences) justifying the chosen path.
 2. "response": Your clinical reflection to the user.
 3. "reflection": Shorthand internal notes on user insight.
-4. "facts": Array of {key, value} pairs. REQUIRED: Update "path" (choose: Ruminate|Explore|Move Forward) and "current_topic".
+4. "facts": Array of {key, value} pairs.
+   CRITICAL: You MUST include an object in this array where "key" is exactly "path" and "value" is exactly one of: "Ruminate", "Explore", or "Move Forward". You must also update the "current_topic" key.
 5. "themes": High-level life pillars.
 6. "goals": Objects of {title, status: active|completed|paused}. No duplicates.
 7. "foods": Array of specific food items consumed in the current entry.
@@ -365,6 +366,7 @@ createApp({
         role,
         text,
         thought,
+        path,
         timestamp: Date.now(),
       });
       return id;
@@ -1201,6 +1203,7 @@ createApp({
           "model",
           finalResponse,
           thoughtText.trim(),
+          currentPath,
         );
         if (finalInsight) await saveReflection(modelId, finalInsight);
 
