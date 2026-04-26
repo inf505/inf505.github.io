@@ -491,6 +491,83 @@ createApp({
       }
     };
 
+    const importDatabase = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+
+          // Clinical Confirmation
+          if (
+            !confirm(
+              "This will WIPE all current local data and replace it with the import file. Proceed?",
+            )
+          ) {
+            return;
+          }
+
+          isSummarizing.value = true; // Use the loading overlay
+
+          // Atomic Transaction: Clear and Replace
+          await db.transaction(
+            "rw",
+            db.chats,
+            db.reflections,
+            db.facts,
+            db.themes,
+            db.goals,
+            db.foods,
+            async () => {
+              await Promise.all([
+                db.chats.clear(),
+                db.reflections.clear(),
+                db.facts.clear(),
+                db.themes.clear(),
+                db.goals.clear(),
+                db.foods.clear(),
+              ]);
+
+              if (data.chats) await db.chats.bulkAdd(data.chats);
+              if (data.reflections)
+                await db.reflections.bulkAdd(data.reflections);
+              if (data.facts) await db.facts.bulkAdd(data.facts);
+              if (data.themes) await db.themes.bulkAdd(data.themes);
+              if (data.goals) await db.goals.bulkAdd(data.goals);
+              if (data.foods) await db.foods.bulkAdd(data.foods);
+            },
+          );
+
+          // Refresh UI state from DB
+          await updateCounts();
+          await loadFoods();
+          await loadGoals();
+
+          // Reload messages to reflect the new history
+          const history = await db.chats.orderBy("timestamp").toArray();
+          messages.value = history;
+
+          // Update current topic from facts
+          const topicFact = data.facts?.find((f) => f.key === "current_topic");
+          if (topicFact)
+            currentTopic.value = formatTopicString(topicFact.value);
+
+          alert("Data restoration successful. State synchronized.");
+          window.location.reload(); // Hard reload to reset all internal reactive states
+        } catch (err) {
+          console.error("Import failed:", err);
+          alert(
+            "Critical Error: Failed to parse or write import data. Ensure the file is a valid Pen & Paper backup.",
+          );
+        } finally {
+          isSummarizing.value = false;
+        }
+      };
+      reader.readAsText(file);
+    };
+
     const getHybridSet = async (
       tableName,
       recentCount = 10,
