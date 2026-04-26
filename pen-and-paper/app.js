@@ -148,11 +148,10 @@ createApp({
     };
 
     const loadFoods = async () => {
-      // We'll grab the last 14 days of food to keep context relevant but lean
-      const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      const seventyTwoHoursAgo = Date.now() - 72 * 60 * 60 * 1000;
       foods.value = await db.foods
         .where("timestamp")
-        .above(fourteenDaysAgo)
+        .above(seventyTwoHoursAgo)
         .toArray();
     };
 
@@ -490,6 +489,40 @@ createApp({
         console.error("Export failed:", err);
         alert("Failed to export database.");
       }
+    };
+
+    const getHybridSet = async (
+      tableName,
+      recentCount = 10,
+      randomCount = 5,
+    ) => {
+      const allEntries = await db[tableName].toArray();
+
+      if (allEntries.length <= recentCount + randomCount) {
+        return allEntries.sort((a, b) => a.timestamp - b.timestamp);
+      }
+
+      // Sort by newest first
+      const sorted = [...allEntries].sort((a, b) => b.timestamp - a.timestamp);
+
+      // 1. Get the 10 most recent
+      const recent = sorted.slice(0, recentCount);
+
+      // 2. Get the pool of remaining entries for random selection
+      const remaining = sorted.slice(recentCount);
+      const randomSelection = [];
+
+      for (let i = 0; i < randomCount; i++) {
+        if (remaining.length === 0) break;
+        const randomIndex = Math.floor(Math.random() * remaining.length);
+        // Remove from pool to prevent duplicates
+        randomSelection.push(remaining.splice(randomIndex, 1)[0]);
+      }
+
+      // Return combined set sorted chronologically for the LLM
+      return [...recent, ...randomSelection].sort(
+        (a, b) => a.timestamp - b.timestamp,
+      );
     };
 
     const addWavHeader = (base64Pcm) => {
@@ -1057,50 +1090,49 @@ createApp({
         // 1. Context Injection: Build a dynamic context string
         let dynamicContext = "";
 
-        // 1. FACTS: Sorted alphabetically by Key (Groups related topics together)
-        if (facts.value.length > 0) {
-          const sortedFacts = [...facts.value].sort((a, b) =>
-            a.key.localeCompare(b.key),
-          );
-          const factsString = sortedFacts
+        // 1. HYBRID FACTS (10 Recent + 5 Random)
+        const hybridFacts = await getHybridSet("facts", 10, 5);
+        if (hybridFacts.length > 0) {
+          const factsString = hybridFacts
             .map(
               (f) =>
                 `[${formatRelativeTime(f.timestamp)}] ${f.key}: ${f.value}`,
             )
             .join("\n");
-          dynamicContext += `\n\nFACTS (Categorized):\n${factsString}`;
+          dynamicContext += `\n\nFACTS (Stochastic Memory: 10 Recent + 5 Random):\n${factsString}`;
         }
 
-        // 2. PAST INSIGHTS: Sorted Chronologically (Oldest to Newest)
-        if (reflections.value.length > 0) {
-          const sortedReflections = [...reflections.value].sort(
-            (a, b) => a.timestamp - b.timestamp,
-          );
-          const reflectionsString = sortedReflections
+        // 2. HYBRID REFLECTIONS (10 Recent + 5 Random)
+        const hybridReflections = await getHybridSet("reflections", 10, 5);
+        if (hybridReflections.length > 0) {
+          const reflectionsString = hybridReflections
             .map(
               (ref) => `[${formatRelativeTime(ref.timestamp)}] ${ref.insight}`,
             )
             .join("\n");
-          dynamicContext += `\n\nPAST INSIGHTS (Chronological Narrative):\n${reflectionsString}`;
+          dynamicContext += `\n\nPAST INSIGHTS (Stochastic Memory: 10 Recent + 5 Random):\n${reflectionsString}`;
         }
 
+        // 3. THEMATIC GRAVITY (Top 8 themes by frequency)
         if (themes.value.length > 0) {
           const themeContext = themes.value
-            .slice(0, 5)
-            .map(
-              (t) =>
-                `${t.name} (last seen: ${formatRelativeTime(t.last_seen || t.timestamp)})`,
-            )
+            .slice(0, 8)
+            .map((t) => `${t.name} (Seen ${t.count}x)`)
             .join(", ");
           dynamicContext += `\n\nRECURRING LIFE THEMES:\n${themeContext}`;
         }
 
-        const activeGoals = goals.value.filter((g) => g.status === "active");
+        const activeGoals = await db.goals
+          .where("status")
+          .equals("active")
+          .reverse()
+          .limit(5)
+          .toArray();
         if (activeGoals.length > 0) {
           const goalsString = activeGoals
             .map((g) => `${g.title} (set: ${formatRelativeTime(g.timestamp)})`)
             .join(", ");
-          dynamicContext += `\n\nACTIVE GOALS:\n${goalsString}`;
+          dynamicContext += `\n\nACTIVE GOALS (Cap: 5):\n${goalsString}`;
         }
 
         if (foods.value.length > 0) {
