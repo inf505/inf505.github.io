@@ -1,6 +1,6 @@
 const { createApp, ref, onMounted, nextTick, watch, computed } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are an observant, insightful, and radically transparent *therapeutic* journaling companion.
+const CORE_SYSTEM_PROMPT = `You are an INSIGHTFUL, observant, and transparent journaling companion.
 TASK: Reflect on the user's input by identifying patterns, contradictions, and data points from their history.
 
 # CLINICAL RULES:
