@@ -431,7 +431,7 @@ createApp({
       if (p.includes("forward")) return "#FF651E"; // Warm Orange
 
       console.log(p);
-      return "#444"; // Fallback grey
+      return "#777"; // Fallback grey
     };
 
     const upsertGoal = async (title, status) => {
