@@ -90,6 +90,13 @@ createApp({
     const inputArea = ref(null);
     const foods = ref([]);
 
+    const enableTTS = ref(false);
+    const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
+    const selectedVoice = ref("Charon"); // Charon provides a deep, detached baseline
+    const ttsProsodyNudge = ref(
+      "Read the following text. Tone: Direct, clinical, detached. Maintain a dry, data-dense cadence. Avoid emotional therapeutic inflection.",
+    );
+
     const renderMarkdown = (text) => marked.parse(text);
 
     const updateCounts = async () => {
@@ -187,6 +194,15 @@ createApp({
       const storedKey = localStorage.getItem("gemini_api_key");
       const storedModel = localStorage.getItem("gemini_model");
       const storedSummaryModel = localStorage.getItem("gemini_summary_model");
+
+      if (localStorage.getItem("gemini_enable_tts") === "true")
+        enableTTS.value = true;
+      if (localStorage.getItem("gemini_tts_model"))
+        selectedTTSModel.value = localStorage.getItem("gemini_tts_model");
+      if (localStorage.getItem("gemini_tts_voice"))
+        selectedVoice.value = localStorage.getItem("gemini_tts_voice");
+      if (localStorage.getItem("gemini_tts_prosody"))
+        ttsProsodyNudge.value = localStorage.getItem("gemini_tts_prosody");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -348,6 +364,11 @@ createApp({
 
       localStorage.setItem("gemini_system_prompt", systemPrompt.value);
 
+      localStorage.setItem("gemini_enable_tts", enableTTS.value);
+      localStorage.setItem("gemini_tts_model", selectedTTSModel.value);
+      localStorage.setItem("gemini_tts_voice", selectedVoice.value);
+      localStorage.setItem("gemini_tts_prosody", ttsProsodyNudge.value);
+
       showSettings.value = false;
     };
 
@@ -366,7 +387,8 @@ createApp({
         role,
         text,
         thought,
-        path, // Now safely references the parameter
+        path,
+        audioData,
         timestamp: Date.now(),
       });
       return id;
@@ -471,6 +493,68 @@ createApp({
       } catch (err) {
         console.error("Export failed:", err);
         alert("Failed to export database.");
+      }
+    };
+
+    const generateAudio = async (textToRead, dbId, messageIndex) => {
+      // Flag the UI to show the "Synthesizing..." loading state
+      messages.value[messageIndex].isGeneratingAudio = true;
+
+      try {
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: `${ttsProsodyNudge.value}\n\nTEXT:\n${textToRead}` },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: selectedVoice.value,
+                },
+              },
+            },
+          },
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedTTSModel.value}:generateContent`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok)
+          throw new Error(data.error?.message || "TTS API Error");
+
+        // Extract base64 inline audio data
+        const base64Audio =
+          data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+        if (base64Audio) {
+          // Update UI State
+          messages.value[messageIndex].audioData = base64Audio;
+          // Persist to local database
+          await db.chats.update(dbId, { audioData: base64Audio });
+
+          // Auto-scroll to ensure the audio player is visible
+          scrollToBottom();
+        }
+      } catch (err) {
+        console.error("Audio Synthesis Pipeline Failed:", err);
+      } finally {
+        messages.value[messageIndex].isGeneratingAudio = false;
       }
     };
 
@@ -1222,7 +1306,15 @@ createApp({
           text: finalResponse,
           thought: thoughtText.trim(),
           path: currentPath,
+          audioData: null,
+          isGeneratingAudio: false,
         });
+
+        // [NEW TTS INJECTION]
+        const newMsgIndex = messages.value.length - 1;
+        if (enableTTS.value && finalResponse) {
+          generateAudio(finalResponse, modelId, newMsgIndex);
+        }
       } catch (error) {
         // NEW: Catch the specific abort error
         let errorMsg = `❌ Error: ${error.message}`;
@@ -1312,6 +1404,10 @@ createApp({
       foods,
       loadFoods,
       deleteFood,
+      enableTTS,
+      selectedTTSModel,
+      selectedVoice,
+      ttsProsodyNudge,
     };
   },
 }).mount("#app");
