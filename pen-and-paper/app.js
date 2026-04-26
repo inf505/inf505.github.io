@@ -382,13 +382,19 @@ createApp({
       }, 300);
     };
 
-    const saveToDb = async (role, text, thought = "", path = null) => {
+    const saveToDb = async (
+      role,
+      text,
+      thought = "",
+      path = null,
+      audioData = null,
+    ) => {
       const id = await db.chats.add({
         role,
         text,
         thought,
         path,
-        audioData,
+        audioData, // Now safely references the parameter from line above
         timestamp: Date.now(),
       });
       return id;
