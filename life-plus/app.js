@@ -24,7 +24,6 @@ const app = createApp({
 
     // Everything returned here is available to your HTML
     return {
-      speed,
       isPlaying,
       isSidebarOpen,
       toggleSidebar,
