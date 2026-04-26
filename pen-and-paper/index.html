@@ -139,12 +139,37 @@
 
                         <div class="settings-group">
                             <label>Data Management:</label>
-                            <button
-                                class="small-btn summarize-btn"
-                                @click="exportDatabase"
+                            <div
+                                style="display: flex; gap: 8px; flex-wrap: wrap"
                             >
-                                💾 Export Database to JSON
-                            </button>
+                                <button
+                                    class="small-btn summarize-btn"
+                                    @click="exportDatabase"
+                                >
+                                    💾 Export Database
+                                </button>
+
+                                <!-- Hidden input for file selection -->
+                                <input
+                                    type="file"
+                                    id="dbImportInput"
+                                    accept=".json"
+                                    @change="importDatabase"
+                                    style="display: none"
+                                />
+
+                                <!-- Styled button to trigger the hidden input -->
+                                <button
+                                    class="small-btn"
+                                    onclick="
+                                        document
+                                            .getElementById('dbImportInput')
+                                            .click()
+                                    "
+                                >
+                                    📂 Import Database
+                                </button>
+                            </div>
                         </div>
 
                         <button
