@@ -3,7 +3,6 @@ const { createApp, ref, onMounted, nextTick } = Vue;
 const app = createApp({
   setup() {
     // Game State
-    const speed = ref(100);
     const isPlaying = ref(false);
 
     // UI State (Added this)
@@ -36,6 +35,5 @@ const app = createApp({
 
 // PrimeVue Global Config
 app.use(PrimeVue.Config);
-app.component("p-slider", PrimeVue.Slider);
 
 app.mount("#app");

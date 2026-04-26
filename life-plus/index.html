@@ -29,18 +29,6 @@
 
                     <!-- Game Controls Section -->
                     <div class="controls">
-                        <div>
-                            <label style="font-size: 0.8rem; color: #666"
-                                >Simulation Speed</label
-                            >
-                            <p style="margin-bottom: 10px">{{ speed }}ms</p>
-                            <p-slider
-                                v-model="speed"
-                                :min="10"
-                                :max="1000"
-                            ></p-slider>
-                        </div>
-
                         <button @click="togglePlay" class="play-btn">
                             <i :data-lucide="isPlaying ? 'pause' : 'play'"></i>
                             <span style="margin-left: 8px"
@@ -70,8 +58,7 @@
 
         <!-- 2. UI Libraries (The Tools) -->
 
-        <script src="https://unpkg.com/primevue@4.5.5/umd/primevue.min.js"></script>
-        <script src="https://unpkg.com/primevue/slider/slider.min.js"></script>
+        <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
 
         <!-- Lucide Icons (Item #3) -->
         <script src="https://unpkg.com/lucide@latest"></script>
