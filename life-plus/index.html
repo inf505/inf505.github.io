@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vue CDN Project</title>
+        <link rel="stylesheet" href="style.css" />
+        <!-- Vue 3 CDN -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <!-- Top Navigation (Visible on mobile for the toggle) -->
+            <header class="top-bar">
+                <button class="menu-toggle" @click="toggleSidebar">☰</button>
+                <div class="logo">MyProject</div>
+            </header>
+
+            <div class="main-container">
+                <!-- Sidebar -->
+                <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
+                    <nav>
+                        <ul>
+                            <li><a href="#">Dashboard</a></li>
+                            <li><a href="#">Projects</a></li>
+                            <li><a href="#">Settings</a></li>
+                            <li><a href="#">Profile</a></li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- Main Content Area -->
+                <main class="content">
+                    <h1>Welcome</h1>
+                    <p>
+                        This is a mobile-first layout. Try resizing your browser
+                        window!
+                    </p>
+                </main>
+            </div>
+
+            <!-- Overlay to close sidebar when clicking outside on mobile -->
+            <div
+                v-if="isSidebarOpen"
+                class="overlay"
+                @click="toggleSidebar"
+            ></div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
