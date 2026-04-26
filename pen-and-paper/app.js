@@ -424,7 +424,7 @@ createApp({
     };
 
     const getPathColor = (path) => {
-      if (!path) return "transparent";
+      if (!path) return "#777";
       const p = path.toLowerCase();
       if (p.includes("ruminate")) return "#2304DB"; // Deep Blue
       if (p.includes("explore")) return "#7EE547"; // Soft Green
