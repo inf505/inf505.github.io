@@ -17,51 +17,59 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
+    overflow-x: hidden;
 }
 
-/* --- Header --- */
-.top-bar {
-    height: 60px;
+/* --- Floating Mobile Button --- */
+.mobile-menu-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
     background: var(--primary-color);
     color: white;
-    display: flex;
-    align-items: center;
-    padding: 0 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.menu-toggle {
-    background: none;
     border: none;
-    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
     font-size: 1.5rem;
     cursor: pointer;
-    margin-right: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* --- Layout --- */
 .main-container {
     display: flex;
-    min-height: calc(100vh - 60px);
+    min-height: 100vh;
 }
 
-/* --- Sidebar (Mobile First: Hidden by default) --- */
+/* --- Sidebar --- */
 .sidebar {
     width: var(--sidebar-width);
     background: #fff;
     border-right: 1px solid #ddd;
     position: fixed;
-    top: 60px;
+    top: 0;
     bottom: 0;
-    left: calc(-1 * var(--sidebar-width)); /* Hide off-screen */
+    left: calc(-1 * var(--sidebar-width));
     transition: left var(--transition-speed) ease;
     z-index: 99;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-open {
-    left: 0; /* Slide into view */
+    left: 0;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    color: var(--primary-color);
 }
 
 .sidebar nav ul {
@@ -86,12 +94,14 @@ body {
 .content {
     flex: 1;
     padding: 2rem;
+    /* Add padding-top on mobile so content isn't hidden under the floating button */
+    padding-top: 4rem;
 }
 
 /* --- Overlay --- */
 .overlay {
     position: fixed;
-    top: 60px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -99,15 +109,19 @@ body {
     z-index: 98;
 }
 
-/* --- Desktop View (Screens wider than 768px) --- */
+/* --- Desktop View --- */
 @media (min-width: 768px) {
-    .menu-toggle {
-        display: none; /* Hide hamburger on desktop */
+    .mobile-menu-btn {
+        display: none;
     }
 
     .sidebar {
-        position: relative; /* Static placement in the flex flow */
+        position: relative;
         left: 0;
+    }
+
+    .content {
+        padding-top: 2rem;
     }
 
     .overlay {

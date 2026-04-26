@@ -5,20 +5,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vue CDN Project</title>
         <link rel="stylesheet" href="style.css" />
-        <!-- Vue 3 CDN -->
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     </head>
     <body>
         <div id="app">
-            <!-- Top Navigation (Visible on mobile for the toggle) -->
-            <header class="top-bar">
-                <button class="menu-toggle" @click="toggleSidebar">☰</button>
-                <div class="logo">MyProject</div>
-            </header>
+            <!-- Floating Toggle for Mobile -->
+            <button class="mobile-menu-btn" @click="toggleSidebar">☰</button>
 
             <div class="main-container">
                 <!-- Sidebar -->
                 <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
+                    <div class="sidebar-header">
+                        <strong>MyProject</strong>
+                    </div>
                     <nav>
                         <ul>
                             <li><a href="#">Dashboard</a></li>
@@ -33,13 +32,13 @@
                 <main class="content">
                     <h1>Welcome</h1>
                     <p>
-                        This is a mobile-first layout. Try resizing your browser
-                        window!
+                        The header is gone. On mobile, use the floating button
+                        in the top-left to open the menu.
                     </p>
                 </main>
             </div>
 
-            <!-- Overlay to close sidebar when clicking outside on mobile -->
+            <!-- Overlay -->
             <div
                 v-if="isSidebarOpen"
                 class="overlay"
