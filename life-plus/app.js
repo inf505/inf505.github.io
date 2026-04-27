@@ -34,5 +34,5 @@ const app = createApp({
 
 // PrimeVue Global Config
 app.use(PrimeVue.Config);
-
+app.component("p-slider", primevue.slider);
 app.mount("#app");
