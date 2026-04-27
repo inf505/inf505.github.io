@@ -6,13 +6,16 @@ const app = createApp({
     const isSidebarOpen = ref(false);
     const isRunning = ref(false);
 
-    // Canvas & Grid Refs
+    // Canvas Refs
     const gameCanvas = ref(null);
     const canvasWrapper = ref(null);
     let ctx = null;
 
-    // Simulation Constants & State
-    const cellSize = 20;
+    // Simulation Variables (Now Reactive!)
+    const speed = ref(15); // Frames per second
+    const cellSize = ref(20); // Pixels per cell
+    const density = ref(15); // Probability percentage for random spawn
+
     let cols = 0;
     let rows = 0;
     let grid = [];
@@ -24,19 +27,20 @@ const app = createApp({
 
     // --- Core Engine Logic ---
 
-    // Initialize the grid with either 0s (dead) or random 1s (alive)
     const initGrid = (random = false) => {
+      // Calculate the spawn threshold based on the density slider
+      const threshold = 1 - density.value / 100;
+
       grid = new Array(cols)
         .fill(null)
         .map(() =>
           new Array(rows)
             .fill(0)
-            .map(() => (random ? (Math.random() > 0.85 ? 1 : 0) : 0)),
+            .map(() => (random ? (Math.random() > threshold ? 1 : 0) : 0)),
         );
       draw();
     };
 
-    // Resize canvas to fill its container and recalculate rows/cols
     const resizeCanvas = () => {
       if (!gameCanvas.value || !canvasWrapper.value) return;
 
@@ -46,46 +50,42 @@ const app = createApp({
       gameCanvas.value.width = width;
       gameCanvas.value.height = height;
 
-      cols = Math.floor(width / cellSize);
-      rows = Math.floor(height / cellSize);
+      // Update dimensions based on the new cellSize slider value
+      cols = Math.floor(width / cellSize.value);
+      rows = Math.floor(height / cellSize.value);
 
-      initGrid(true); // Start with a random pattern
+      initGrid(true); // Restart with new dimensions
     };
 
-    // Draw the grid state to the canvas
     const draw = () => {
       if (!ctx) return;
 
-      // Clear background
-      ctx.fillStyle = "#f8f9fa"; // Sakai Surface
+      ctx.fillStyle = "#f8f9fa";
       ctx.fillRect(0, 0, gameCanvas.value.width, gameCanvas.value.height);
 
-      // Draw cells
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
           if (grid[i][j] === 1) {
-            ctx.fillStyle = "#10b981"; // Sakai/Aura Primary Green
-            // Subtracting 1 from size creates a natural grid-line effect
+            ctx.fillStyle = "#10b981";
             ctx.fillRect(
-              i * cellSize,
-              j * cellSize,
-              cellSize - 1,
-              cellSize - 1,
+              i * cellSize.value,
+              j * cellSize.value,
+              cellSize.value - 1,
+              cellSize.value - 1,
             );
           } else {
-            ctx.fillStyle = "#e2e8f0"; // Dead cell / Grid line color
+            ctx.fillStyle = "#e2e8f0";
             ctx.fillRect(
-              i * cellSize,
-              j * cellSize,
-              cellSize - 1,
-              cellSize - 1,
+              i * cellSize.value,
+              j * cellSize.value,
+              cellSize.value - 1,
+              cellSize.value - 1,
             );
           }
         }
       }
     };
 
-    // Count alive neighbors (with wrapping edges)
     const countNeighbors = (grid, x, y) => {
       let sum = 0;
       for (let i = -1; i < 2; i++) {
@@ -95,11 +95,10 @@ const app = createApp({
           sum += grid[col][row];
         }
       }
-      sum -= grid[x][y]; // Don't count the cell itself
+      sum -= grid[x][y];
       return sum;
     };
 
-    // Calculate the next generation
     const computeNextGen = () => {
       let nextGrid = new Array(cols)
         .fill(null)
@@ -110,13 +109,12 @@ const app = createApp({
           const state = grid[i][j];
           const neighbors = countNeighbors(grid, i, j);
 
-          // Rules of Life
           if (state === 0 && neighbors === 3) {
-            nextGrid[i][j] = 1; // Birth
+            nextGrid[i][j] = 1;
           } else if (state === 1 && (neighbors < 2 || neighbors > 3)) {
-            nextGrid[i][j] = 0; // Death
+            nextGrid[i][j] = 0;
           } else {
-            nextGrid[i][j] = state; // Survival
+            nextGrid[i][j] = state;
           }
         }
       }
@@ -124,14 +122,16 @@ const app = createApp({
       draw();
     };
 
-    // Game loop
     const loop = () => {
       if (!isRunning.value) return;
       computeNextGen();
-      // setTimeout to control framerate (~10 fps makes it easy to watch)
+
+      // Calculate delay in milliseconds based on FPS slider
+      const delay = 1000 / speed.value;
+
       setTimeout(() => {
         animationId = requestAnimationFrame(loop);
-      }, 100);
+      }, delay);
     };
 
     // --- Controls ---
@@ -142,23 +142,20 @@ const app = createApp({
     };
 
     const step = () => computeNextGen();
-
     const randomize = () => initGrid(true);
-
     const clear = () => {
       isRunning.value = false;
       cancelAnimationFrame(animationId);
       initGrid(false);
     };
 
-    // Allow user to click canvas to toggle individual cells manually
     const toggleCell = (event) => {
       const rect = gameCanvas.value.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
 
-      const col = Math.floor(x / cellSize);
-      const row = Math.floor(y / cellSize);
+      const col = Math.floor(x / cellSize.value);
+      const row = Math.floor(y / cellSize.value);
 
       if (col >= 0 && col < cols && row >= 0 && row < rows) {
         grid[col][row] = grid[col][row] ? 0 : 1;
@@ -166,7 +163,6 @@ const app = createApp({
       }
     };
 
-    // Lifecycle hooks
     onMounted(() => {
       ctx = gameCanvas.value.getContext("2d");
       resizeCanvas();
@@ -189,6 +185,10 @@ const app = createApp({
       clear,
       randomize,
       toggleCell,
+      speed,
+      cellSize,
+      density,
+      resizeCanvas, // Exported the new vars!
     };
   },
 });
@@ -201,4 +201,7 @@ app.use(PrimeVue.Config, {
 });
 
 app.component("p-button", PrimeVue.Button);
+// Registering the new PrimeVue Slider component
+app.component("p-slider", PrimeVue.Slider);
+
 app.mount("#app");

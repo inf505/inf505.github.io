@@ -31,9 +31,9 @@
                     </div>
 
                     <div class="sidebar-content">
+                        <!-- Playback Controls -->
                         <span class="section-label">Controls</span>
                         <div class="control-group">
-                            <!-- Bound Buttons to Vue methods -->
                             <p-button
                                 :label="isRunning ? 'Pause' : 'Play'"
                                 :icon="isRunning ? 'pi pi-pause' : 'pi pi-play'"
@@ -50,8 +50,7 @@
                                 :disabled="isRunning"
                                 class="w-full"
                                 size="small"
-                            >
-                            </p-button>
+                            ></p-button>
                             <p-button
                                 label="Randomize"
                                 icon="pi pi-refresh"
@@ -59,8 +58,7 @@
                                 @click="randomize"
                                 class="w-full"
                                 size="small"
-                            >
-                            </p-button>
+                            ></p-button>
                             <p-button
                                 label="Clear"
                                 icon="pi pi-trash"
@@ -69,8 +67,44 @@
                                 @click="clear"
                                 class="w-full"
                                 size="small"
-                            >
-                            </p-button>
+                            ></p-button>
+                        </div>
+
+                        <!-- New Settings Section -->
+                        <div class="mt-4">
+                            <span class="section-label">Settings</span>
+                            <div class="control-group">
+                                <div class="setting-item">
+                                    <label>Speed ({{ speed }} FPS)</label>
+                                    <p-slider
+                                        v-model="speed"
+                                        :min="1"
+                                        :max="60"
+                                    ></p-slider>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label>Cell Size ({{ cellSize }}px)</label>
+                                    <!-- Using @change so it only resizes the grid when you release the mouse -->
+                                    <p-slider
+                                        v-model="cellSize"
+                                        :min="4"
+                                        :max="50"
+                                        @change="resizeCanvas"
+                                    ></p-slider>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label
+                                        >Spawn Density ({{ density }}%)</label
+                                    >
+                                    <p-slider
+                                        v-model="density"
+                                        :min="1"
+                                        :max="99"
+                                    ></p-slider>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </aside>
@@ -78,7 +112,6 @@
                 <main class="content">
                     <div class="card">
                         <h2 class="card-title">Game of Life</h2>
-                        <!-- Replaced placeholder with Canvas -->
                         <div class="canvas-container" ref="canvasWrapper">
                             <canvas
                                 ref="gameCanvas"

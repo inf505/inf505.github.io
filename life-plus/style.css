@@ -177,3 +177,20 @@ canvas {
     display: block;
     cursor: crosshair; /* Indicates it can be clicked */
 }
+/* --- Settings Section --- */
+.mt-4 {
+    margin-top: 2rem;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.setting-item label {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 600;
+}
