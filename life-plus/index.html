@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Vue CDN Project</title>
+        <title>Life Engine</title>
         <link rel="stylesheet" href="style.css" />
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     </head>
@@ -15,22 +15,9 @@
                     <div class="sidebar-header">
                         <strong>Life Engine</strong>
                     </div>
-                    <div class="controls">
-                        <button @click="togglePlay" class="play-btn">
-                            <i :data-lucide="isPlaying ? 'pause' : 'play'"></i>
-                            <span style="margin-left: 8px"
-                                >{{ isPlaying ? 'Stop' : 'Start' }}</span
-                            >
-                        </button>
-                    </div>
+                    <div class="controls"></div>
                 </aside>
-                <main class="content">
-                    <h1>Welcome</h1>
-                    <p>
-                        The header is gone. On mobile, use the floating button
-                        in the top-left to open the menu.
-                    </p>
-                </main>
+                <main class="content"></main>
             </div>
             <div
                 v-if="isSidebarOpen"
@@ -39,7 +26,6 @@
             ></div>
         </div>
         <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
-        <script src="https://unpkg.com/lucide@1.11.0/dist/umd/lucide.min.js></script>
         <script src="app.js"></script>
     </body>
 </html>
