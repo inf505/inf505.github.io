@@ -1,10 +1,6 @@
 :root {
-    --sidebar-width: 260px;
-    --primary-color: #2c3e50;
-    --accent-color: #42b983;
-    --bg-color: #f4f7f6;
-    --text-color: #333;
-    --transition-speed: 0.3s;
+    --sidebar-width: 280px;
+    --transition-speed: 0.2s;
 }
 
 * {
@@ -14,27 +10,26 @@
 }
 
 body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    overflow-x: hidden;
+    font-family: var(--p-font-family, "Inter", "Segoe UI", sans-serif);
+    background-color: #f8f9fa; /* Sakai Surface Ground */
+    color: #334155;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* --- Floating Mobile Button --- */
+/* --- Mobile Toggle --- */
 .mobile-menu-btn {
     position: fixed;
     top: 1rem;
     left: 1rem;
-    z-index: 100;
-    background: var(--primary-color);
+    z-index: 1000;
+    background: var(--p-primary-color);
     color: white;
     border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 8px;
-    font-size: 1.5rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -46,56 +41,93 @@ body {
     min-height: 100vh;
 }
 
-/* --- Sidebar --- */
+/* --- Sidebar (Sakai Style) --- */
 .sidebar {
     width: var(--sidebar-width);
-    background: #fff;
-    border-right: 1px solid #ddd;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
     position: fixed;
     top: 0;
     bottom: 0;
     left: calc(-1 * var(--sidebar-width));
     transition: left var(--transition-speed) ease;
-    z-index: 99;
+    z-index: 999;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar-open {
-    left: 0;
+    left: 0 !important;
 }
 
 .sidebar-header {
-    padding: 0.5rem 1.5rem;
-    font-size: 1.2rem;
-    border-bottom: 1px solid #eee;
-    color: var(--primary-color);
+    padding: 1.5rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.sidebar nav ul {
-    list-style: none;
-    padding: 1rem 0;
+.sidebar-content {
+    padding: 1.5rem;
 }
 
-.sidebar nav ul li a {
+.section-label {
     display: block;
-    padding: 1rem 1.5rem;
-    text-decoration: none;
-    color: var(--text-color);
-    transition: background 0.2s;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 1rem;
+    letter-spacing: 0.5px;
 }
 
-.sidebar nav ul li a:hover {
-    background: #eee;
-    color: var(--accent-color);
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.w-full {
+    width: 100%;
 }
 
 /* --- Main Content --- */
 .content {
     flex: 1;
     padding: 2rem;
-    /* Add padding-top on mobile so content isn't hidden under the floating button */
-    padding-top: 4rem;
+    padding-top: 5rem; /* Space for mobile button */
+    transition: padding-left var(--transition-speed);
+}
+
+/* Sakai Card Design */
+.card {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow:
+        0 2px 1px -1px rgba(0, 0, 0, 0.2),
+        0 1px 1px 0 rgba(0, 0, 0, 0.14),
+        0 1px 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.engine-placeholder {
+    min-height: 400px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #cbd5e1;
+    color: #94a3b8;
 }
 
 /* --- Overlay --- */
@@ -105,19 +137,20 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 98;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 998;
 }
 
-/* --- Desktop View --- */
-@media (min-width: 768px) {
+/* --- Desktop Adjustments --- */
+@media (min-width: 992px) {
     .mobile-menu-btn {
         display: none;
     }
 
     .sidebar {
-        position: relative;
+        position: sticky;
         left: 0;
+        height: 100vh;
     }
 
     .content {

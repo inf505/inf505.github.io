@@ -1,4 +1,4 @@
-const { createApp, ref, onMounted, nextTick } = Vue;
+const { createApp, ref } = Vue;
 
 const app = createApp({
   setup() {
@@ -8,9 +8,6 @@ const app = createApp({
       isSidebarOpen.value = !isSidebarOpen.value;
     };
 
-    onMounted(() => {});
-
-    // Everything returned here is available to your HTML
     return {
       isSidebarOpen,
       toggleSidebar,
@@ -18,7 +15,17 @@ const app = createApp({
   },
 });
 
-// PrimeVue Global Config
-app.use(PrimeVue.Config);
+// Use PrimeVue with the Aura theme preset (Sakai's modern default)
+app.use(PrimeVue.Config, {
+  theme: {
+    preset: PrimeUIX.Themes.Aura,
+    options: {
+      darkModeSelector: ".app-dark",
+    },
+  },
+});
+
+// Register Components
+app.component("p-button", PrimeVue.Button);
 
 app.mount("#app");

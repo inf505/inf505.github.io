@@ -4,28 +4,83 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Life Engine</title>
+        <!-- PrimeIcons -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/primeicons/primeicons.css"
+        />
         <link rel="stylesheet" href="style.css" />
+
+        <!-- Vue & PrimeVue 4 UMD -->
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
+        <script src="https://unpkg.com/@primeuix/themes/umd/aura.js"></script>
     </head>
     <body>
         <div id="app">
-            <button class="mobile-menu-btn" @click="toggleSidebar">☰</button>
+            <!-- Mobile Toggle Button (Styled like Sakai) -->
+            <button class="mobile-menu-btn" @click="toggleSidebar">
+                <i class="pi pi-bars"></i>
+            </button>
+
             <div class="main-container">
+                <!-- Sidebar -->
                 <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
                     <div class="sidebar-header">
+                        <i
+                            class="pi pi-box"
+                            style="color: var(--p-primary-color)"
+                        ></i>
                         <strong>Life Engine</strong>
                     </div>
-                    <div class="controls"></div>
+
+                    <div class="sidebar-content">
+                        <span class="section-label">Controls</span>
+                        <div class="control-group">
+                            <p-button
+                                label="Play"
+                                icon="pi pi-play"
+                                class="w-full"
+                                size="small"
+                            ></p-button>
+                            <p-button
+                                label="Step"
+                                icon="pi pi-step-forward"
+                                severity="secondary"
+                                class="w-full"
+                                size="small"
+                            ></p-button>
+                            <p-button
+                                label="Clear"
+                                icon="pi pi-trash"
+                                severity="danger"
+                                outlined
+                                class="w-full"
+                                size="small"
+                            ></p-button>
+                        </div>
+                    </div>
                 </aside>
-                <main class="content"></main>
+
+                <!-- Content Area -->
+                <main class="content">
+                    <div class="card">
+                        <h2 class="card-title">Game of Life</h2>
+                        <div class="engine-placeholder">
+                            <!-- Grid will go here -->
+                            Grid initialization pending...
+                        </div>
+                    </div>
+                </main>
             </div>
+
             <div
                 v-if="isSidebarOpen"
                 class="overlay"
                 @click="toggleSidebar"
             ></div>
         </div>
-        <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
+
         <script src="app.js"></script>
     </body>
 </html>
