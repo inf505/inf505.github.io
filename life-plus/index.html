@@ -4,27 +4,23 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Life Engine</title>
-        <!-- PrimeIcons -->
         <link
             rel="stylesheet"
             href="https://unpkg.com/primeicons/primeicons.css"
         />
         <link rel="stylesheet" href="style.css" />
 
-        <!-- Vue & PrimeVue 4 UMD -->
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
         <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
         <script src="https://unpkg.com/@primeuix/themes/umd/aura.js"></script>
     </head>
     <body>
         <div id="app">
-            <!-- Mobile Toggle Button (Styled like Sakai) -->
             <button class="mobile-menu-btn" @click="toggleSidebar">
                 <i class="pi pi-bars"></i>
             </button>
 
             <div class="main-container">
-                <!-- Sidebar -->
                 <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
                     <div class="sidebar-header">
                         <i
@@ -37,38 +33,57 @@
                     <div class="sidebar-content">
                         <span class="section-label">Controls</span>
                         <div class="control-group">
+                            <!-- Bound Buttons to Vue methods -->
                             <p-button
-                                label="Play"
-                                icon="pi pi-play"
+                                :label="isRunning ? 'Pause' : 'Play'"
+                                :icon="isRunning ? 'pi pi-pause' : 'pi pi-play'"
+                                @click="togglePlay"
                                 class="w-full"
                                 size="small"
-                            ></p-button>
+                            >
+                            </p-button>
                             <p-button
                                 label="Step"
                                 icon="pi pi-step-forward"
                                 severity="secondary"
+                                @click="step"
+                                :disabled="isRunning"
                                 class="w-full"
                                 size="small"
-                            ></p-button>
+                            >
+                            </p-button>
+                            <p-button
+                                label="Randomize"
+                                icon="pi pi-refresh"
+                                severity="info"
+                                @click="randomize"
+                                class="w-full"
+                                size="small"
+                            >
+                            </p-button>
                             <p-button
                                 label="Clear"
                                 icon="pi pi-trash"
                                 severity="danger"
                                 outlined
+                                @click="clear"
                                 class="w-full"
                                 size="small"
-                            ></p-button>
+                            >
+                            </p-button>
                         </div>
                     </div>
                 </aside>
 
-                <!-- Content Area -->
                 <main class="content">
                     <div class="card">
                         <h2 class="card-title">Game of Life</h2>
-                        <div class="engine-placeholder">
-                            <!-- Grid will go here -->
-                            Grid initialization pending...
+                        <!-- Replaced placeholder with Canvas -->
+                        <div class="canvas-container" ref="canvasWrapper">
+                            <canvas
+                                ref="gameCanvas"
+                                @click="toggleCell"
+                            ></canvas>
                         </div>
                     </div>
                 </main>

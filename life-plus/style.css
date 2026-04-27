@@ -161,3 +161,19 @@ body {
         display: none;
     }
 }
+/* --- Canvas Wrapper --- */
+.canvas-container {
+    width: 100%;
+    height: 60vh; /* Takes up a nice portion of the screen */
+    min-height: 400px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden; /* Clips the canvas perfectly to the border radius */
+    border: 1px solid #cbd5e1;
+    display: block;
+}
+
+canvas {
+    display: block;
+    cursor: crosshair; /* Indicates it can be clicked */
+}
