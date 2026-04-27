@@ -194,3 +194,33 @@ canvas {
     color: #475569;
     font-weight: 600;
 }
+/* Update the sidebar-content so it can scroll independently on small screens */
+.sidebar-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* --- Ruleset Custom Inputs --- */
+.rules-inputs {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.rule-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.rule-input label {
+    font-size: 0.75rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.rule-input input {
+    width: 100%;
+}

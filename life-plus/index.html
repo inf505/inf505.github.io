@@ -40,8 +40,7 @@
                                 @click="togglePlay"
                                 class="w-full"
                                 size="small"
-                            >
-                            </p-button>
+                            ></p-button>
                             <p-button
                                 label="Step"
                                 icon="pi pi-step-forward"
@@ -70,7 +69,41 @@
                             ></p-button>
                         </div>
 
-                        <!-- New Settings Section -->
+                        <!-- NEW: Ruleset Controls -->
+                        <div class="mt-4">
+                            <span class="section-label">Ruleset (B/S)</span>
+                            <div class="control-group">
+                                <p-select
+                                    v-model="selectedPreset"
+                                    :options="rulePresets"
+                                    option-label="name"
+                                    class="w-full"
+                                    size="small"
+                                >
+                                </p-select>
+
+                                <div class="rules-inputs">
+                                    <div class="rule-input">
+                                        <label>Birth</label>
+                                        <p-inputtext
+                                            v-model="birthRule"
+                                            placeholder="e.g. 3"
+                                            size="small"
+                                        />
+                                    </div>
+                                    <div class="rule-input">
+                                        <label>Survive</label>
+                                        <p-inputtext
+                                            v-model="survivalRule"
+                                            placeholder="e.g. 23"
+                                            size="small"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Section -->
                         <div class="mt-4">
                             <span class="section-label">Settings</span>
                             <div class="control-group">
@@ -82,10 +115,8 @@
                                         :max="60"
                                     ></p-slider>
                                 </div>
-
                                 <div class="setting-item">
                                     <label>Cell Size ({{ cellSize }}px)</label>
-                                    <!-- Using @change so it only resizes the grid when you release the mouse -->
                                     <p-slider
                                         v-model="cellSize"
                                         :min="4"
@@ -93,7 +124,6 @@
                                         @change="resizeCanvas"
                                     ></p-slider>
                                 </div>
-
                                 <div class="setting-item">
                                     <label
                                         >Spawn Density ({{ density }}%)</label
