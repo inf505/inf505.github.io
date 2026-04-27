@@ -5,22 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vue CDN Project</title>
         <link rel="stylesheet" href="style.css" />
-
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     </head>
     <body>
         <div id="app">
-            <!-- Floating Toggle for Mobile -->
             <button class="mobile-menu-btn" @click="toggleSidebar">☰</button>
-
             <div class="main-container">
-                <!-- Sidebar -->
                 <aside :class="['sidebar', { 'sidebar-open': isSidebarOpen }]">
                     <div class="sidebar-header">
                         <strong>Life Engine</strong>
                     </div>
-
-                    <!-- Game Controls Section -->
                     <div class="controls">
                         <button @click="togglePlay" class="play-btn">
                             <i :data-lucide="isPlaying ? 'pause' : 'play'"></i>
@@ -30,8 +24,6 @@
                         </button>
                     </div>
                 </aside>
-
-                <!-- Main Content Area -->
                 <main class="content">
                     <h1>Welcome</h1>
                     <p>
@@ -40,23 +32,14 @@
                     </p>
                 </main>
             </div>
-
-            <!-- Overlay -->
             <div
                 v-if="isSidebarOpen"
                 class="overlay"
                 @click="toggleSidebar"
             ></div>
         </div>
-
-        <!-- 2. UI Libraries (The Tools) -->
-
         <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
-
-        <!-- Lucide Icons (Item #3) -->
         <script src="https://unpkg.com/lucide@latest"></script>
-        <script src="https://unpkg.com/primevue@^3/slider/slider.min.js"></script>
-        <!-- 3. Your Code (The Logic) -->
         <script src="app.js"></script>
     </body>
 </html>
