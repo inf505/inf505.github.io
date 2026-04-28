@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
         />
-        <title>Story Weaver | AI Co-Author</title>
+        <title>Story Chat | AI Co-Author</title>
         <link rel="shortcut icon" href="favicon.ico" />
         <link rel="stylesheet" href="style.css" />
 
@@ -48,6 +48,12 @@
                             Settings
                         </button>
                         <button
+                            :class="['tab-btn', { active: activeTab === 'facts' }]"
+                            @click="activeTab = 'facts'"
+                        >
+                            Facts
+                        </button>
+                        <button
                             :class="['tab-btn', { active: activeTab === 'audio' }]"
                             @click="activeTab = 'audio'"
                         >
@@ -57,6 +63,41 @@
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
+                        <!-- TAB CONTENT: FACTS (The Grimoire) -->
+                        <div v-if="activeTab === 'facts'" class="tab-content">
+                            <div class="settings-group">
+                                <label>Story Grimoire</label>
+                                <small
+                                    >These are the permanent facts the AI
+                                    remembers about your story.</small
+                                >
+                            </div>
+
+                            <div class="facts-container">
+                                <div
+                                    v-for="fact in facts"
+                                    :key="fact.id"
+                                    class="fact-row"
+                                >
+                                    <div class="fact-text">{{ fact.text }}</div>
+                                    <button
+                                        class="delete-fact-btn"
+                                        @click="deleteFact(fact.id)"
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+
+                                <div
+                                    v-if="facts.length === 0"
+                                    class="empty-facts"
+                                >
+                                    The AI hasn't recorded any key facts yet.
+                                    Continue the story to build your grimoire.
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Inside TAB CONTENT: SETTINGS -->
                         <div class="settings-group">
                             <label>Story Model:</label>

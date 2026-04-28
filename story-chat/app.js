@@ -1,18 +1,23 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
 const CORE_SYSTEM_PROMPT = `You are a creative and collaborative storytelling partner.
-TASK: Work with the user to write an engaging story. Keep your responses focused on moving the narrative forward, developing the setting and characters, and matching the user's requested tone.
+TASK: Work with the user to write an engaging story.
 
 OUTPUT REQUIREMENTS:
-Return a single JSON object. Do not use markdown blocks.
-1. "thought": Internal logic or brief brainstorming on where the narrative could go next (1 sentence only).
-2. "response": The actual story text. Do not include the choices in this text.
-3. "options": An array of exactly 3 short, distinct action choices for what the user/character could do next (e.g., ["Investigate the noise", "Hide in the closet", "Draw your weapon"]).
+Return a single JSON object.
+1. "thought": Internal logic (1 sentence).
+2. "response": The story text.
+3. "options": Array of 3 distinct action choices.
+4. "new_facts": An array of strings representing permanent changes to the world state, character status, or discovered items (e.g., ["The protagonist found a silver key", "Met Elara, a rogue archer", "Current location: The Whispering Woods"]).
+   - Only include NEW facts or UPDATED facts in this array.
+   - If no new facts occurred, return an empty array [].
 `;
 
 const db = new Dexie("StoryWriterDB");
-db.version(1).stores({
+db.version(2).stores({
+  // Incremented version to 2
   chats: "++id, role, text, thought, timestamp",
+  facts: "++id, text, category, timestamp", // Added facts table
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -52,6 +57,21 @@ createApp({
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
+
+    const facts = ref([]);
+
+    const loadFacts = async () => {
+      try {
+        facts.value = await db.facts.orderBy("timestamp").toArray();
+      } catch (err) {
+        console.error("Error loading facts:", err);
+      }
+    };
+
+    const deleteFact = async (id) => {
+      await db.facts.delete(id);
+      await loadFacts();
+    };
 
     const renderMarkdown = (text) => marked.parse(text);
 
@@ -139,6 +159,8 @@ createApp({
         window.addEventListener("resize", handleFallbackResize);
         handleFallbackResize();
       }
+
+      await loadFacts();
     });
 
     const saveAllSettings = () => {
@@ -331,10 +353,17 @@ createApp({
         });
 
         const userTone = systemPrompt.value.trim();
+
+        const allFacts = await db.facts.toArray();
+        const factsSummary = allFacts.map((f) => `- ${f.text}`).join("\n");
+
         const finalSystemInstruction = `
-                ${CORE_SYSTEM_PROMPT}
-                ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-                `.trim();
+        ${CORE_SYSTEM_PROMPT}
+        ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+
+        KNOWN STORY FACTS:
+        ${factsSummary || "No facts established yet."}
+        `.trim();
 
         const payload = {
           contents,
@@ -342,8 +371,7 @@ createApp({
             systemInstruction: { parts: [{ text: finalSystemInstruction }] },
           }),
           generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 2048,
+            temperature: 0.9,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -353,11 +381,15 @@ createApp({
                 options: {
                   type: "array",
                   items: { type: "string" },
+                },
+                new_facts: {
+                  type: "array",
+                  items: { type: "string" },
                   description:
-                    "Exactly 3 distinct choices for the user's next action.",
+                    "Key story developments or permanent world-state changes.",
                 },
               },
-              required: ["thought", "response", "options"],
+              required: ["thought", "response", "options", "new_facts"],
             },
           },
         };
@@ -454,6 +486,16 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
+        if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
+          for (const factText of parsed.new_facts) {
+            await db.facts.add({
+              text: factText,
+              timestamp: Date.now(),
+            });
+          }
+          await loadFacts();
+        }
+
         const modelId = await saveToDb(
           "model",
           finalResponse,
@@ -539,6 +581,9 @@ createApp({
       selectedVoice,
       ttsProsodyNudge,
       triggerTTS,
+      facts,
+      loadFacts,
+      deleteFact,
     };
   },
 }).mount("#app");

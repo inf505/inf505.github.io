@@ -509,3 +509,50 @@ button.small-btn {
     color: #121212;
     transform: translateY(1px);
 }
+/* Facts Tab Styling */
+.facts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.fact-row {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.fact-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #ddd;
+}
+
+.delete-fact-btn {
+    background: transparent;
+    color: #666;
+    font-size: 1.5rem;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.delete-fact-btn:hover {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.empty-facts {
+    text-align: center;
+    color: #555;
+    padding: 2rem;
+    font-style: italic;
+    font-size: 0.9rem;
+}
