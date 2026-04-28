@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
+        />
+        <title>Story Weaver | AI Co-Author</title>
+        <link rel="shortcut icon" href="favicon.ico" />
+        <link rel="stylesheet" href="style.css" />
+
+        <!-- External Libraries -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+        <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <!-- CHAT INTERFACE -->
+            <div class="chat-container">
+                <!-- FLOATING CONTROLS -->
+                <div class="floating-header">
+                    <button
+                        class="float-btn archive-btn"
+                        @click="startOver"
+                        :title="'Start Over - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
+                    >
+                        <span>🗑️</span>
+                    </button>
+
+                    <button
+                        class="float-btn settings-btn"
+                        @click="showSettings = !showSettings"
+                    >
+                        ⚙️
+                    </button>
+                </div>
+
+                <!-- SETTINGS PANEL -->
+                <div v-if="showSettings" class="settings-panel">
+                    <!-- TABS NAVIGATION -->
+                    <div class="tabs-header">
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'settings' }]"
+                            @click="activeTab = 'settings'"
+                        >
+                            Settings
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'audio' }]"
+                            @click="activeTab = 'audio'"
+                        >
+                            Audio
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: SETTINGS -->
+                    <div v-if="activeTab === 'settings'" class="tab-content">
+                        <!-- Inside TAB CONTENT: SETTINGS -->
+                        <div class="settings-group">
+                            <label>Story Model:</label>
+                            <input
+                                type="text"
+                                v-model="selectedModel"
+                                placeholder="e.g., gemma-4-31b-it"
+                            />
+                            <small
+                                >gemma-4-26b-a4b-it, gemma-4-31b-it,
+                                gemini-2.5-flash-lite,
+                                gemini-3.1-flash-lite-preview</small
+                            >
+                        </div>
+
+                        <div class="settings-group">
+                            <label>API Key:</label>
+                            <input
+                                type="password"
+                                v-model="apiKey"
+                                placeholder="AIzaSy..."
+                            />
+                        </div>
+
+                        <div class="settings-group">
+                            <label>World / Character / Tone Rules</label>
+                            <textarea
+                                v-model="systemPrompt"
+                                rows="4"
+                                placeholder="Describe the world, the main character, or the genre you want the AI to write in..."
+                            ></textarea>
+                        </div>
+
+                        <button
+                            class="small-btn apply-btn"
+                            @click="saveAllSettings"
+                        >
+                            Apply Settings
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: AUDIO / TTS -->
+                    <div v-if="activeTab === 'audio'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Native TTS Model:</label>
+                            <input
+                                type="text"
+                                v-model="selectedTTSModel"
+                                placeholder="gemini-3.1-flash-tts-preview"
+                            />
+                            <small
+                                >gemini-3.1-flash-tts-preview,
+                                gemini-2.5-flash-preview-tts
+                            </small>
+                        </div>
+
+                        <div class="settings-group">
+                            <label>Voice Profile:</label>
+                            <input
+                                type="text"
+                                v-model="selectedVoice"
+                                placeholder="e.g., Aoede, Puck"
+                            />
+                            <small
+                                >Standard voices: Aoede, Charon, Fenrir, Kore,
+                                Puck.</small
+                            >
+                        </div>
+
+                        <div class="settings-group">
+                            <label>Prosody Nudge (Narration Tone):</label>
+                            <textarea
+                                v-model="ttsProsodyNudge"
+                                rows="3"
+                            ></textarea>
+                            <small
+                                >Instruction for the AI narrator on how to read
+                                the story.</small
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCROLLING MESSAGES -->
+                <div
+                    class="chat-messages"
+                    ref="messagesContainer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    <div v-if="messages.length === 0" class="empty-state">
+                        Configure your API Key and Rules in Settings to begin!
+                    </div>
+
+                    <div
+                        v-for="(msg, index) in messages"
+                        :key="msg.id || index"
+                        :class="['message', msg.role]"
+                    >
+                        <div class="bubble">
+                            <!-- Action Buttons Container -->
+                            <div class="msg-actions">
+                                <!-- Speaker / Read Aloud Button -->
+                                <button
+                                    v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
+                                    class="action-msg-btn speaker-btn"
+                                    @click="triggerTTS(index)"
+                                    title="Synthesize Audio"
+                                >
+                                    🔊
+                                </button>
+
+                                <!-- Retry Button (Only for the last model message) -->
+                                <button
+                                    v-if="msg.role === 'model' && index === messages.length - 1"
+                                    class="action-msg-btn retry-btn"
+                                    @click="retryMessage(index)"
+                                    title="Retry / Regenerate"
+                                >
+                                    ↻
+                                </button>
+
+                                <!-- Delete Button -->
+                                <button
+                                    class="action-msg-btn delete-btn"
+                                    @click="deleteMessage(index)"
+                                    title="Delete Message"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+
+                            <!-- Thought Process -->
+                            <div v-if="msg.thought" class="thought-box">
+                                <details>
+                                    <summary>AI Story Logic</summary>
+                                    <pre>{{ msg.thought }}</pre>
+                                </details>
+                            </div>
+
+                            <!-- Content -->
+                            <div
+                                class="message-text"
+                                v-html="renderMarkdown(msg.text)"
+                            ></div>
+
+                            <!-- AUDIO LOADING STATE -->
+                            <div
+                                v-if="msg.isGeneratingAudio"
+                                class="audio-loading"
+                                style="
+                                    font-size: 0.8em;
+                                    color: #888;
+                                    margin-top: 10px;
+                                "
+                            >
+                                <i>Synthesizing audio...</i>
+                            </div>
+
+                            <!-- AUDIO PLAYER -->
+                            <div
+                                v-if="msg.audioData"
+                                class="audio-player"
+                                style="margin-top: 10px"
+                            >
+                                <audio
+                                    controls
+                                    autoplay
+                                    :src="'data:audio/wav;base64,' + msg.audioData"
+                                    style="width: 100%; height: 36px"
+                                ></audio>
+                            </div>
+
+                            <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
+                            <div
+                                v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
+                                class="story-options"
+                            >
+                                <p class="options-label">
+                                    What do you do next?
+                                </p>
+                                <button
+                                    v-for="(opt, i) in msg.options"
+                                    :key="i"
+                                    class="option-btn"
+                                    @click="sendOption(opt)"
+                                >
+                                    {{ opt }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div v-if="isLoading" class="message model">
+                        <div class="bubble typing">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="chat-footer">
+                    <div class="chat-input-area">
+                        <textarea
+                            v-model="currentInput"
+                            ref="inputArea"
+                            rows="1"
+                            @keydown.enter.exact.prevent="sendMessage"
+                            placeholder="Write your own action..."
+                            @focus="scrollToBottom"
+                            :disabled="isLoading"
+                        ></textarea>
+
+                        <button
+                            @click="sendMessage"
+                            :disabled="isLoading || !currentInput.trim()"
+                            aria-label="Send message"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
