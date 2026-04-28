@@ -354,6 +354,7 @@ createApp({
 
         const userTone = systemPrompt.value.trim();
 
+        // Fetch existing facts to inject into the prompt
         const allFacts = await db.facts.toArray();
         const factsSummary = allFacts.map((f) => `- ${f.text}`).join("\n");
 
@@ -468,6 +469,7 @@ createApp({
         let finalResponse = responseText.trim() || "*(No response text)*";
         let finalOptions = null;
 
+        // --- PARSING & FACT STORAGE ---
         try {
           const jsonStartIndex = finalResponse.indexOf("{");
           const jsonEndIndex = finalResponse.lastIndexOf("}");
@@ -481,19 +483,21 @@ createApp({
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
+
+            // Process facts inside the block where 'parsed' is defined
+            if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
+              for (const factText of parsed.new_facts) {
+                await db.facts.add({
+                  text: factText,
+                  timestamp: Date.now(),
+                });
+              }
+              // Refresh UI ref for the Facts Tab
+              if (typeof loadFacts === "function") await loadFacts();
+            }
           }
         } catch (e) {
           console.error("JSON Parse error", e);
-        }
-
-        if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
-          for (const factText of parsed.new_facts) {
-            await db.facts.add({
-              text: factText,
-              timestamp: Date.now(),
-            });
-          }
-          await loadFacts();
         }
 
         const modelId = await saveToDb(
