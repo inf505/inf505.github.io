@@ -64,7 +64,7 @@ createApp({
         // Sort by timestamp so newest or oldest appear in order
         const data = await db.facts.orderBy("timestamp").toArray();
         facts.value = data;
-        console.log("Facts loaded into UI:", facts.value); // Debug check
+        //console.log("Facts loaded into UI:", facts.value); // Debug check
       } catch (err) {
         console.error("Error loading facts:", err);
       }
