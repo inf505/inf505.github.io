@@ -89,7 +89,6 @@ createApp({
           factsText += " [FACT: " + facts.value[i].text + "] ";
         }
 
-        // EVERYTHING ON ONE LINE: No line breaks inside these quotes
         var finalPrompt = `You are an AI editor. Review the following story facts. Merge duplicates, consolidate related info, and remove redundancy. Keep facts accurate, concise, and third-person. Return ONLY a JSON object with a 'merged_facts' array of strings. DATA: ${factsText}`;
 
         var payload = {
