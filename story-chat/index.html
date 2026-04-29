@@ -67,13 +67,11 @@
                         <div v-if="activeTab === 'facts'" class="tab-content">
                             <div class="settings-group">
                                 <label>Story Grimoire</label>
-                                <small
-                                    >These are the permanent facts the AI
-                                    remembers about your story.</small
-                                >
+                                <small>Permanent memory for the AI.</small>
                             </div>
 
                             <div class="facts-container">
+                                <!-- Check that this matches 'facts' in your setup return -->
                                 <div
                                     v-for="fact in facts"
                                     :key="fact.id"
@@ -92,8 +90,7 @@
                                     v-if="facts.length === 0"
                                     class="empty-facts"
                                 >
-                                    The AI hasn't recorded any key facts yet.
-                                    Continue the story to build your grimoire.
+                                    No facts recorded yet.
                                 </div>
                             </div>
                         </div>
