@@ -620,6 +620,8 @@ createApp({
       facts,
       loadFacts,
       deleteFact,
+      isOptimizingFacts,
+      optimizeFacts,
     };
   },
 }).mount("#app");
