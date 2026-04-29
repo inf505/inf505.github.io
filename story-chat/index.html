@@ -88,6 +88,18 @@
 
                         <div class="settings-group">
                             <label>World / Character / Tone Rules</label>
+                            <button
+                                class="small-btn magic-btn"
+                                @click="generateRandomRules"
+                                :disabled="isGeneratingRules"
+                                style="
+                                    margin-bottom: 5px;
+                                    background-color: #6a5acd;
+                                "
+                            >
+                                {{ isGeneratingRules ? '✨ Dreaming...' : '✨
+                                Randomize' }}
+                            </button>
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
@@ -103,7 +115,7 @@
                         </button>
                     </div>
 
-                    <!-- TAB CONTENT: FACTS (Moved out of Settings) -->
+                    <!-- TAB CONTENT: FACTS  -->
                     <div v-if="activeTab === 'facts'" class="tab-content">
                         <div class="settings-group">
                             <label>Story Grimoire</label>

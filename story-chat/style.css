@@ -556,3 +556,21 @@ button.small-btn {
     font-style: italic;
     font-size: 0.9rem;
 }
+.magic-btn {
+    background-color: #6a5acd !important; /* Slate Blue */
+    color: white !important;
+    border-radius: 4px;
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    transition: all 0.3s ease;
+}
+
+.magic-btn:hover:not(:disabled) {
+    background-color: #836fff !important;
+    transform: scale(1.05);
+}
+
+.magic-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
