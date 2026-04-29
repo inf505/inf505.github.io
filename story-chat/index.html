@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
         />
-        <title>Story Chat | AI Co-Author</title>
+        <title>Story Weaver | AI Co-Author</title>
         <link rel="shortcut icon" href="favicon.ico" />
         <link rel="stylesheet" href="style.css" />
 
@@ -48,12 +48,6 @@
                             Settings
                         </button>
                         <button
-                            :class="['tab-btn', { active: activeTab === 'facts' }]"
-                            @click="activeTab = 'facts'"
-                        >
-                            Facts
-                        </button>
-                        <button
                             :class="['tab-btn', { active: activeTab === 'audio' }]"
                             @click="activeTab = 'audio'"
                         >
@@ -63,6 +57,10 @@
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
+<<<<<<< HEAD
+=======
+                        <!-- Inside TAB CONTENT: SETTINGS -->
+>>>>>>> parent of fd0fb80 (...)
                         <div class="settings-group">
                             <label>Story Model:</label>
                             <input

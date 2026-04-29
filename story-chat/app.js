@@ -1,5 +1,6 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
+<<<<<<< HEAD
 // SAFE STRING CONSTRUCTION
 const CORE_SYSTEM_PROMPT =
   "You are a creative and collaborative storytelling partner. " +
@@ -15,6 +16,21 @@ const db = new Dexie("StoryWriterDB");
 db.version(2).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
+=======
+const CORE_SYSTEM_PROMPT = `You are a creative and collaborative storytelling partner.
+TASK: Work with the user to write an engaging story. Keep your responses focused on moving the narrative forward, developing the setting and characters, and matching the user's requested tone.
+
+OUTPUT REQUIREMENTS:
+Return a single JSON object. Do not use markdown blocks.
+1. "thought": Internal logic or brief brainstorming on where the narrative could go next (1 sentence only).
+2. "response": The actual story text. Do not include the choices in this text.
+3. "options": An array of exactly 3 short, distinct action choices for what the user/character could do next (e.g., ["Investigate the noise", "Hide in the closet", "Draw your weapon"]).
+`;
+
+const db = new Dexie("StoryWriterDB");
+db.version(1).stores({
+  chats: "++id, role, text, thought, timestamp",
+>>>>>>> parent of fd0fb80 (...)
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -51,6 +67,7 @@ createApp({
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
+<<<<<<< HEAD
     const facts = ref([]);
 
     const loadFacts = async () => {
@@ -128,6 +145,8 @@ createApp({
         isOptimizingFacts.value = false;
       }
     };
+=======
+>>>>>>> parent of fd0fb80 (...)
 
     const renderMarkdown = (text) => marked.parse(text);
 
@@ -139,7 +158,105 @@ createApp({
         ).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
       } catch (err) {
+<<<<<<< HEAD
         console.error(err);
+=======
+        console.error("Error updating stats:", err);
+      }
+    };
+
+    const adjustHeight = () => {
+      const el = inputArea.value;
+      if (!el) return;
+      el.style.height = "auto";
+      el.style.height = el.scrollHeight + "px";
+    };
+
+    watch(currentInput, () => {
+      nextTick(adjustHeight);
+    });
+
+    onMounted(async () => {
+      const storedKey = localStorage.getItem("story_api_key");
+      const storedModel = localStorage.getItem("story_model");
+
+      if (localStorage.getItem("story_tts_model"))
+        selectedTTSModel.value = localStorage.getItem("story_tts_model");
+      if (localStorage.getItem("story_tts_voice"))
+        selectedVoice.value = localStorage.getItem("story_tts_voice");
+      if (localStorage.getItem("story_tts_prosody"))
+        ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
+
+      if (storedKey && storedModel) {
+        apiKey.value = storedKey;
+        selectedModel.value = storedModel;
+        isConfigured.value = true;
+      }
+
+      const storedSystemPrompt = localStorage.getItem("story_system_prompt");
+      if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
+
+      try {
+        messages.value = await db.chats.orderBy("timestamp").toArray();
+        scrollToBottom();
+
+        // AUTOLOAD LOGIC: If no messages exist, automatically start the story
+        if (messages.value.length === 0) {
+          if (apiKey.value) {
+            initializeStory();
+          } else {
+            showSettings.value = true; // Open settings if they need to setup the API
+          }
+        }
+      } catch (err) {
+        console.error("Dexie Chats Load Error:", err);
+      }
+
+      await updateCounts();
+
+      if (window.visualViewport) {
+        const handleResize = () => {
+          document.documentElement.style.setProperty(
+            "--app-height",
+            `${window.visualViewport.height}px`,
+          );
+          document.body.style.height = `${window.visualViewport.height}px`;
+          scrollToBottom();
+        };
+
+        window.visualViewport.addEventListener("resize", handleResize);
+        handleResize();
+      } else {
+        const handleFallbackResize = () => {
+          document.documentElement.style.setProperty(
+            "--app-height",
+            `${window.innerHeight}px`,
+          );
+          document.body.style.height = `${window.innerHeight}px`;
+          scrollToBottom();
+        };
+        window.addEventListener("resize", handleFallbackResize);
+        handleFallbackResize();
+      }
+    });
+
+    const saveAllSettings = () => {
+      if (selectedModel.value.trim())
+        localStorage.setItem("story_model", selectedModel.value.trim());
+
+      localStorage.setItem("story_api_key", apiKey.value);
+      localStorage.setItem("story_system_prompt", systemPrompt.value);
+      localStorage.setItem("story_tts_model", selectedTTSModel.value);
+      localStorage.setItem("story_tts_voice", selectedVoice.value);
+      localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
+
+      showSettings.value = false;
+      isConfigured.value = true;
+
+      // If they just saved settings and have a blank canvas, start!
+      if (messages.value.length === 0 && apiKey.value) {
+        initializeStory();
+>>>>>>> parent of fd0fb80 (...)
       }
     };
 
@@ -283,11 +400,8 @@ createApp({
         });
 
         const userTone = systemPrompt.value.trim();
-
-        const allFacts = await db.facts.toArray();
-        const factsSummary = allFacts.map((f) => `- ${f.text}`).join("\n");
-
         const finalSystemInstruction = `
+<<<<<<< HEAD
         ${CORE_SYSTEM_PROMPT}
         ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
 
@@ -295,22 +409,37 @@ createApp({
         ${factsSummary || "No facts established yet."}
         `.trim();
 >>>>>>> parent of ce25736 (Update app.js)
+=======
+                ${CORE_SYSTEM_PROMPT}
+                ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+                `.trim();
+>>>>>>> parent of fd0fb80 (...)
 
         const payload = {
           contents: hist,
           systemInstruction: { parts: [{ text: sys }] },
           generationConfig: {
-            temperature: 0.9,
+            temperature: 0.8,
+            maxOutputTokens: 2048,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
               properties: {
                 thought: { type: "string" },
                 response: { type: "string" },
+<<<<<<< HEAD
                 options: { type: "array", items: { type: "string" } },
                 new_facts: { type: "array", items: { type: "string" } },
+=======
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Exactly 3 distinct choices for the user's next action.",
+                },
+>>>>>>> parent of fd0fb80 (...)
               },
-              required: ["thought", "response", "options", "new_facts"],
+              required: ["thought", "response", "options"],
             },
           },
         };
@@ -420,16 +549,6 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
-        if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
-          for (const factText of parsed.new_facts) {
-            await db.facts.add({
-              text: factText,
-              timestamp: Date.now(),
-            });
-          }
-          await loadFacts();
-        }
-
         const modelId = await saveToDb(
           "model",
           finalResponse,
@@ -519,6 +638,7 @@ createApp({
       selectedVoice,
       ttsProsodyNudge,
       triggerTTS,
+<<<<<<< HEAD
       facts,
       loadFacts,
       deleteFact,
@@ -535,6 +655,8 @@ createApp({
         currentInput.value = t;
         sendMessage();
       },
+=======
+>>>>>>> parent of fd0fb80 (...)
     };
   },
 }).mount("#app");
