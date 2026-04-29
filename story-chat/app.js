@@ -75,6 +75,85 @@ createApp({
       await loadFacts();
     };
 
+    // const optimizeFacts = async () => {
+    //   if (!apiKey.value) {
+    //     alert("Please enter your API Key in Settings first.");
+    //     return;
+    //   }
+    //   if (facts.value.length < 2) return;
+    //   isOptimizingFacts.value = true;
+    //   try {
+    //     // We build the facts list manually to avoid any line-break issues
+    //     var factsText = "";
+    //     for (var i = 0; i < facts.value.length; i++) {
+    //       factsText += " [FACT: " + facts.value[i].text + "] ";
+    //     }
+
+    //     // EVERYTHING ON ONE LINE: No line breaks inside these quotes
+    //     var finalPrompt =
+    //       "You are an AI editor. Review the following story facts. Merge duplicates, consolidate related info, and remove redundancy. Keep facts accurate, concise, and third-person. Return ONLY a JSON object with a 'merged_facts' array of strings. DATA: " +
+    //       factsText;
+
+    //     var payload = {
+    //       contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
+    //       generationConfig: {
+    //         temperature: 0.1,
+    //         responseMimeType: "application/json",
+    //         responseSchema: {
+    //           type: "object",
+    //           properties: {
+    //             merged_facts: { type: "array", items: { type: "string" } },
+    //           },
+    //           required: ["merged_facts"],
+    //         },
+    //       },
+    //     };
+
+    //     var url =
+    //       "https://generativelanguage.googleapis.com/v1beta/models/" +
+    //       selectedModel.value +
+    //       ":generateContent";
+    //     var response = await fetch(url, {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         "x-goog-api-key": apiKey.value,
+    //       },
+    //       body: JSON.stringify(payload),
+    //     });
+
+    //     var data = await response.json();
+    //     if (!response.ok) throw new Error(data.error?.message || "API Error");
+    //     var responseText = data.candidates[0].content.parts[0].text;
+
+    //     var jsonStartIndex = responseText.indexOf("{");
+    //     var jsonEndIndex = responseText.lastIndexOf("}");
+
+    //     if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+    //       var jsonString = responseText.substring(
+    //         jsonStartIndex,
+    //         jsonEndIndex + 1,
+    //       );
+    //       var parsed = JSON.parse(jsonString);
+    //       if (parsed.merged_facts && Array.isArray(parsed.merged_facts)) {
+    //         await db.facts.clear();
+    //         for (var j = 0; j < parsed.merged_facts.length; j++) {
+    //           await db.facts.add({
+    //             text: parsed.merged_facts[j],
+    //             timestamp: Date.now(),
+    //           });
+    //         }
+    //         await loadFacts();
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error("Optimization error:", error);
+    //     alert("Failed to optimize facts: " + error.message);
+    //   } finally {
+    //     isOptimizingFacts.value = false;
+    //   }
+    // };
+
     const renderMarkdown = (text) => marked.parse(text);
 
     const updateCounts = async () => {
