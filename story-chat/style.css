@@ -574,3 +574,31 @@ button.small-btn {
     opacity: 0.6;
     cursor: wait;
 }
+.fact-badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-right: 8px;
+    display: inline-block;
+    background: #444;
+    color: #eee;
+}
+
+.fact-badge.character {
+    background: #2a4d69;
+    color: #adcbe3;
+}
+.fact-badge.item {
+    background: #4b3832;
+    color: #e5ccbb;
+}
+.fact-badge.location {
+    background: #37474f;
+    color: #cfd8dc;
+}
+.fact-badge.lore {
+    background: #4a148c;
+    color: #e1bee7;
+}

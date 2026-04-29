@@ -133,7 +133,7 @@ createApp({
           fData += " [FACT: " + facts.value[i].text + "] ";
         }
         var prompt =
-          "Merge duplicate facts. Keep concise. Return JSON merged_facts:string[]. DATA: " +
+          "Merge duplicate facts. Keep concise. Preserve categories (Character, Item, Location, Lore). Return JSON merged_facts array of objects with text and category. DATA: " +
           fData;
         var res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -145,7 +145,26 @@ createApp({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{ role: "user", parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: "application/json" },
+              generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "object",
+                  properties: {
+                    merged_facts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          text: { type: "string" },
+                          category: { type: "string" },
+                        },
+                        required: ["text", "category"],
+                      },
+                    },
+                  },
+                  required: ["merged_facts"],
+                },
+              },
             }),
           },
         );
@@ -157,12 +176,23 @@ createApp({
           var p = JSON.parse(raw.substring(s, e + 1));
           if (p.merged_facts) {
             await db.facts.clear();
+
+            // for (var j = 0; j < p.merged_facts.length; j++) {
+            //   await db.facts.add({
+            //     text: p.merged_facts[j],
+            //     timestamp: Date.now(),
+            //   });
+            // }
+
             for (var j = 0; j < p.merged_facts.length; j++) {
+              var mf = p.merged_facts[j];
               await db.facts.add({
-                text: p.merged_facts[j],
+                text: mf.text,
+                category: mf.category,
                 timestamp: Date.now(),
               });
             }
+
             await loadFacts();
           }
         }
