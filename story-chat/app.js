@@ -80,29 +80,33 @@ createApp({
         alert("Please enter your API Key in Settings first.");
         return;
       }
-      if (facts.value.length < 2) return; // Nothing to merge
+      if (facts.value.length < 2) return;
 
       isOptimizingFacts.value = true;
 
       try {
-        const currentFactsList = facts.value
-          .map((f) => "- " + f.text)
-          .join("\n");
+        // Build the facts list without using backticks or literal line breaks
+        var currentFactsList = "";
+        for (var i = 0; i < facts.value.length; i++) {
+          currentFactsList += " [FACT: " + facts.value[i].text + "] ";
+        }
 
-        // Safe string concatenation to avoid unescaped line breaks
-        const optimizePrompt =
-          "You are an AI editor managing a story's permanent memory. " +
-          "Review the following list of story facts. " +
-          "Merge duplicates, consolidate related information into single sentences, and remove redundant entries. " +
-          "Keep the facts accurate, concise, and written in the third person. " +
-          "Return ONLY a JSON object containing a 'merged_facts' array of strings.\n\n" +
-          "CURRENT FACTS:\n" +
-          currentFactsList;
+        // Build prompt using safe-string concatenation
+        var p1 = "You are an AI editor managing a story grimoire. ";
+        var p2 = "Review the following list of story facts. ";
+        var p3 =
+          "Merge duplicates, consolidate related info, and remove redundancy. ";
+        var p4 = "Keep facts accurate, concise, and third-person. ";
+        var p5 =
+          "Return ONLY a JSON object with a 'merged_facts' array of strings. ";
+        var p6 = "DATA TO PROCESS: " + currentFactsList;
 
-        const payload = {
-          contents: [{ role: "user", parts: [{ text: optimizePrompt }] }],
+        var finalPrompt = p1 + p2 + p3 + p4 + p5 + p6;
+
+        var payload = {
+          contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
           generationConfig: {
-            temperature: 0.1, // Low temp for analytical task
+            temperature: 0.1,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -110,7 +114,6 @@ createApp({
                 merged_facts: {
                   type: "array",
                   items: { type: "string" },
-                  description: "The newly consolidated list of facts.",
                 },
               },
               required: ["merged_facts"],
@@ -118,12 +121,12 @@ createApp({
           },
         };
 
-        const url =
+        var url =
           "https://generativelanguage.googleapis.com/v1beta/models/" +
           selectedModel.value +
           ":generateContent";
 
-        const response = await fetch(url, {
+        var response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -132,43 +135,35 @@ createApp({
           body: JSON.stringify(payload),
         });
 
-        const data = await response.json();
+        var data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
 
-        const responseText = data.candidates[0].content.parts[0].text;
+        var responseText = data.candidates[0].content.parts[0].text;
 
-        // Use the safe substring extractor
-        const jsonStartIndex = responseText.indexOf("{");
-        const jsonEndIndex = responseText.lastIndexOf("}");
+        // Extract JSON safely using your substring method
+        var jsonStartIndex = responseText.indexOf("{");
+        var jsonEndIndex = responseText.lastIndexOf("}");
 
         if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-          const jsonString = responseText.substring(
+          var jsonString = responseText.substring(
             jsonStartIndex,
             jsonEndIndex + 1,
           );
-          const parsed = JSON.parse(jsonString);
+          var parsed = JSON.parse(jsonString);
 
           if (parsed.merged_facts && Array.isArray(parsed.merged_facts)) {
-            // Success! Clear old facts and insert the optimized ones
             await db.facts.clear();
-            for (const newFact of parsed.merged_facts) {
+            for (var j = 0; j < parsed.merged_facts.length; j++) {
               await db.facts.add({
-                text: newFact,
+                text: parsed.merged_facts[j],
                 timestamp: Date.now(),
               });
             }
-            // Refresh the UI list
             await loadFacts();
-          } else {
-            throw new Error(
-              "AI did not return the expected 'merged_facts' array.",
-            );
           }
-        } else {
-          throw new Error("Failed to parse JSON from AI response.");
         }
       } catch (error) {
-        console.error("Failed to optimize facts:", error);
+        console.error("Optimization error:", error);
         alert("Failed to optimize facts: " + error.message);
       } finally {
         isOptimizingFacts.value = false;
