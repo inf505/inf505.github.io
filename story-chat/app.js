@@ -100,53 +100,6 @@ createApp({
       nextTick(adjustHeight);
     });
 
-    const generateRandomRules = async () => {
-      if (!apiKey.value) return alert("Please enter an API Key first.");
-      isGeneratingRules.value = true;
-
-      const generatorPrompt = `
-            Generate a creative and unique "World / Character / Tone" setting for a Choose Your Own Adventure story.
-            Be specific but concise (2-3 sentences).
-            Mix genres in interesting ways (e.g., 'A cozy tea-shop mystery set on a dying space station' or 'A gritty noir detective story in a world where everyone is a literal puppet').
-            Include:
-            - The Setting
-            - The Protagonist's role
-            - The overall Tone (e.g., Whimsical, Gritty, Surreal, Heroic)
-
-            Return ONLY the setting text, no conversational filler.
-        `;
-
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: generatorPrompt }] }],
-            generationConfig: { temperature: 1.0 }, // Higher temperature for more randomness
-          }),
-        });
-
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.error?.message || "Generation failed");
-
-        const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (generatedText) {
-          systemPrompt.value = generatedText.trim();
-        }
-      } catch (err) {
-        console.error("Rules Generation Error:", err);
-        alert("Failed to generate rules: " + err.message);
-      } finally {
-        isGeneratingRules.value = false;
-      }
-    };
-
     onMounted(async () => {
       const storedKey = localStorage.getItem("story_api_key");
       const storedModel = localStorage.getItem("story_model");
@@ -275,6 +228,47 @@ createApp({
         initializeStory();
       } else {
         showSettings.value = true;
+      }
+    };
+
+    const generateRandomRules = async () => {
+      if (!apiKey.value) return alert("Please enter an API Key first.");
+      isGeneratingRules.value = true;
+
+      const generatorPrompt =
+        "Generate a creative and unique 'World / Character / Tone' setting for a story. " +
+        "Be specific but concise (2-3 sentences). Mix genres interestingly. " +
+        "Include the Setting, the Protagonist's role, and the overall Tone (Whimsical, Gritty, etc.). " +
+        "Return ONLY the setting text, no conversational filler.";
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: generatorPrompt }] }],
+            generationConfig: { temperature: 1.0 },
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error?.message || "Generation failed");
+
+        const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (generatedText) {
+          systemPrompt.value = generatedText.trim();
+        }
+      } catch (err) {
+        console.error("Rules Generation Error:", err);
+        alert("Failed to generate rules: " + err.message);
+      } finally {
+        isGeneratingRules.value = false;
       }
     };
 
