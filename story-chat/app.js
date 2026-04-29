@@ -5,7 +5,7 @@ TASK: Work with the user to write an engaging story.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Internal logic (1 sentence).
+1. "thought": Internal logic (1-2 sentences).
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
 4. "new_facts": An array of strings representing permanent changes to the world state, character status, or discovered items (e.g., ["The protagonist found a silver key", "Met Elara, a rogue archer", "Current location: The Whispering Woods"]).
@@ -15,9 +15,8 @@ Return a single JSON object.
 
 const db = new Dexie("StoryWriterDB");
 db.version(2).stores({
-  // Incremented version to 2
   chats: "++id, role, text, thought, timestamp",
-  facts: "++id, text, category, timestamp", // Added facts table
+  facts: "++id, text, category, timestamp",
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -37,7 +36,7 @@ const formatRelativeTime = (timestamp) => {
 createApp({
   setup() {
     const apiKey = ref("");
-    const selectedModel = ref("gemma-4-31b-it");
+    const selectedModel = ref("gemini-2.5-flash-lite");
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
@@ -592,3 +591,5 @@ createApp({
     };
   },
 }).mount("#app");
+
+// EOF
