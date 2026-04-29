@@ -43,7 +43,7 @@ createApp({
     const showSettings = ref(false);
 
     const activeTab = ref("settings");
-
+    const isOptimizingFacts = ref(false);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
     const messages = ref([]);
@@ -73,6 +73,55 @@ createApp({
     const deleteFact = async (id) => {
       await db.facts.delete(id);
       await loadFacts();
+    };
+
+    const optimizeFacts = async () => {
+      if (!apiKey.value || facts.value.length < 2) return;
+      isOptimizingFacts.value = true;
+      try {
+        var fData = "";
+        for (var i = 0; i < facts.value.length; i++) {
+          fData += " [FACT: " + facts.value[i].text + "] ";
+        }
+        var prompt =
+          "Merge duplicate facts. Keep concise. Return JSON merged_facts:string[]. DATA: " +
+          fData;
+        var res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/" +
+            selectedModel.value +
+            ":generateContent?key=" +
+            apiKey.value,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" },
+            }),
+          },
+        );
+        var data = await res.json();
+        var raw = data.candidates[0].content.parts[0].text;
+        var s = raw.indexOf("{"),
+          e = raw.lastIndexOf("}");
+        if (s !== -1 && e !== -1) {
+          var p = JSON.parse(raw.substring(s, e + 1));
+          if (p.merged_facts) {
+            await db.facts.clear();
+            for (var j = 0; j < p.merged_facts.length; j++) {
+              await db.facts.add({
+                text: p.merged_facts[j],
+                timestamp: Date.now(),
+              });
+            }
+            await loadFacts();
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        isOptimizingFacts.value = false;
+      }
     };
 
     const renderMarkdown = (text) => marked.parse(text);
