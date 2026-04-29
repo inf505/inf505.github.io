@@ -652,7 +652,7 @@ createApp({
       sendMessage,
       sendOption,
       isOptimizingFacts,
-      optimizeFacts,
+      //optimizeFacts,
       retryMessage,
       inputArea,
       deleteMessage,
