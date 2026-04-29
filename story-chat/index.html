@@ -63,39 +63,6 @@
 
                     <!-- TAB CONTENT: SETTINGS -->
                     <div v-if="activeTab === 'settings'" class="tab-content">
-                        <!-- TAB CONTENT: FACTS (The Grimoire) -->
-                        <div v-if="activeTab === 'facts'" class="tab-content">
-                            <div class="settings-group">
-                                <label>Story Grimoire</label>
-                                <small>Permanent memory for the AI.</small>
-                            </div>
-
-                            <div class="facts-container">
-                                <!-- Check that this matches 'facts' in your setup return -->
-                                <div
-                                    v-for="fact in facts"
-                                    :key="fact.id"
-                                    class="fact-row"
-                                >
-                                    <div class="fact-text">{{ fact.text }}</div>
-                                    <button
-                                        class="delete-fact-btn"
-                                        @click="deleteFact(fact.id)"
-                                    >
-                                        &times;
-                                    </button>
-                                </div>
-
-                                <div
-                                    v-if="facts.length === 0"
-                                    class="empty-facts"
-                                >
-                                    No facts recorded yet.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Inside TAB CONTENT: SETTINGS -->
                         <div class="settings-group">
                             <label>Story Model:</label>
                             <input
@@ -124,7 +91,7 @@
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
-                                placeholder="Describe the world, the main character, or the genre you want the AI to write in..."
+                                placeholder="Describe the world..."
                             ></textarea>
                         </div>
 
@@ -136,6 +103,34 @@
                         </button>
                     </div>
 
+                    <!-- TAB CONTENT: FACTS (Moved out of Settings) -->
+                    <div v-if="activeTab === 'facts'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Story Grimoire</label>
+                            <small>Permanent memory for the AI.</small>
+                        </div>
+
+                        <div class="facts-container">
+                            <div
+                                v-for="fact in facts"
+                                :key="fact.id"
+                                class="fact-row"
+                            >
+                                <div class="fact-text">{{ fact.text }}</div>
+                                <button
+                                    class="delete-fact-btn"
+                                    @click="deleteFact(fact.id)"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+
+                            <div v-if="facts.length === 0" class="empty-facts">
+                                No facts recorded yet.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- TAB CONTENT: AUDIO / TTS -->
                     <div v-if="activeTab === 'audio'" class="tab-content">
                         <div class="settings-group">
@@ -145,10 +140,6 @@
                                 v-model="selectedTTSModel"
                                 placeholder="gemini-3.1-flash-tts-preview"
                             />
-                            <small
-                                >gemini-3.1-flash-tts-preview,
-                                gemini-2.5-flash-preview-tts
-                            </small>
                         </div>
 
                         <div class="settings-group">
@@ -158,10 +149,6 @@
                                 v-model="selectedVoice"
                                 placeholder="e.g., Aoede, Puck"
                             />
-                            <small
-                                >Standard voices: Aoede, Charon, Fenrir, Kore,
-                                Puck.</small
-                            >
                         </div>
 
                         <div class="settings-group">
@@ -170,10 +157,6 @@
                                 v-model="ttsProsodyNudge"
                                 rows="3"
                             ></textarea>
-                            <small
-                                >Instruction for the AI narrator on how to read
-                                the story.</small
-                            >
                         </div>
                     </div>
                 </div>
