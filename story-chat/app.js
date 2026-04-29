@@ -80,10 +80,15 @@ createApp({
         alert("Please enter your API Key first.");
         return;
       }
+
+      var warnMsg =
+        "This will generate a new idea and RESTART your story. Your current progress and Grimoire will be deleted. Continue?";
+      if (!confirm(warnMsg)) return;
+
       isGeneratingRules.value = true;
       try {
         var p =
-          "Generate a highly creative, random story premise. Include a unique world setting, a character, and a tone. Format as one cohesive paragraph under 40 words. No labels or headers.";
+          "Generate a creative story premise. Include a world, character, and tone. One paragraph, max 40 words. No labels.";
         var res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
             selectedModel.value +
@@ -100,6 +105,16 @@ createApp({
         var data = await res.json();
         if (data.candidates && data.candidates[0].content.parts) {
           systemPrompt.value = data.candidates[0].content.parts[0].text.trim();
+          localStorage.setItem("story_system_prompt", systemPrompt.value);
+
+          // Force startOver without a second confirmation (since we already warned above)
+          await db.chats.clear();
+          await db.facts.clear();
+          messages.value = [];
+          facts.value = [];
+          await updateCounts();
+          initializeStory();
+          showSettings.value = false;
         }
       } catch (err) {
         console.error(err);
@@ -293,15 +308,15 @@ createApp({
     };
 
     const startOver = async () => {
-      if (
-        !confirm(
-          "Are you sure you want to start a new story? This will permanently delete the current text.",
-        )
-      ) {
-        return;
-      }
+      var warnMsg =
+        "Are you sure? This will permanently delete the story AND all remembered facts in the Grimoire.";
+      if (!confirm(warnMsg)) return;
+
       await db.chats.clear();
+      await db.facts.clear();
       messages.value = [];
+      facts.value = [];
+
       await updateCounts();
 
       if (apiKey.value) {
