@@ -109,6 +109,16 @@
                         <div class="settings-group">
                             <label>Story Grimoire</label>
                             <small>Permanent memory for the AI.</small>
+                            <!-- NEW: Optimize Button -->
+                            <button
+                                class="small-btn apply-btn"
+                                @click="optimizeFacts"
+                                :disabled="isOptimizingFacts || facts.length < 2"
+                                style="margin-top: 10px; margin-bottom: 15px"
+                            >
+                                {{ isOptimizingFacts ? '✨ Merging &
+                                Cleaning...' : '✨ Optimize & Merge Facts' }}
+                            </button>
                         </div>
 
                         <div class="facts-container">

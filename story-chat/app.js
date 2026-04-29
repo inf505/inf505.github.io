@@ -41,9 +41,8 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-
     const activeTab = ref("settings");
-
+    const isOptimizingFacts = ref(false);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
     const messages = ref([]);
@@ -74,6 +73,106 @@ createApp({
     const deleteFact = async (id) => {
       await db.facts.delete(id);
       await loadFacts();
+    };
+
+    const optimizeFacts = async () => {
+      if (!apiKey.value) {
+        alert("Please enter your API Key in Settings first.");
+        return;
+      }
+      if (facts.value.length < 2) return; // Nothing to merge
+
+      isOptimizingFacts.value = true;
+
+      try {
+        const currentFactsList = facts.value
+          .map((f) => "- " + f.text)
+          .join("\n");
+
+        // Safe string concatenation to avoid unescaped line breaks
+        const optimizePrompt =
+          "You are an AI editor managing a story's permanent memory. " +
+          "Review the following list of story facts. " +
+          "Merge duplicates, consolidate related information into single sentences, and remove redundant entries. " +
+          "Keep the facts accurate, concise, and written in the third person. " +
+          "Return ONLY a JSON object containing a 'merged_facts' array of strings.\n\n" +
+          "CURRENT FACTS:\n" +
+          currentFactsList;
+
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: optimizePrompt }] }],
+          generationConfig: {
+            temperature: 0.1, // Low temp for analytical task
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                merged_facts: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "The newly consolidated list of facts.",
+                },
+              },
+              required: ["merged_facts"],
+            },
+          },
+        };
+
+        const url =
+          "https://generativelanguage.googleapis.com/v1beta/models/" +
+          selectedModel.value +
+          ":generateContent";
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || "API Error");
+
+        const responseText = data.candidates[0].content.parts[0].text;
+
+        // Use the safe substring extractor
+        const jsonStartIndex = responseText.indexOf("{");
+        const jsonEndIndex = responseText.lastIndexOf("}");
+
+        if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+          const jsonString = responseText.substring(
+            jsonStartIndex,
+            jsonEndIndex + 1,
+          );
+          const parsed = JSON.parse(jsonString);
+
+          if (parsed.merged_facts && Array.isArray(parsed.merged_facts)) {
+            // Success! Clear old facts and insert the optimized ones
+            await db.facts.clear();
+            for (const newFact of parsed.merged_facts) {
+              await db.facts.add({
+                text: newFact,
+                timestamp: Date.now(),
+              });
+            }
+            // Refresh the UI list
+            await loadFacts();
+          } else {
+            throw new Error(
+              "AI did not return the expected 'merged_facts' array.",
+            );
+          }
+        } else {
+          throw new Error("Failed to parse JSON from AI response.");
+        }
+      } catch (error) {
+        console.error("Failed to optimize facts:", error);
+        alert("Failed to optimize facts: " + error.message);
+      } finally {
+        isOptimizingFacts.value = false;
+      }
     };
 
     const renderMarkdown = (text) => marked.parse(text);
@@ -573,6 +672,8 @@ createApp({
       messagesContainer,
       sendMessage,
       sendOption,
+      isOptimizingFacts,
+      optimizeFacts,
       retryMessage,
       inputArea,
       deleteMessage,
