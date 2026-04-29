@@ -91,12 +91,7 @@ createApp({
 
         // Safe string concatenation to avoid unescaped line breaks
         const optimizePrompt =
-          "You are an AI editor managing a story's permanent memory. " +
-          "Review the following list of story facts. " +
-          "Merge duplicates, consolidate related information into single sentences, and remove redundant entries. " +
-          "Keep the facts accurate, concise, and written in the third person. " +
-          "Return ONLY a JSON object containing a 'merged_facts' array of strings.\n\n" +
-          "CURRENT FACTS:\n" +
+          `You are an AI editor managing a story's permanent memory. Review the following list of story facts. Merge duplicates, consolidate related information into single sentences, and remove redundant entries. Keep the facts accurate, concise, and written in the third person. Return ONLY a JSON object containing a 'merged_facts' array of strings. CURRENT FACTS: ` +
           currentFactsList;
 
         const payload = {
