@@ -81,27 +81,18 @@ createApp({
         return;
       }
       if (facts.value.length < 2) return;
-
       isOptimizingFacts.value = true;
-
       try {
-        // Build the facts list without using backticks or literal line breaks
-        var currentFactsList = "";
+        // We build the facts list manually to avoid any line-break issues
+        var factsText = "";
         for (var i = 0; i < facts.value.length; i++) {
-          currentFactsList += " [FACT: " + facts.value[i].text + "] ";
+          factsText += " [FACT: " + facts.value[i].text + "] ";
         }
 
-        // Build prompt using safe-string concatenation
-        var p1 = "You are an AI editor managing a story grimoire. ";
-        var p2 = "Review the following list of story facts. ";
-        var p3 =
-          "Merge duplicates, consolidate related info, and remove redundancy. ";
-        var p4 = "Keep facts accurate, concise, and third-person. ";
-        var p5 =
-          "Return ONLY a JSON object with a 'merged_facts' array of strings. ";
-        var p6 = "DATA TO PROCESS: " + currentFactsList;
-
-        var finalPrompt = p1 + p2 + p3 + p4 + p5 + p6;
+        // EVERYTHING ON ONE LINE: No line breaks inside these quotes
+        var finalPrompt =
+          "You are an AI editor. Review the following story facts. Merge duplicates, consolidate related info, and remove redundancy. Keep facts accurate, concise, and third-person. Return ONLY a JSON object with a 'merged_facts' array of strings. DATA: " +
+          factsText;
 
         var payload = {
           contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
@@ -111,10 +102,7 @@ createApp({
             responseSchema: {
               type: "object",
               properties: {
-                merged_facts: {
-                  type: "array",
-                  items: { type: "string" },
-                },
+                merged_facts: { type: "array", items: { type: "string" } },
               },
               required: ["merged_facts"],
             },
@@ -125,7 +113,6 @@ createApp({
           "https://generativelanguage.googleapis.com/v1beta/models/" +
           selectedModel.value +
           ":generateContent";
-
         var response = await fetch(url, {
           method: "POST",
           headers: {
@@ -137,10 +124,8 @@ createApp({
 
         var data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || "API Error");
-
         var responseText = data.candidates[0].content.parts[0].text;
 
-        // Extract JSON safely using your substring method
         var jsonStartIndex = responseText.indexOf("{");
         var jsonEndIndex = responseText.lastIndexOf("}");
 
@@ -150,7 +135,6 @@ createApp({
             jsonEndIndex + 1,
           );
           var parsed = JSON.parse(jsonString);
-
           if (parsed.merged_facts && Array.isArray(parsed.merged_facts)) {
             await db.facts.clear();
             for (var j = 0; j < parsed.merged_facts.length; j++) {
