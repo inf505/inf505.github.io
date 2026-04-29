@@ -75,6 +75,40 @@ createApp({
       await loadFacts();
     };
 
+    const randomizeRules = async () => {
+      if (!apiKey.value) {
+        alert("Please enter your API Key first.");
+        return;
+      }
+      isGeneratingRules.value = true;
+      try {
+        var p =
+          "Generate a highly creative, random story premise. Include a unique world setting, a character, and a tone. Format as one cohesive paragraph under 40 words. No labels or headers.";
+        var res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/" +
+            selectedModel.value +
+            ":generateContent?key=" +
+            apiKey.value,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: p }] }],
+            }),
+          },
+        );
+        var data = await res.json();
+        if (data.candidates && data.candidates[0].content.parts) {
+          systemPrompt.value = data.candidates[0].content.parts[0].text.trim();
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Randomizer failed.");
+      } finally {
+        isGeneratingRules.value = false;
+      }
+    };
+
     const optimizeFacts = async () => {
       if (!apiKey.value || facts.value.length < 2) return;
       isOptimizingFacts.value = true;
@@ -622,6 +656,8 @@ createApp({
       deleteFact,
       isOptimizingFacts,
       optimizeFacts,
+      isGeneratingRules,
+      randomizeRules,
     };
   },
 }).mount("#app");

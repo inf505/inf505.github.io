@@ -88,7 +88,15 @@
 
                         <div class="settings-group">
                             <label>World / Character / Tone Rules</label>
-
+                            <button
+                                class="small-btn"
+                                @click="randomizeRules"
+                                :disabled="isGeneratingRules"
+                                style="margin-bottom: 8px; width: 100%"
+                            >
+                                {{ isGeneratingRules ? "🎲 Rolling the dice..."
+                                : "🎲 Randomize Story Idea" }}
+                            </button>
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
