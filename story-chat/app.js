@@ -261,6 +261,7 @@ createApp({
     const triggerAIResponse = async () => {
       isLoading.value = true;
       try {
+<<<<<<< HEAD
         const hist = messages.value.map((m) => ({
           role: m.role === "user" ? "user" : "model",
           parts: [{ text: m.text }],
@@ -272,6 +273,28 @@ createApp({
           systemPrompt.value +
           "\nFACTS: " +
           (fSum || "None");
+=======
+        const contents = messages.value.map((msg) => {
+          let role = msg.role === "user" ? "user" : "model";
+          return {
+            role: role,
+            parts: [{ text: msg.text }],
+          };
+        });
+
+        const userTone = systemPrompt.value.trim();
+
+        const allFacts = await db.facts.toArray();
+        const factsSummary = allFacts.map((f) => `- ${f.text}`).join("\n");
+
+        const finalSystemInstruction = `
+        ${CORE_SYSTEM_PROMPT}
+        ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+
+        KNOWN STORY FACTS:
+        ${factsSummary || "No facts established yet."}
+        `.trim();
+>>>>>>> parent of ce25736 (Update app.js)
 
         const payload = {
           contents: hist,
@@ -291,6 +314,7 @@ createApp({
             },
           },
         };
+<<<<<<< HEAD
         const url =
           "https://generativelanguage.googleapis.com/v1beta/models/" +
           selectedModel.value +
@@ -302,6 +326,126 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
+=======
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        let data;
+        let attempt = 0;
+        const retryDelays = [5000, 10000, 15000];
+
+        while (attempt <= retryDelays.length) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 240000);
+
+          try {
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey.value,
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              if (response.status === 500 && attempt < retryDelays.length) {
+                console.warn(
+                  `API 500 Error. Retrying in ${retryDelays[attempt]}ms...`,
+                );
+                await new Promise((res) =>
+                  setTimeout(res, retryDelays[attempt]),
+                );
+                attempt++;
+                continue;
+              }
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(
+                errorData.error?.message || `API Error: ${response.status}`,
+              );
+            }
+
+            data = await response.json();
+            break;
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+          }
+        }
+
+        let responseText = "";
+        let thoughtText = "";
+        totalTokens.value =
+          data.usageMetadata.totalTokenCount.toLocaleString("en-US");
+
+        if (data.candidates && data.candidates[0].content.parts) {
+          for (const part of data.candidates[0].content.parts) {
+            if (part.thought) {
+              thoughtText += (part.text || "") + "\n\n";
+            } else if (part.text) {
+              let text = part.text;
+              text = text.replace(
+                /<think>([\s\S]*?)<\/think>/gi,
+                (m, inner) => {
+                  thoughtText += inner.trim() + "\n\n";
+                  return "";
+                },
+              );
+              responseText += text + "\n";
+            }
+          }
+        }
+
+        let finalResponse = responseText.trim() || "*(No response text)*";
+        let finalOptions = null;
+
+        try {
+          const jsonStartIndex = finalResponse.indexOf("{");
+          const jsonEndIndex = finalResponse.lastIndexOf("}");
+          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+            const jsonString = finalResponse.substring(
+              jsonStartIndex,
+              jsonEndIndex + 1,
+            );
+            const parsed = JSON.parse(jsonString);
+
+            if (parsed.thought) thoughtText = parsed.thought;
+            if (parsed.response) finalResponse = parsed.response.trim();
+            if (parsed.options) finalOptions = parsed.options;
+          }
+        } catch (e) {
+          console.error("JSON Parse error", e);
+        }
+
+        if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
+          for (const factText of parsed.new_facts) {
+            await db.facts.add({
+              text: factText,
+              timestamp: Date.now(),
+            });
+          }
+          await loadFacts();
+        }
+
+        const modelId = await saveToDb(
+          "model",
+          finalResponse,
+          thoughtText.trim(),
+          finalOptions,
+        );
+
+        messages.value.push({
+          id: modelId,
+          role: "model",
+          text: finalResponse,
+          thought: thoughtText.trim(),
+          options: finalOptions,
+          audioData: null,
+          isGeneratingAudio: false,
+>>>>>>> parent of ce25736 (Update app.js)
         });
         const data = await res.json();
         totalTokens.value = data.usageMetadata.totalTokenCount.toLocaleString();
