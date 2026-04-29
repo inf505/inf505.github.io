@@ -64,7 +64,7 @@ createApp({
         // Sort by timestamp so newest or oldest appear in order
         const data = await db.facts.orderBy("timestamp").toArray();
         facts.value = data;
-        //console.log("Facts loaded into UI:", facts.value); // Debug check
+        console.log("Facts loaded into UI:", facts.value); // Debug check
       } catch (err) {
         console.error("Error loading facts:", err);
       }
@@ -91,7 +91,12 @@ createApp({
 
         // Safe string concatenation to avoid unescaped line breaks
         const optimizePrompt =
-          `You are an AI editor managing a story's permanent memory. Review the following list of story facts. Merge duplicates, consolidate related information into single sentences, and remove redundant entries. Keep the facts accurate, concise, and written in the third person. Return ONLY a JSON object containing a 'merged_facts' array of strings. CURRENT FACTS: ` +
+          "You are an AI editor managing a story's permanent memory. " +
+          "Review the following list of story facts. " +
+          "Merge duplicates, consolidate related information into single sentences, and remove redundant entries. " +
+          "Keep the facts accurate, concise, and written in the third person. " +
+          "Return ONLY a JSON object containing a 'merged_facts' array of strings.\n\n" +
+          "CURRENT FACTS:\n" +
           currentFactsList;
 
         const payload = {
