@@ -81,10 +81,7 @@ createApp({
         return;
       }
 
-      var warnMsg =
-        "This will generate a new idea and RESTART your story. Your current progress and Grimoire will be deleted. Continue?";
-      if (!confirm(warnMsg)) return;
-
+      // No warning needed anymore since this is non-destructive!
       isGeneratingRules.value = true;
       try {
         var p =
@@ -104,17 +101,8 @@ createApp({
         );
         var data = await res.json();
         if (data.candidates && data.candidates[0].content.parts) {
+          // Just update the textarea, don't restart yet
           systemPrompt.value = data.candidates[0].content.parts[0].text.trim();
-          localStorage.setItem("story_system_prompt", systemPrompt.value);
-
-          // Force startOver without a second confirmation (since we already warned above)
-          await db.chats.clear();
-          await db.facts.clear();
-          messages.value = [];
-          facts.value = [];
-          await updateCounts();
-          initializeStory();
-          showSettings.value = false;
         }
       } catch (err) {
         console.error(err);
@@ -168,6 +156,7 @@ createApp({
             }),
           },
         );
+
         var data = await res.json();
         var raw = data.candidates[0].content.parts[0].text;
         var s = raw.indexOf("{"),
