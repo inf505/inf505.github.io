@@ -138,7 +138,15 @@
                                 :key="fact.id"
                                 class="fact-row"
                             >
-                                <div class="fact-text">{{ fact.text }}</div>
+                                <div class="fact-content">
+                                    <!-- Badge for Category -->
+                                    <span
+                                        :class="['fact-badge', fact.category.toLowerCase()]"
+                                    >
+                                        {{ fact.category }}
+                                    </span>
+                                    <div class="fact-text">{{ fact.text }}</div>
+                                </div>
                                 <button
                                     class="delete-fact-btn"
                                     @click="deleteFact(fact.id)"

@@ -457,7 +457,7 @@ createApp({
         const finalSystemInstruction = `
         ${CORE_SYSTEM_PROMPT}
         ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-
+        CATEGORIES: Character (people/creatures), Item (objects/weapons), Location (places), Lore (history/world rules).
         KNOWN STORY FACTS:
         ${factsSummary || "No facts established yet."}
         `.trim();
@@ -481,9 +481,18 @@ createApp({
                 },
                 new_facts: {
                   type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Key story developments or permanent world-state changes.",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: { type: "string" },
+                      category: {
+                        type: "string",
+                        enum: ["Character", "Item", "Location", "Lore"],
+                      },
+                    },
+                    required: ["text", "category"],
+                  },
+                  description: "Key developments with their specific category.",
                 },
               },
               required: ["thought", "response", "options", "new_facts"],
@@ -577,9 +586,11 @@ createApp({
             if (parsed.options) finalOptions = parsed.options;
 
             if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
-              for (const factText of parsed.new_facts) {
+              for (var k = 0; k < parsed.new_facts.length; k++) {
+                var f = parsed.new_facts[k];
                 await db.facts.add({
-                  text: factText,
+                  text: f.text,
+                  category: f.category || "Lore", // Fallback to Lore
                   timestamp: Date.now(),
                 });
               }
