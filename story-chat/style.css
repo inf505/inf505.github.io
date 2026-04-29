@@ -509,7 +509,6 @@ button.small-btn {
     color: #121212;
     transform: translateY(1px);
 }
-<<<<<<< HEAD
 /* Facts Tab Styling */
 .facts-container {
     display: flex;
@@ -575,5 +574,3 @@ button.small-btn {
     opacity: 0.6;
     cursor: wait;
 }
-=======
->>>>>>> parent of fd0fb80 (...)
