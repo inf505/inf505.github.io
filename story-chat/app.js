@@ -1,17 +1,14 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are a creative and collaborative storytelling partner.
-TASK: Work with the user to write an engaging story.
-
-OUTPUT REQUIREMENTS:
-Return a single JSON object.
-1. "thought": Internal logic (1-2 sentences).
-2. "response": The story text.
-3. "options": Array of 3 distinct action choices.
-4. "new_facts": An array of strings representing permanent changes to the world state, character status, or discovered items (e.g., ["The protagonist found a silver key", "Met Elara, a rogue archer", "Current location: The Whispering Woods"]).
-   - Only include NEW facts or UPDATED facts in this array.
-   - If no new facts occurred, return an empty array [].
-`;
+const CORE_SYSTEM_PROMPT =
+  "You are a creative and collaborative storytelling partner. " +
+  "TASK: Work with the user to write an engaging story. " +
+  "OUTPUT REQUIREMENTS: Return a single JSON object. " +
+  "1. 'thought': Internal logic (1-2 sentences). " +
+  "2. 'response': The story text. " +
+  "3. 'options': Array of 3 distinct action choices. " +
+  "4. 'new_facts': An array of strings representing permanent changes to the world state. " +
+  "Only include NEW or UPDATED facts. If no new facts occurred, return an empty array [].";
 
 const db = new Dexie("StoryWriterDB");
 db.version(2).stores({
@@ -484,7 +481,6 @@ createApp({
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
-            // Process facts inside the block where 'parsed' is defined
             if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
               for (const factText of parsed.new_facts) {
                 await db.facts.add({
@@ -591,5 +587,3 @@ createApp({
     };
   },
 }).mount("#app");
-
-// EOF
