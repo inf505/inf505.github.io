@@ -282,10 +282,13 @@ createApp({
     });
 
     const saveAllSettings = () => {
-      if (selectedModel.value.trim())
-        localStorage.setItem("story_model", selectedModel.value.trim());
+      // Check if the rules actually changed compared to what's in storage
+      var oldRules = localStorage.getItem("story_system_prompt") || "";
+      var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
+      // Save everything to localStorage
       localStorage.setItem("story_api_key", apiKey.value);
+      localStorage.setItem("story_model", selectedModel.value);
       localStorage.setItem("story_system_prompt", systemPrompt.value);
       localStorage.setItem("story_tts_model", selectedTTSModel.value);
       localStorage.setItem("story_tts_voice", selectedVoice.value);
@@ -294,8 +297,24 @@ createApp({
       showSettings.value = false;
       isConfigured.value = true;
 
+      // Case 1: The chat is empty, just start the story
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
+      }
+      // Case 2: Mid-game change. Ask the user if they want to restart
+      else if (rulesChanged && messages.value.length > 0) {
+        var restartNow = confirm(
+          "Rules updated! Would you like to restart the story now to apply these changes?",
+        );
+        if (restartNow) {
+          // We manually trigger the logic from startOver without the double-confirmation
+          db.chats.clear();
+          db.facts.clear();
+          messages.value = [];
+          facts.value = [];
+          updateCounts();
+          initializeStory();
+        }
       }
     };
 

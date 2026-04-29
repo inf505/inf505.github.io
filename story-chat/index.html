@@ -110,6 +110,25 @@
                         >
                             Apply Settings
                         </button>
+
+                        <!-- NEW: Warning message for mid-game rule changes -->
+                        <div
+                            v-if="messages.length > 0"
+                            style="
+                                margin-top: 15px;
+                                padding: 10px;
+                                background: rgba(255, 165, 0, 0.1);
+                                border: 1px solid orange;
+                                border-radius: 4px;
+                                font-size: 0.8rem;
+                                color: orange;
+                            "
+                        >
+                            <strong>Note:</strong> You are currently in an
+                            active story. To start a fresh adventure with these
+                            new rules, use the 🗑️ Start Over button in the main
+                            chat.
+                        </div>
                     </div>
 
                     <!-- TAB CONTENT: FACTS  -->
