@@ -121,13 +121,25 @@ createApp({
         }
 
         if (data.candidates && data.candidates[0].content.parts) {
-          const rawText = data.candidates[0].content.parts[0].text;
+          let rawText = data.candidates[0].content.parts[0].text;
 
-          // Parse the enforced JSON response
-          const parsedData = JSON.parse(rawText);
+          console.log("RAW AI RESPONSE:", rawText);
 
-          if (parsedData.premise) {
-            systemPrompt.value = parsedData.premise.trim();
+          const start = rawText.indexOf("{");
+          const end = rawText.lastIndexOf("}");
+
+          if (start !== -1 && end !== -1) {
+            rawText = rawText.substring(start, end + 1);
+          }
+
+          try {
+            const parsedData = JSON.parse(rawText);
+            if (parsedData.premise) {
+              systemPrompt.value = parsedData.premise.trim();
+            }
+          } catch (parseError) {
+            console.error("Failed to parse cleaned text:", rawText);
+            throw parseError;
           }
         }
       } catch (err) {
