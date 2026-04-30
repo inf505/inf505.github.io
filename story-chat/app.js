@@ -85,7 +85,7 @@ createApp({
       isGeneratingRules.value = true;
       try {
         var p =
-          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal and a secret. No commentary, no formatting, keep your story design simple.";
+          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal and a secret. No commentary, no formatting, keep your story design simple. Stay under 100 words if possible.";
         var res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
             selectedModel.value +
