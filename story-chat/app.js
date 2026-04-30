@@ -82,6 +82,11 @@ createApp({
       }
 
       isGeneratingRules.value = true;
+
+      // 1. Create the controller
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       try {
         const p =
           "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
@@ -93,10 +98,7 @@ createApp({
             responseSchema: {
               type: "object",
               properties: {
-                premise: {
-                  type: "string",
-                  description: "The 80-word maximum story premise.",
-                },
+                premise: { type: "string" },
               },
               required: ["premise"],
             },
@@ -112,41 +114,46 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
+          signal: controller.signal, // 2. Pass the signal to fetch
         });
+
+        // 3. Clear the timeout since the request finished
+        clearTimeout(timeoutId);
 
         const data = await res.json();
 
-        if (!res.ok) {
+        if (!res.ok)
           throw new Error(data.error?.message || "API request failed");
-        }
 
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          console.log("RAW AI RESPONSE:", rawText);
-
+          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
-
           if (start !== -1 && end !== -1) {
             rawText = rawText.substring(start, end + 1);
           }
 
-          try {
-            const parsedData = JSON.parse(rawText);
-            if (parsedData.premise) {
-              systemPrompt.value = parsedData.premise.trim();
-            }
-          } catch (parseError) {
-            console.error("Failed to parse cleaned text:", rawText);
-            throw parseError;
+          const parsedData = JSON.parse(rawText);
+          if (parsedData.premise) {
+            systemPrompt.value = parsedData.premise.trim();
           }
         }
       } catch (err) {
-        console.error("Error generating rules:", err);
-        alert("Randomizer failed: " + err.message);
+        // 4. Handle specifically the timeout/abort error
+        if (err.name === "AbortError") {
+          console.error("Randomizer timed out.");
+          alert(
+            "The request timed out. The AI is taking too long to think—try again!",
+          );
+        } else {
+          console.error("Error generating rules:", err);
+          alert("Randomizer failed: " + err.message);
+        }
       } finally {
         isGeneratingRules.value = false;
+        clearTimeout(timeoutId); // Final safety clear
       }
     };
 
