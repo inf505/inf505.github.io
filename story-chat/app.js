@@ -553,6 +553,7 @@ createApp({
           }),
           generationConfig: {
             temperature: 0.9,
+            maxOutputTokens: 2048,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -569,10 +570,7 @@ createApp({
                     type: "object",
                     properties: {
                       text: { type: "string" },
-                      category: {
-                        type: "string",
-                        enum: ["Character", "Item", "Location", "Lore"],
-                      },
+                      category: { type: "string" },
                     },
                     required: ["text", "category"],
                   },
