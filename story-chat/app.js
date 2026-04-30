@@ -40,7 +40,7 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-
+    const randomizerModel = ref("gemma-4-31b-it");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
     const totalSizeKb = ref("0.0");
@@ -104,7 +104,7 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
 
         const res = await fetch(url, {
           method: "POST",
@@ -266,6 +266,9 @@ createApp({
 
       if (localStorage.getItem("story_tts_model"))
         selectedTTSModel.value = localStorage.getItem("story_tts_model");
+      if (localStorage.getItem("story_randomizer_model")) {
+        randomizerModel.value = localStorage.getItem("story_randomizer_model");
+      }
       if (localStorage.getItem("story_tts_voice"))
         selectedVoice.value = localStorage.getItem("story_tts_voice");
       if (localStorage.getItem("story_tts_prosody"))
@@ -333,6 +336,7 @@ createApp({
       // Save everything to localStorage
       localStorage.setItem("story_api_key", apiKey.value);
       localStorage.setItem("story_model", selectedModel.value);
+      localStorage.setItem("story_randomizer_model", randomizerModel.value);
       localStorage.setItem("story_system_prompt", systemPrompt.value);
       localStorage.setItem("story_tts_model", selectedTTSModel.value);
       localStorage.setItem("story_tts_voice", selectedVoice.value);
@@ -757,6 +761,7 @@ createApp({
     return {
       apiKey,
       selectedModel,
+      randomizerModel,
       isConfigured,
       renderMarkdown,
       formatRelativeTime,

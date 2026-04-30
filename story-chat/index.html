@@ -88,6 +88,18 @@
 
                         <div class="settings-group">
                             <label>World / Character / Tone Rules</label>
+
+                            <!-- New Randomizer Model Input -->
+                            <div style="margin-bottom: 8px">
+                                <small>Randomizer Model:</small>
+                                <input
+                                    type="text"
+                                    v-model="randomizerModel"
+                                    placeholder="gemma-4-31b-it"
+                                    style="font-size: 0.8rem; padding: 4px"
+                                />
+                            </div>
+
                             <button
                                 class="small-btn"
                                 @click="randomizeRules"
