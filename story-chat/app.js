@@ -534,17 +534,18 @@ createApp({
         });
 
         const userTone = systemPrompt.value.trim();
-
         const allFacts = await db.facts.toArray();
-        const factsSummary = allFacts.map((f) => `- ${f.text}`).join("\n");
+        const factsSummary = allFacts
+          .map((f) => `- [${f.category}] ${f.text}`)
+          .join("\n");
 
         const finalSystemInstruction = `
-        ${CORE_SYSTEM_PROMPT}
-        ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-        CATEGORIES: Character (people/creatures), Item (objects/weapons), Location (places), Lore (history/world rules).
-        KNOWN STORY FACTS:
-        ${factsSummary || "No facts established yet."}
-        `.trim();
+            ${CORE_SYSTEM_PROMPT}
+            ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+            CATEGORIES: Character (people/creatures), Item (objects/weapons), Location (places), Lore (history/world rules).
+            KNOWN STORY FACTS:
+            ${factsSummary || "No facts established yet."}
+            `.trim();
 
         const payload = {
           contents,
@@ -563,6 +564,8 @@ createApp({
                 options: {
                   type: "array",
                   items: { type: "string" },
+                  description:
+                    "An array of exactly 3 action choices for the user.",
                 },
                 new_facts: {
                   type: "array",
@@ -570,11 +573,15 @@ createApp({
                     type: "object",
                     properties: {
                       text: { type: "string" },
-                      category: { type: "string" },
+                      category: {
+                        type: "string",
+                        enum: ["Character", "Item", "Location", "Lore"],
+                      },
                     },
                     required: ["text", "category"],
                   },
-                  description: "Key developments with their specific category.",
+                  description:
+                    "Key story developments. Return an empty array [] if none.",
                 },
               },
               required: ["thought", "response", "options", "new_facts"],
@@ -590,11 +597,9 @@ createApp({
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 240000);
+          const timeoutId = setTimeout(() => controller.abort(), 45000); // Back to 45s
 
           try {
-            console.log("SENDING PAYLOAD:", JSON.stringify(payload, null, 2));
-
             const response = await fetch(url, {
               method: "POST",
               headers: {
@@ -609,6 +614,9 @@ createApp({
 
             if (!response.ok) {
               if (response.status === 500 && attempt < retryDelays.length) {
+                console.warn(
+                  `API 500 Error. Retrying... (Attempt ${attempt + 1})`,
+                );
                 await new Promise((res) =>
                   setTimeout(res, retryDelays[attempt]),
                 );
@@ -622,25 +630,20 @@ createApp({
             }
 
             data = await response.json();
-
-            console.log("RAW API DATA:", data);
-
             break;
           } catch (error) {
             clearTimeout(timeoutId);
-            throw error;
+            throw error; // Pass to outer catch
           }
         }
 
         let responseText = "";
         let thoughtText = "";
         totalTokens.value =
-          data.usageMetadata.totalTokenCount.toLocaleString("en-US");
+          data.usageMetadata?.totalTokenCount?.toLocaleString("en-US") || "0";
 
         if (data.candidates && data.candidates[0].content.parts) {
           for (const part of data.candidates[0].content.parts) {
-            console.log("PART TEXT RECEIVED:", part.text);
-
             if (part.thought) {
               thoughtText += (part.text || "") + "\n\n";
             } else if (part.text) {
@@ -674,14 +677,16 @@ createApp({
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
+            // Handle the new facts array
             if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
-              for (var k = 0; k < parsed.new_facts.length; k++) {
-                var f = parsed.new_facts[k];
-                await db.facts.add({
-                  text: f.text,
-                  category: f.category || "Lore", // Fallback to Lore
-                  timestamp: Date.now(),
-                });
+              for (const f of parsed.new_facts) {
+                if (f.text && f.category) {
+                  await db.facts.add({
+                    text: f.text,
+                    category: f.category,
+                    timestamp: Date.now(),
+                  });
+                }
               }
               await loadFacts();
             }
@@ -707,12 +712,19 @@ createApp({
           isGeneratingAudio: false,
         });
       } catch (error) {
+        // MATCHING YOUR WORKING APP'S ERROR HANDLING
         let errorMsg = `❌ Error: ${error.message}`;
+        if (error.name === "AbortError") {
+          errorMsg =
+            "⏳ Request timed out. The AI took too long to respond. Please hit the ↻ retry button.";
+        }
+
         const errId = await saveToDb("model", errorMsg);
         messages.value.push({ id: errId, role: "model", text: errorMsg });
       } finally {
         isLoading.value = false;
         scrollToBottom();
+        nextTick(() => inputArea.value?.focus());
       }
       await updateCounts();
     };
