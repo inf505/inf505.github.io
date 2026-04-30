@@ -85,7 +85,7 @@ createApp({
 
       // 1. Create the controller
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
         const p =
@@ -556,7 +556,6 @@ createApp({
             responseSchema: {
               type: "object",
               properties: {
-                thought: { type: "string" },
                 response: { type: "string" },
                 options: {
                   type: "array",
@@ -578,7 +577,7 @@ createApp({
                   description: "Key developments with their specific category.",
                 },
               },
-              required: ["thought", "response", "options", "new_facts"],
+              required: ["response", "options", "new_facts"],
             },
           },
         };
