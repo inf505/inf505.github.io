@@ -82,25 +82,27 @@ createApp({
 
       isGeneratingRules.value = true;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       try {
         const isGemma = selectedModel.value.toLowerCase().includes("gemma");
-        const p =
-          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal. No commentary, no formatting. Return as JSON with a single key 'premise'. STRICT LIMIT: One paragraph, maximum 80 words.";
+
+        const systemInstr =
+          "You are a narrative designer. You only speak in JSON.";
+        const userPrompt =
+          'Generate a high-concept story premise mixing two unexpected genres. Describe a world with a mystery and a protagonist with a goal. Limit: 80 words. Return as JSON: {"premise": "..."}';
 
         const payload = {
-          contents: [{ role: "user", parts: [{ text: p }] }],
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          // Injected system instruction to help 26b stay focused
+          systemInstruction: { parts: [{ text: systemInstr }] },
           generationConfig: {
-            temperature: 0.9,
+            temperature: 0.7, // Lower temperature = more stable JSON
             responseMimeType: "application/json",
-            // Skip responseSchema if it's Gemma to avoid hangs
             ...(!isGemma && {
               responseSchema: {
                 type: "object",
-                properties: {
-                  premise: { type: "string" },
-                },
+                properties: { premise: { type: "string" } },
                 required: ["premise"],
               },
             }),
@@ -127,8 +129,9 @@ createApp({
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          // Safety Cleaner: Find the first { and last }
-          // Required now because Gemma might add markdown backticks without the Schema engine
+          // DEBUG: If it still fails, check the console for this log!
+          console.log("PREMISE RAW RESPONSE:", rawText);
+
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -142,12 +145,10 @@ createApp({
         }
       } catch (err) {
         if (err.name === "AbortError") {
-          alert(
-            "Premise generation timed out. Gemma is being stubborn—try clicking it again!",
-          );
+          alert("Premise generation timed out. Try again!");
         } else {
           console.error("Error generating rules:", err);
-          alert("Randomizer failed: " + err.message);
+          alert("Randomizer failed. Check console for details.");
         }
       } finally {
         isGeneratingRules.value = false;
