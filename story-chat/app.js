@@ -96,9 +96,10 @@ createApp({
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           // Injected system instruction to help 26b stay focused
           systemInstruction: { parts: [{ text: systemInstr }] },
+          thinkingConfig: { thinkingLevel: "MINIMAL" },
           generationConfig: {
             temperature: 0.7, // Lower temperature = more stable JSON
-            thinkingConfig: { thinkingLevel: "MINIMAL" },
+
             responseMimeType: "application/json",
             ...(!isGemma && {
               responseSchema: {
