@@ -81,32 +81,58 @@ createApp({
         return;
       }
 
-      // No warning needed anymore since this is non-destructive!
       isGeneratingRules.value = true;
       try {
-        var p =
+        const p =
           "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
-        var res = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/" +
-            selectedModel.value +
-            ":generateContent?key=" +
-            apiKey.value,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: p }] }],
-            }),
+
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: p }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                premise: {
+                  type: "string",
+                  description: "The 80-word maximum story premise.",
+                },
+              },
+              required: ["premise"],
+            },
           },
-        );
-        var data = await res.json();
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || "API request failed");
+        }
+
         if (data.candidates && data.candidates[0].content.parts) {
-          // Just update the textarea, don't restart yet
-          systemPrompt.value = data.candidates[0].content.parts[0].text.trim();
+          const rawText = data.candidates[0].content.parts[0].text;
+
+          // Parse the enforced JSON response
+          const parsedData = JSON.parse(rawText);
+
+          if (parsedData.premise) {
+            systemPrompt.value = parsedData.premise.trim();
+          }
         }
       } catch (err) {
-        console.error(err);
-        alert("Randomizer failed.");
+        console.error("Error generating rules:", err);
+        alert("Randomizer failed: " + err.message);
       } finally {
         isGeneratingRules.value = false;
       }
