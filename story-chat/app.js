@@ -393,7 +393,7 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      const prompt = "Begin the story. ";
+      const prompt = "The story begins...";
       const userId = await saveToDb("user", prompt);
 
       messages.value.push({
