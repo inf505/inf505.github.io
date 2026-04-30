@@ -81,26 +81,29 @@ createApp({
       }
 
       isGeneratingRules.value = true;
-
-      // 1. Create the controller
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
       try {
+        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
         const p =
-          "Act as a professional writer. Generate a high-concept, atmospheric story premise. Describe a world with one specific mystery and a protagonist (do not name) with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
+          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal. No commentary, no formatting. Return as JSON with a single key 'premise'. STRICT LIMIT: One paragraph, maximum 80 words.";
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
           generationConfig: {
+            temperature: 0.9,
             responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                premise: { type: "string" },
+            // Skip responseSchema if it's Gemma to avoid hangs
+            ...(!isGemma && {
+              responseSchema: {
+                type: "object",
+                properties: {
+                  premise: { type: "string" },
+                },
+                required: ["premise"],
               },
-              required: ["premise"],
-            },
+            }),
           },
         };
 
@@ -113,21 +116,19 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
-          signal: controller.signal, // 2. Pass the signal to fetch
+          signal: controller.signal,
         });
 
-        // 3. Clear the timeout since the request finished
         clearTimeout(timeoutId);
-
         const data = await res.json();
 
-        if (!res.ok)
-          throw new Error(data.error?.message || "API request failed");
+        if (!res.ok) throw new Error(data.error?.message || "API Error");
 
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
+          // Safety Cleaner: Find the first { and last }
+          // Required now because Gemma might add markdown backticks without the Schema engine
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -140,11 +141,9 @@ createApp({
           }
         }
       } catch (err) {
-        // 4. Handle specifically the timeout/abort error
         if (err.name === "AbortError") {
-          console.error("Randomizer timed out.");
           alert(
-            "The request timed out. The AI is taking too long to think—try again!",
+            "Premise generation timed out. Gemma is being stubborn—try clicking it again!",
           );
         } else {
           console.error("Error generating rules:", err);
@@ -152,7 +151,7 @@ createApp({
         }
       } finally {
         isGeneratingRules.value = false;
-        clearTimeout(timeoutId); // Final safety clear
+        clearTimeout(timeoutId);
       }
     };
 
