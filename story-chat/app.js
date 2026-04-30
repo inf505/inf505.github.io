@@ -87,21 +87,26 @@ createApp({
       try {
         const isGemma = selectedModel.value.toLowerCase().includes("gemma");
 
-        // We tell the model to be verbose if it wants, but wrap the final answer clearly
         const systemInstr =
-          "You are a narrative designer. You must provide the final story premise in a valid JSON block using ```json ... ``` tags.";
+          "You are a narrative designer. You only speak in JSON.";
         const userPrompt =
-          'Generate a high-concept story premise mixing two unexpected genres. Describe a world with a mystery and a protagonist with a goal. Limit: 80 words. The final output must be a JSON object: {"premise": "..."}';
+          'Generate a high-concept story premise mixing two unexpected genres. Describe a world with a mystery and a protagonist with a goal. Limit: 80 words. Return as JSON: {"premise": "..."}';
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          // Injected system instruction to help 26b stay focused
           systemInstruction: { parts: [{ text: systemInstr }] },
           generationConfig: {
-            temperature: 0.8,
-            // We REMOVE responseMimeType: "application/json" here.
-            // Why? Because if we force JSON mime type, the model tries to hide its
-            // monologue but fails, leading to the "hang".
-            // By using standard text, it can talk, and we just go find the JSON.
+            temperature: 0.7, // Lower temperature = more stable JSON
+            thinkingConfig: { thinkingLevel: "MINIMAL" },
+            responseMimeType: "application/json",
+            ...(!isGemma && {
+              responseSchema: {
+                type: "object",
+                properties: { premise: { type: "string" } },
+                required: ["premise"],
+              },
+            }),
           },
         };
 
@@ -125,33 +130,27 @@ createApp({
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          // NEW EXTRACTION LOGIC:
-          // Look for a JSON code block first
-          let jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
-          let jsonString = jsonMatch ? jsonMatch[1] : null;
+          // DEBUG: If it still fails, check the console for this log!
+          console.log("PREMISE RAW RESPONSE:", rawText);
 
-          // Fallback: If no code block, try to find the LAST { } pair
-          // (The last one is usually the final output after the monologue)
-          if (!jsonString) {
-            const lastStart = rawText.lastIndexOf("{");
-            const lastEnd = rawText.lastIndexOf("}");
-            if (lastStart !== -1 && lastEnd !== -1 && lastEnd > lastStart) {
-              jsonString = rawText.substring(lastStart, lastEnd + 1);
-            }
+          const start = rawText.indexOf("{");
+          const end = rawText.lastIndexOf("}");
+          if (start !== -1 && end !== -1) {
+            rawText = rawText.substring(start, end + 1);
           }
 
-          if (jsonString) {
-            const parsedData = JSON.parse(jsonString);
-            if (parsedData.premise) {
-              systemPrompt.value = parsedData.premise.trim();
-            }
-          } else {
-            throw new Error("Could not find JSON in response.");
+          const parsedData = JSON.parse(rawText);
+          if (parsedData.premise) {
+            systemPrompt.value = parsedData.premise.trim();
           }
         }
       } catch (err) {
-        console.error("Error generating rules:", err);
-        alert("Randomizer failed. Gemma is being too chatty! Try again.");
+        if (err.name === "AbortError") {
+          alert("Premise generation timed out. Try again!");
+        } else {
+          console.error("Error generating rules:", err);
+          alert("Randomizer failed. Check console for details.");
+        }
       } finally {
         isGeneratingRules.value = false;
         clearTimeout(timeoutId);
