@@ -81,33 +81,26 @@ createApp({
       }
 
       isGeneratingRules.value = true;
+
+      // 1. Create the controller
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
-        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
-
-        const systemInstr =
-          "You are a narrative designer. You only speak in JSON.";
-        const userPrompt =
-          'Generate a high-concept story premise mixing two unexpected genres. Describe a world with a mystery and a protagonist with a goal. Limit: 80 words. Return as JSON: {"premise": "..."}';
+        const p =
+          "Act as a professional writer. Generate a high-concept, atmospheric story premise. Describe a world with one specific mystery and a protagonist (do not name) with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
 
         const payload = {
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          // Injected system instruction to help 26b stay focused
-          systemInstruction: { parts: [{ text: systemInstr }] },
-          thinkingConfig: { thinkingLevel: "MINIMAL" },
+          contents: [{ role: "user", parts: [{ text: p }] }],
           generationConfig: {
-            temperature: 0.7, // Lower temperature = more stable JSON
-
             responseMimeType: "application/json",
-            ...(!isGemma && {
-              responseSchema: {
-                type: "object",
-                properties: { premise: { type: "string" } },
-                required: ["premise"],
+            responseSchema: {
+              type: "object",
+              properties: {
+                premise: { type: "string" },
               },
-            }),
+              required: ["premise"],
+            },
           },
         };
 
@@ -120,20 +113,21 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
-          signal: controller.signal,
+          signal: controller.signal, // 2. Pass the signal to fetch
         });
 
+        // 3. Clear the timeout since the request finished
         clearTimeout(timeoutId);
+
         const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error?.message || "API Error");
+        if (!res.ok)
+          throw new Error(data.error?.message || "API request failed");
 
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          // DEBUG: If it still fails, check the console for this log!
-          console.log("PREMISE RAW RESPONSE:", rawText);
-
+          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -146,15 +140,19 @@ createApp({
           }
         }
       } catch (err) {
+        // 4. Handle specifically the timeout/abort error
         if (err.name === "AbortError") {
-          alert("Premise generation timed out. Try again!");
+          console.error("Randomizer timed out.");
+          alert(
+            "The request timed out. The AI is taking too long to think—try again!",
+          );
         } else {
           console.error("Error generating rules:", err);
-          alert("Randomizer failed. Check console for details.");
+          alert("Randomizer failed: " + err.message);
         }
       } finally {
         isGeneratingRules.value = false;
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId); // Final safety clear
       }
     };
 
