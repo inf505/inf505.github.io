@@ -587,7 +587,7 @@ createApp({
                   },
                 },
               },
-              required: ["thought", "response", "options", "new_facts"],
+              required: ["thought", "response", "options", "facts"],
             },
           },
         };
