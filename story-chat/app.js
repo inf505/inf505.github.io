@@ -8,9 +8,7 @@ Return a single JSON object.
 1. "thought": Internal logic (1 sentence).
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
-4. "facts": An array of objects representing permanent changes to the world.
-   - Each object must have a "text" string and a "category" string (Character, Item, Location, or Lore).
-   - Only include NEW or UPDATED facts.
+4. "facts": An array of objects. Each object MUST have a "text" string and a "category" string (Character, Item, Location, or Lore).
    - If no new facts occurred, return an empty array[].
 `;
 
@@ -557,38 +555,41 @@ createApp({
     CATEGORIES: Character, Item, Location, Lore.
     `.trim();
 
+        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
+
         const payload = {
           contents,
           ...(finalSystemInstruction && {
             systemInstruction: { parts: [{ text: finalSystemInstruction }] },
           }),
           generationConfig: {
-            temperature: 0.9,
+            temperature: 0.8, // Slightly lower for stability
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: { type: "string" },
-                response: { type: "string" },
-                options: {
-                  type: "array",
-                  items: { type: "string" },
-                },
-                facts: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      text: { type: "string" },
-                      category: { type: "string" },
+            // ONLY provide the strict schema if it's NOT Gemma
+            // Gemma will follow the prompt instructions for JSON instead
+            ...(!isGemma && {
+              responseSchema: {
+                type: "object",
+                properties: {
+                  thought: { type: "string" },
+                  response: { type: "string" },
+                  options: { type: "array", items: { type: "string" } },
+                  facts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: { type: "string" },
+                        category: { type: "string" },
+                      },
+                      required: ["text", "category"],
                     },
-                    required: ["text", "category"],
                   },
                 },
+                required: ["thought", "response", "options", "facts"],
               },
-              required: ["thought", "response", "options", "facts"],
-            },
+            }),
           },
         };
 
