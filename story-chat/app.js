@@ -89,7 +89,7 @@ createApp({
 
       try {
         const p =
-          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist (do not name) with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
+          "Act as a professional writer. Generate a high-concept, atmospheric story premise. Describe a world with one specific mystery and a protagonist (do not name) with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
