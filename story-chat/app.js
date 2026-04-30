@@ -89,15 +89,13 @@ createApp({
         var res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
             selectedModel.value +
-            ":generateContent",
+            ":generateContent?key=" +
+            apiKey.value,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey.value,
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              contents: [{ role: "user", parts: [{ text: p }] }],
             }),
           },
         );
