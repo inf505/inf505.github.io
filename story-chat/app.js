@@ -525,27 +525,37 @@ createApp({
       scrollToBottom();
 
       try {
-        const contents = messages.value.map((msg) => {
-          let role = msg.role === "user" ? "user" : "model";
-          return {
-            role: role,
-            parts: [{ text: msg.text }],
-          };
-        });
-
         const userTone = systemPrompt.value.trim();
+
         const allFacts = await db.facts.toArray();
         const factsSummary = allFacts
           .map((f) => `- [${f.category}] ${f.text}`)
           .join("\n");
 
+        // 1. GEMMA TRICK: Inject context directly into the first User message
+        const contents = messages.value.map((msg, index) => {
+          let role = msg.role === "user" ? "user" : "model";
+          let text = msg.text;
+
+          if (index === 0) {
+            text = `[STORY GRIMOIRE]
+    ${factsSummary || "No facts established yet."}[END GRIMOIRE]
+
+    USER ACTION: ${text}`;
+          }
+
+          return {
+            role: role,
+            parts: [{ text: text }],
+          };
+        });
+
+        // 2. Simplified System Instruction
         const finalSystemInstruction = `
-            ${CORE_SYSTEM_PROMPT}
-            ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-            CATEGORIES: Character (people/creatures), Item (objects/weapons), Location (places), Lore (history/world rules).
-            KNOWN STORY FACTS:
-            ${factsSummary || "No facts established yet."}
-            `.trim();
+    ${CORE_SYSTEM_PROMPT}
+    ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
+    CATEGORIES: Character, Item, Location, Lore.
+    `.trim();
 
         const payload = {
           contents,
@@ -571,7 +581,7 @@ createApp({
                     type: "object",
                     properties: {
                       text: { type: "string" },
-                      category: { type: "string" }, // Removed Enum
+                      category: { type: "string" },
                     },
                     required: ["text", "category"],
                   },
@@ -590,7 +600,8 @@ createApp({
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 245000); // Back to 45s
+          // 3. FIXED TIMEOUT: 45000 ms = 45 seconds
+          const timeoutId = setTimeout(() => controller.abort(), 45000);
 
           try {
             const response = await fetch(url, {
@@ -626,7 +637,7 @@ createApp({
             break;
           } catch (error) {
             clearTimeout(timeoutId);
-            throw error; // Pass to outer catch
+            throw error;
           }
         }
 
@@ -670,7 +681,6 @@ createApp({
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
-            // Handle the new facts array
             if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
               for (const f of parsed.new_facts) {
                 if (f.text && f.category) {
@@ -705,7 +715,6 @@ createApp({
           isGeneratingAudio: false,
         });
       } catch (error) {
-        // MATCHING YOUR WORKING APP'S ERROR HANDLING
         let errorMsg = `❌ Error: ${error.message}`;
         if (error.name === "AbortError") {
           errorMsg =
