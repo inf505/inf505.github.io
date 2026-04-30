@@ -564,8 +564,6 @@ createApp({
                 options: {
                   type: "array",
                   items: { type: "string" },
-                  description:
-                    "An array of exactly 3 action choices for the user.",
                 },
                 new_facts: {
                   type: "array",
@@ -573,15 +571,10 @@ createApp({
                     type: "object",
                     properties: {
                       text: { type: "string" },
-                      category: {
-                        type: "string",
-                        enum: ["Character", "Item", "Location", "Lore"],
-                      },
+                      category: { type: "string" }, // Removed Enum
                     },
                     required: ["text", "category"],
                   },
-                  description:
-                    "Key story developments. Return an empty array [] if none.",
                 },
               },
               required: ["thought", "response", "options", "new_facts"],
