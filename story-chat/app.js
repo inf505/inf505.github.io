@@ -594,6 +594,8 @@ createApp({
           const timeoutId = setTimeout(() => controller.abort(), 240000);
 
           try {
+            console.log("SENDING PAYLOAD:", JSON.stringify(payload, null, 2));
+
             const response = await fetch(url, {
               method: "POST",
               headers: {
@@ -621,6 +623,9 @@ createApp({
             }
 
             data = await response.json();
+
+            console.log("RAW API DATA:", data);
+
             break;
           } catch (error) {
             clearTimeout(timeoutId);
@@ -635,6 +640,8 @@ createApp({
 
         if (data.candidates && data.candidates[0].content.parts) {
           for (const part of data.candidates[0].content.parts) {
+            console.log("PART TEXT RECEIVED:", part.text);
+
             if (part.thought) {
               thoughtText += (part.text || "") + "\n\n";
             } else if (part.text) {
