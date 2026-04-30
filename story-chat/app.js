@@ -8,10 +8,10 @@ Return a single JSON object.
 1. "thought": Internal logic (1 sentence).
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
-4. "new_facts": An array of objects representing permanent changes to the world.
-   - Format: {"text": "string", "category": "Character|Item|Location|Lore"}
+4. "facts": An array of objects representing permanent changes to the world.
+   - Each object must have a "text" string and a "category" string (Character, Item, Location, or Lore).
    - Only include NEW or UPDATED facts.
-   - If no new facts occurred, return an empty array [].
+   - If no new facts occurred, return an empty array[].
 `;
 
 const db = new Dexie("StoryWriterDB");
@@ -575,7 +575,7 @@ createApp({
                   type: "array",
                   items: { type: "string" },
                 },
-                new_facts: {
+                facts: {
                   type: "array",
                   items: {
                     type: "object",
@@ -681,8 +681,8 @@ createApp({
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
-            if (parsed.new_facts && Array.isArray(parsed.new_facts)) {
-              for (const f of parsed.new_facts) {
+            if (parsed.facts && Array.isArray(parsed.facts)) {
+              for (const f of parsed.facts) {
                 if (f.text && f.category) {
                   await db.facts.add({
                     text: f.text,
