@@ -5,11 +5,12 @@ TASK: Work with the user to write an engaging story.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Internal logic (1-2 sentences).
+1. "thought": Internal logic (1 sentence).
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
-4. "new_facts": An array of strings representing permanent changes to the world state, character status, or discovered items (e.g., ["The protagonist found a silver key", "Met Elara, a rogue archer", "Current location: The Whispering Woods"]).
-   - Only include NEW facts or UPDATED facts in this array.
+4. "new_facts": An array of objects representing permanent changes to the world.
+   - Format: {"text": "string", "category": "Character|Item|Location|Lore"}
+   - Only include NEW or UPDATED facts.
    - If no new facts occurred, return an empty array [].
 `;
 
