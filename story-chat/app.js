@@ -87,8 +87,10 @@ createApp({
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
-        const p =
-          "Act as a professional writer. Generate a high-concept, atmospheric story premise. Describe a world with one specific mystery and a protagonist (do not name) with a clear goal. No commentary, no formatting, keep your story design simple. STRICT LIMIT: One paragraph, maximum 80 words. No fluff.";
+        const p = `Act as a professional high-concept screenwriter.
+        In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
+        Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
+        STRICT LIMIT: One paragraph, maximum 80 words.`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
@@ -97,9 +99,14 @@ createApp({
             responseSchema: {
               type: "object",
               properties: {
+                thought: {
+                  type: "string",
+                  description:
+                    "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
+                },
                 premise: { type: "string" },
               },
-              required: ["premise"],
+              required: ["thought", "premise"],
             },
           },
         };
