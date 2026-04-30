@@ -85,7 +85,7 @@ createApp({
       isGeneratingRules.value = true;
       try {
         var p =
-          "Generate a creative story premise. Include a world, character, and tone. One paragraph, max 40 words. No labels.";
+          "Act as a professional narrative designer. Generate a high-concept, atmospheric story premise mixing two unexpected genres. Describe a world with one specific mystery and a protagonist with a clear goal and a secret.";
         var res = await fetch(
           "https://generativelanguage.googleapis.com/v1beta/models/" +
             selectedModel.value +
