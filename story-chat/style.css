@@ -251,18 +251,20 @@ button.small-btn {
 /* Settings Panel & Inputs */
 .settings-panel {
     background: #252525;
-    padding: 4rem 1rem 1rem 1rem; /* Pad top to clear floating header */
+    padding: 4rem 1rem 1rem 1rem;
     border-bottom: 1px solid #333;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    position: absolute; /* Cover the chat area */
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 50; /* Below floating buttons (100) */
+    z-index: 50;
+    overflow: hidden;
     overflow-y: auto;
+    max-height: 85vh;
 }
 
 .settings-group {
@@ -311,15 +313,17 @@ button.small-btn {
     margin-bottom: 1.5rem;
     gap: 0.5rem;
     overflow-x: auto;
+    overflow-y: auto;
     white-space: nowrap;
     scrollbar-width: none;
-
+    flex-grow: 1;
     position: sticky;
     top: 0;
     z-index: 10;
     background-color: #252525;
     padding-top: 10px;
     padding-bottom: 10px;
+    padding-right: 8px;
 }
 
 .tabs-header::-webkit-scrollbar {
