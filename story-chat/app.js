@@ -10,7 +10,7 @@ PERSPECTIVE:
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Internal logic (1 sentence).
+1. "thought": Internal logic. Briefly check the STORY GRIMOIRE for existing facts and ensure this update doesn't contradict established lore.
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
 4. "facts": An array of objects. Each object MUST have a "text" string and a "category" string (Character, Item, Location, or Lore).
@@ -595,7 +595,7 @@ createApp({
           // Use the static core prompt
           systemInstruction: { parts: [{ text: CORE_SYSTEM_PROMPT }] },
           generationConfig: {
-            temperature: 0.8,
+            temperature: 0.9,
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
             // Only include responseSchema if NOT a Gemma model
