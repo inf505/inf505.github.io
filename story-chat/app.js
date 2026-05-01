@@ -447,15 +447,21 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      const prompt = "The story begins...";
-      const userId = await saveToDb("user", prompt);
+      // Use the Premise as the first message.
+      // If it's empty, use a default fallback.
+      const firstMessage =
+        systemPrompt.value.trim() ||
+        "The story begins in a mysterious world...";
+
+      const userId = await saveToDb("user", firstMessage);
 
       messages.value.push({
         id: userId,
         role: "user",
-        text: prompt,
+        text: firstMessage,
         isHidden: false,
       });
+
       await triggerAIResponse();
     };
 
@@ -559,8 +565,6 @@ createApp({
       scrollToBottom();
 
       try {
-        const userTone = systemPrompt.value.trim();
-
         const allFacts = await db.facts.toArray();
         const factsSummary = allFacts
           .map((f) => `- [${f.category}] ${f.text}`)
@@ -575,7 +579,7 @@ createApp({
             text = `[STORY GRIMOIRE]
     ${factsSummary || "No facts established yet."}[END GRIMOIRE]
 
-    USER ACTION: ${text}`;
+    STORY PREMISE: ${text}`;
           }
 
           return {
@@ -584,20 +588,9 @@ createApp({
           };
         });
 
-        // 2. Simplified System Instruction
-        const finalSystemInstruction = `
-    ${CORE_SYSTEM_PROMPT}
-    ${userTone ? "\nUSER STYLE SETTINGS: " + userTone : ""}
-    CATEGORIES: Character, Item, Location, Lore.
-    `.trim();
-
-        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
-
         const payload = {
           contents,
-          ...(finalSystemInstruction && {
-            systemInstruction: { parts: [{ text: finalSystemInstruction }] },
-          }),
+          systemInstruction: { parts: [{ text: CORE_SYSTEM_PROMPT }] },
           generationConfig: {
             temperature: 0.9, // Slightly lower for stability
             maxOutputTokens: 2048,
