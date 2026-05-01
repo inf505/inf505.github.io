@@ -21,9 +21,8 @@ Return a single JSON object.
 
 const db = new Dexie("StoryWriterDB");
 db.version(2).stores({
-  // Incremented version to 2
   chats: "++id, role, text, thought, timestamp",
-  facts: "++id, text, category, timestamp", // Added facts table
+  facts: "++id, text, category, timestamp",
 });
 
 const formatRelativeTime = (timestamp) => {
