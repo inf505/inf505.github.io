@@ -602,3 +602,19 @@ button.small-btn {
     background: #4a148c;
     color: #e1bee7;
 }
+.manual-fact-entry textarea {
+    background: #1a1a1a;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px;
+    resize: none;
+}
+
+.manual-fact-entry select {
+    background: #1a1a1a;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 0 5px;
+}

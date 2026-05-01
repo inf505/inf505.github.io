@@ -62,7 +62,8 @@ createApp({
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
-
+    const newFactText = ref("");
+    const newFactCategory = ref("Lore");
     const facts = ref([]);
 
     const loadFacts = async () => {
@@ -78,6 +79,24 @@ createApp({
     const deleteFact = async (id) => {
       await db.facts.delete(id);
       await loadFacts();
+    };
+
+    const addManualFact = async () => {
+      if (!newFactText.value.trim()) return;
+
+      try {
+        await db.facts.add({
+          text: newFactText.value.trim(),
+          category: newFactCategory.value,
+          timestamp: Date.now(),
+        });
+
+        // Reset inputs and refresh list
+        newFactText.value = "";
+        await loadFacts();
+      } catch (err) {
+        console.error("Error adding manual fact:", err);
+      }
     };
 
     const randomizeRules = async () => {
@@ -803,6 +822,9 @@ createApp({
       facts,
       loadFacts,
       deleteFact,
+      newFactText,
+      newFactCategory,
+      addManualFact,
       isOptimizingFacts,
       optimizeFacts,
       isGeneratingRules,

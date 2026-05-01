@@ -133,6 +133,54 @@
                         <div class="settings-group">
                             <label>Story Grimoire</label>
                             <small>Permanent memory for the AI.</small>
+
+                            <!-- NEW: Manual Fact Entry Form -->
+                            <div
+                                class="manual-fact-entry"
+                                style="
+                                    margin-top: 15px;
+                                    background: rgba(255, 255, 255, 0.05);
+                                    padding: 10px;
+                                    border-radius: 8px;
+                                    border: 1px solid rgba(255, 255, 255, 0.1);
+                                "
+                            >
+                                <textarea
+                                    v-model="newFactText"
+                                    placeholder="Add a new fact manually..."
+                                    rows="2"
+                                    style="
+                                        width: 100%;
+                                        margin-bottom: 8px;
+                                        font-size: 0.9rem;
+                                    "
+                                ></textarea>
+
+                                <div style="display: flex; gap: 8px">
+                                    <select
+                                        v-model="newFactCategory"
+                                        style="
+                                            flex: 1;
+                                            font-size: 0.8rem;
+                                            height: 32px;
+                                        "
+                                    >
+                                        <option>Character</option>
+                                        <option>Item</option>
+                                        <option>Location</option>
+                                        <option>Lore</option>
+                                    </select>
+                                    <button
+                                        class="small-btn"
+                                        @click="addManualFact"
+                                        :disabled="!newFactText.trim()"
+                                        style="flex: 1; height: 32px"
+                                    >
+                                        Add Fact
+                                    </button>
+                                </div>
+                            </div>
+
                             <button
                                 class="small-btn apply-btn"
                                 @click="optimizeFacts"
