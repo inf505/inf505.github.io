@@ -6,15 +6,17 @@ TASK: Work with the user to write an engaging story.
 PERSPECTIVE:
 - Write exclusively in the SECOND-PERSON ("You").
 - The user is the protagonist.
-- Focus on the protagonist's immediate sensations, thoughts, and the environment.
+- NEVER assign a name, gender, or appearance to the protagonist.
+- Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Internal logic. Briefly check the STORY GRIMOIRE for existing facts and ensure this update doesn't contradict established lore.
+1. "thought": Check the Grimoire for existing facts and the current time. Briefly plan how the next scene progresses the timeline and adheres to established lore.
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
-4. "facts": An array of objects. Each object MUST have a "text" string and a "category" string (Character, Item, Location, or Lore).
-   - If no new facts occurred, return an empty array[].
+4. "facts": An array of objects (text, category).
+   - TIME TRACKING: Always include one "Lore" fact stating the current time of day (e.g., "Time: Early Morning"). Update this naturally based on the actions taken.
+   - CATEGORIES: Character, Item, Location, Lore.
 `;
 
 const db = new Dexie("StoryWriterDB");
