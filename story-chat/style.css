@@ -312,7 +312,14 @@ button.small-btn {
     gap: 0.5rem;
     overflow-x: auto;
     white-space: nowrap;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #252525;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .tabs-header::-webkit-scrollbar {
