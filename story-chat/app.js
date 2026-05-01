@@ -194,14 +194,21 @@ createApp({
       isOptimizingFacts.value = true;
 
       try {
-        const fData = facts.value
+        const sortedFacts = [...facts.value].sort(
+          (a, b) => b.timestamp - a.timestamp,
+        );
+        const fData = sortedFacts
           .map((f) => `[${f.category}] ${f.text}`)
           .join(" | ");
 
-        const prompt = `Merge duplicate facts and resolve contradictions. Keep facts concise.
-        Preserve categories (Character, Item, Location, Lore).
-        Return a JSON object with a "merged_facts" array of objects (text and category).
-        DATA TO PROCESS: ${fData}`;
+        const prompt = `Act as a data-cleanup assistant.
+  TASK: Clean the following list of story facts.
+  1. Merge duplicate information.
+  2. RESOLVE CONTRADICTIONS: If facts conflict (like multiple "Time" entries), ALWAYS keep the most recent information and discard the old.
+  3. Keep text concise and preserve categories.
+  4. Ensure NO information is lost unless it is a duplicate or an old contradiction.
+
+  DATA (Newest to Oldest): ${fData}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
 
