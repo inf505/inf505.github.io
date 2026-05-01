@@ -599,33 +599,29 @@ createApp({
             systemInstruction: { parts: [{ text: finalSystemInstruction }] },
           }),
           generationConfig: {
-            temperature: 0.8, // Slightly lower for stability
+            temperature: 0.9, // Slightly lower for stability
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
-            // ONLY provide the strict schema if it's NOT Gemma
-            // Gemma will follow the prompt instructions for JSON instead
-            ...(!isGemma && {
-              responseSchema: {
-                type: "object",
-                properties: {
-                  thought: { type: "string" },
-                  response: { type: "string" },
-                  options: { type: "array", items: { type: "string" } },
-                  facts: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        text: { type: "string" },
-                        category: { type: "string" },
-                      },
-                      required: ["text", "category"],
+            responseSchema: {
+              type: "object",
+              properties: {
+                thought: { type: "string" },
+                response: { type: "string" },
+                options: { type: "array", items: { type: "string" } },
+                facts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: { type: "string" },
+                      category: { type: "string" },
                     },
+                    required: ["text", "category"],
                   },
                 },
-                required: ["thought", "response", "options", "facts"],
               },
-            }),
+              required: ["thought", "response", "options", "facts"],
+            },
           },
         };
 
