@@ -625,3 +625,9 @@ button.small-btn {
     border-radius: 4px;
     padding: 0 5px;
 }
+.tab-content {
+    /* Set max height to the screen height MINUS room for top buttons and tabs */
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-right: 5px; /* Keeps the scrollbar from hiding text */
+}
