@@ -194,21 +194,36 @@ createApp({
       isOptimizingFacts.value = true;
 
       try {
-        const sortedFacts = [...facts.value].sort(
-          (a, b) => b.timestamp - a.timestamp,
+        // 1. EXTRACTION: Find the single most recent "Time" fact and save it
+        // This ensures it NEVER gets lost in the AI shuffle.
+        const timeFacts = facts.value
+          .filter((f) => f.text.toLowerCase().startsWith("time:"))
+          .sort((a, b) => b.timestamp - a.timestamp);
+
+        const latestTimeFact = timeFacts[0];
+
+        // 2. FILTERING: Send everything ELSE to the AI for merging
+        const otherFacts = facts.value.filter(
+          (f) => !f.text.toLowerCase().startsWith("time:"),
         );
-        const fData = sortedFacts
+        const fData = otherFacts
           .map((f) => `[${f.category}] ${f.text}`)
           .join(" | ");
 
-        const prompt = `Act as a data-cleanup assistant.
-  TASK: Clean the following list of story facts.
-  1. Merge duplicate information.
-  2. RESOLVE CONTRADICTIONS: If facts conflict (like multiple "Time" entries), ALWAYS keep the most recent information and discard the old.
-  3. Keep text concise and preserve categories.
-  4. Ensure NO information is lost unless it is a duplicate or an old contradiction.
+        // If there's nothing else to merge but time, just skip the AI part
+        if (otherFacts.length < 2 && timeFacts.length > 1) {
+          await db.facts.clear();
+          if (latestTimeFact) await db.facts.add(latestTimeFact);
+          for (const f of otherFacts) await db.facts.add(f);
+          await loadFacts();
+          isOptimizingFacts.value = false;
+          return;
+        }
 
-  DATA (Newest to Oldest): ${fData}`;
+        const prompt = `Merge duplicate facts and resolve contradictions.
+        Preserve categories (Character, Item, Location, Lore).
+        Keep text concise. Do not invent new facts.
+        DATA: ${fData}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
 
@@ -218,7 +233,7 @@ createApp({
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.1,
+              temperature: 0.1, // Keep it robotic
               responseMimeType: "application/json",
               responseSchema: {
                 type: "object",
@@ -242,29 +257,28 @@ createApp({
         });
 
         const data = await res.json();
-
         if (!res.ok)
           throw new Error(data.error?.message || "Optimization failed");
 
-        // Safety check for candidates
-        if (
-          data.candidates &&
-          data.candidates[0].content &&
-          data.candidates[0].content.parts
-        ) {
+        if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
+          const start = rawText.indexOf("{"),
+            end = rawText.lastIndexOf("}");
+          const parsed = JSON.parse(rawText.substring(start, end + 1));
 
-          // Clean up potential markdown backticks
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
-            rawText = rawText.substring(start, end + 1);
-          }
-
-          const parsed = JSON.parse(rawText);
           if (parsed.merged_facts) {
-            // Clear and rebuild the facts table
             await db.facts.clear();
+
+            // 3. RE-INSERTION: Add the "Time" fact back first
+            if (latestTimeFact) {
+              await db.facts.add({
+                text: latestTimeFact.text,
+                category: latestTimeFact.category,
+                timestamp: Date.now(),
+              });
+            }
+
+            // Then add the AI-merged facts
             for (const mf of parsed.merged_facts) {
               await db.facts.add({
                 text: mf.text,
@@ -274,12 +288,9 @@ createApp({
             }
             await loadFacts();
           }
-        } else {
-          throw new Error("AI returned an empty response during optimization.");
         }
       } catch (err) {
         console.error("Optimization Error:", err);
-        alert("Fact Optimization failed: " + err.message);
       } finally {
         isOptimizingFacts.value = false;
       }
