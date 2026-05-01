@@ -193,7 +193,14 @@
                             </button>
                         </div>
 
-                        <div class="facts-container">
+                        <div
+                            class="facts-container"
+                            style="
+                                max-height: 40vh;
+                                overflow-y: auto;
+                                padding-right: 5px;
+                            "
+                        >
                             <div
                                 v-for="fact in facts"
                                 :key="fact.id"
