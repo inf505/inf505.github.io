@@ -192,78 +192,86 @@ createApp({
     const optimizeFacts = async () => {
       if (!apiKey.value || facts.value.length < 2) return;
       isOptimizingFacts.value = true;
+
       try {
-        var fData = "";
-        for (var i = 0; i < facts.value.length; i++) {
-          fData += " [FACT: " + facts.value[i].text + "] ";
-        }
-        var prompt =
-          "Merge duplicate facts. Keep concise. Preserve categories (Character, Item, Location, Lore). Return JSON merged_facts array of objects with text and category. DATA: " +
-          fData;
-        var res = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/" +
-            selectedModel.value +
-            ":generateContent?key=" +
-            apiKey.value,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: "object",
-                  properties: {
-                    merged_facts: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          text: { type: "string" },
-                          category: { type: "string" },
-                        },
-                        required: ["text", "category"],
+        const fData = facts.value
+          .map((f) => `[${f.category}] ${f.text}`)
+          .join(" | ");
+
+        const prompt = `Merge duplicate facts and resolve contradictions. Keep facts concise.
+        Preserve categories (Character, Item, Location, Lore).
+        Return a JSON object with a "merged_facts" array of objects (text and category).
+        DATA TO PROCESS: ${fData}`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "object",
+                properties: {
+                  merged_facts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: { type: "string" },
+                        category: { type: "string" },
                       },
+                      required: ["text", "category"],
                     },
                   },
-                  required: ["merged_facts"],
                 },
+                required: ["merged_facts"],
               },
-            }),
-          },
-        );
+            },
+          }),
+        });
 
-        var data = await res.json();
-        var raw = data.candidates[0].content.parts[0].text;
-        var s = raw.indexOf("{"),
-          e = raw.lastIndexOf("}");
-        if (s !== -1 && e !== -1) {
-          var p = JSON.parse(raw.substring(s, e + 1));
-          if (p.merged_facts) {
+        const data = await res.json();
+
+        if (!res.ok)
+          throw new Error(data.error?.message || "Optimization failed");
+
+        // Safety check for candidates
+        if (
+          data.candidates &&
+          data.candidates[0].content &&
+          data.candidates[0].content.parts
+        ) {
+          let rawText = data.candidates[0].content.parts[0].text;
+
+          // Clean up potential markdown backticks
+          const start = rawText.indexOf("{");
+          const end = rawText.lastIndexOf("}");
+          if (start !== -1 && end !== -1) {
+            rawText = rawText.substring(start, end + 1);
+          }
+
+          const parsed = JSON.parse(rawText);
+          if (parsed.merged_facts) {
+            // Clear and rebuild the facts table
             await db.facts.clear();
-
-            // for (var j = 0; j < p.merged_facts.length; j++) {
-            //   await db.facts.add({
-            //     text: p.merged_facts[j],
-            //     timestamp: Date.now(),
-            //   });
-            // }
-
-            for (var j = 0; j < p.merged_facts.length; j++) {
-              var mf = p.merged_facts[j];
+            for (const mf of parsed.merged_facts) {
               await db.facts.add({
                 text: mf.text,
                 category: mf.category,
                 timestamp: Date.now(),
               });
             }
-
             await loadFacts();
           }
+        } else {
+          throw new Error("AI returned an empty response during optimization.");
         }
       } catch (err) {
-        console.error(err);
+        console.error("Optimization Error:", err);
+        alert("Fact Optimization failed: " + err.message);
       } finally {
         isOptimizingFacts.value = false;
       }
