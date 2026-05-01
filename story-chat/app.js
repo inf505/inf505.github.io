@@ -588,33 +588,39 @@ createApp({
           };
         });
 
+        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
+
         const payload = {
           contents,
+          // Use the static core prompt
           systemInstruction: { parts: [{ text: CORE_SYSTEM_PROMPT }] },
           generationConfig: {
-            temperature: 0.9, // Slightly lower for stability
+            temperature: 0.8,
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: { type: "string" },
-                response: { type: "string" },
-                options: { type: "array", items: { type: "string" } },
-                facts: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      text: { type: "string" },
-                      category: { type: "string" },
+            // Only include responseSchema if NOT a Gemma model
+            ...(!isGemma && {
+              responseSchema: {
+                type: "object",
+                properties: {
+                  thought: { type: "string" },
+                  response: { type: "string" },
+                  options: { type: "array", items: { type: "string" } },
+                  facts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: { type: "string" },
+                        category: { type: "string" },
+                      },
+                      required: ["text", "category"],
                     },
-                    required: ["text", "category"],
                   },
                 },
+                required: ["thought", "response", "options", "facts"],
               },
-              required: ["thought", "response", "options", "facts"],
-            },
+            }),
           },
         };
 
