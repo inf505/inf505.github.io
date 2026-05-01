@@ -3,6 +3,12 @@ const { createApp, ref, onMounted, nextTick, watch } = Vue;
 const CORE_SYSTEM_PROMPT = `You are a creative and collaborative storytelling partner.
 TASK: Work with the user to write an engaging story.
 
+PERSPECTIVE:
+- Write exclusively in the SECOND-PERSON ("You").
+- The user is the protagonist.
+- NEVER assign a name, gender, or specific physical appearance to the protagonist.
+- Focus on the protagonist's immediate sensations, thoughts, and the environment.
+
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
 1. "thought": Internal logic (1 sentence).
@@ -90,6 +96,7 @@ createApp({
         const p = `Act as a professional high-concept screenwriter.
         In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
         Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
+- Do not name the protagonist; describe them only by their current situation or role (e.g., 'You are a survivor', 'You are the last keeper').
         STRICT LIMIT: One paragraph, maximum 80 words.`;
 
         const payload = {
