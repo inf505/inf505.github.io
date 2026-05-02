@@ -305,10 +305,7 @@ createApp({
         return;
       }
 
-      // Filter candidates for summarization:
-      // 1. i !== 0: Protect the first message (Premise/Rules)
-      // 2. m.role !== 'summary': Ignore previous summaries
-      // 3. We exclude the last 2 messages to prevent the active turn/options from disappearing
+      // Filter candidates for summarization
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
@@ -341,20 +338,34 @@ createApp({
           })
           .join("\n\n");
 
-        const prompt = `You are an expert editor. Summarize the following chronological excerpt of a story concisely into a few flowing paragraphs.
+        const prompt = `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.
+            Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
+            Write the summary strictly in the SECOND-PERSON ("You").
 
-                CRITICAL RULES:
-                1. Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
-                2. Write the summary strictly in the SECOND-PERSON ("You").
-                3. DO NOT output your thinking process, constraints, or segment breakdowns.
-                4. DO NOT use lists or bullet points. Output ONLY the final narrative story text.
-
-                STORY EXCERPT:
-                ${transcript}`;
+            STORY EXCERPT:
+            ${transcript}`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3 }, // Keep it strictly factual based on text
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                thought_process: {
+                  type: "string",
+                  description: "Your internal segment breakdown and planning.",
+                },
+                summary: {
+                  type: "string",
+                  description:
+                    "The final, polished narrative summary paragraph. No lists. Written in second-person.",
+                },
+              },
+              required: ["thought_process", "summary"],
+            },
+          },
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
@@ -373,16 +384,25 @@ createApp({
           throw new Error(data.error?.message || "Summarization API failed");
 
         let summaryText = "";
+
         if (data.candidates && data.candidates[0].content.parts) {
-          summaryText = data.candidates[0].content.parts[0].text;
-          summaryText = summaryText
-            .replace(/<think>([\s\S]*?)<\/think>/gi, "")
-            .trim();
+          let rawText = data.candidates[0].content.parts[0].text;
+
+          // Clean up markdown block if model wraps the JSON
+          const start = rawText.indexOf("{");
+          const end = rawText.lastIndexOf("}");
+          if (start !== -1 && end !== -1) {
+            rawText = rawText.substring(start, end + 1);
+          }
+
+          const parsed = JSON.parse(rawText);
+          if (parsed.summary) {
+            summaryText = parsed.summary.trim();
+          }
         }
 
         if (!summaryText) throw new Error("Received empty summary from AI.");
 
-        // Grab the timestamp of the last message in the chunk to position the summary chronologically
         const lastMsgTimestamp =
           msgsToSummarize[msgsToSummarize.length - 1].timestamp;
 
@@ -391,11 +411,11 @@ createApp({
           await db.chats.delete(m.id);
         }
 
-        // Add the new Summary message to DB (timestamp + 1ms places it perfectly after the gap)
+        // Add the new Summary message to DB
         await db.chats.add({
           role: "summary",
           text: summaryText,
-          thought: "",
+          thought: "", // We throw away the AI's thought_process field here
           options: null,
           timestamp: lastMsgTimestamp + 1,
         });
