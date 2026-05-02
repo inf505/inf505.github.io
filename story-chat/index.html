@@ -120,6 +120,61 @@
                             ></textarea>
                         </div>
 
+                        <div
+                            class="settings-group"
+                            style="
+                                margin-top: 20px;
+                                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                                padding-top: 15px;
+                            "
+                        >
+                            <label style="color: #ff9d00"
+                                >Memory & Data Management</label
+                            >
+
+                            <div
+                                style="
+                                    font-size: 0.85rem;
+                                    margin-bottom: 10px;
+                                    color: #aaa;
+                                    background: rgba(0, 0, 0, 0.2);
+                                    padding: 8px;
+                                    border-radius: 6px;
+                                "
+                            >
+                                <strong>Database Size:</strong> {{ totalSizeKb
+                                }} KB<br />
+                                <strong>Last Token Usage:</strong> {{
+                                totalTokens }} tokens
+                            </div>
+
+                            <button
+                                class="small-btn"
+                                @click="summarizeStory"
+                                :disabled="isSummarizing"
+                                style="
+                                    width: 100%;
+                                    border: 1px solid #ff9d00;
+                                    color: #ff9d00;
+                                    background: rgba(255, 157, 0, 0.1);
+                                "
+                            >
+                                {{ isSummarizing ? "🗜️ Compressing Batch..." :
+                                "🗜️ Summarize Oldest 10 Messages" }}
+                            </button>
+                            <small
+                                style="
+                                    display: block;
+                                    margin-top: 6px;
+                                    text-align: center;
+                                    color: #888;
+                                "
+                            >
+                                Compresses the oldest 10 unsummarized messages
+                                into a single Chapter Summary block.
+                            </small>
+                        </div>
+
                         <button
                             class="small-btn apply-btn"
                             @click="saveAllSettings"
@@ -276,6 +331,23 @@
                         :class="['message', msg.role]"
                     >
                         <div class="bubble">
+                            <!-- NEW: Summary Badge -->
+                            <div
+                                v-if="msg.role === 'summary'"
+                                style="
+                                    font-size: 0.75rem;
+                                    color: #ff9d00;
+                                    text-transform: uppercase;
+                                    font-weight: bold;
+                                    margin-bottom: 8px;
+                                    border-bottom: 1px solid
+                                        rgba(255, 157, 0, 0.3);
+                                    padding-bottom: 4px;
+                                "
+                            >
+                                📜 Chapter Summary
+                            </div>
+
                             <!-- Action Buttons Container -->
                             <div class="msg-actions">
                                 <!-- Speaker / Read Aloud Button -->

@@ -49,6 +49,7 @@ createApp({
     const randomizerModel = ref("gemma-4-31b-it");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
+    const isSummarizing = ref(false);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
     const messages = ref([]);
@@ -297,6 +298,116 @@ createApp({
     };
 
     const renderMarkdown = (text) => marked.parse(text);
+
+    const summarizeStory = async () => {
+      if (!apiKey.value) {
+        alert("Please configure your API Key first.");
+        return;
+      }
+
+      // Filter candidates for summarization:
+      // 1. i !== 0: Protect the first message (Premise/Rules)
+      // 2. m.role !== 'summary': Ignore previous summaries
+      // 3. We exclude the last 2 messages to prevent the active turn/options from disappearing
+      const latestIds = messages.value.slice(-2).map((m) => m.id);
+      const candidates = messages.value.filter(
+        (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
+      );
+
+      if (candidates.length < 10) {
+        alert(
+          `Not enough unsummarized messages. You currently have ${candidates.length}/10 ready for compression. Play a bit more!`,
+        );
+        return;
+      }
+
+      const warnMsg =
+        "This will compress the oldest 10 active messages into a permanent Chapter Summary. Continue?";
+      if (!confirm(warnMsg)) return;
+
+      isSummarizing.value = true;
+
+      try {
+        const msgsToSummarize = candidates.slice(0, 10);
+
+        // Build Transcript
+        const transcript = msgsToSummarize
+          .map((m) => {
+            let text = m.text;
+            if (m.role === "model" && m.options && m.options.length > 0) {
+              text += `\n(Options chosen: ${m.options.join(", ")})`;
+            }
+            return `${m.role === "user" ? "USER" : "STORYTELLER"}: ${text}`;
+          })
+          .join("\n\n");
+
+        const prompt = `You are an expert editor. Summarize the following chronological excerpt of a story concisely.
+            Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
+            Do not include game mechanics or raw options.
+            Write the summary strictly in the SECOND-PERSON ("You").
+
+            STORY EXCERPT:
+            ${transcript}`;
+
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3 }, // Keep it strictly factual based on text
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey.value,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!res.ok)
+          throw new Error(data.error?.message || "Summarization API failed");
+
+        let summaryText = "";
+        if (data.candidates && data.candidates[0].content.parts) {
+          summaryText = data.candidates[0].content.parts[0].text;
+          summaryText = summaryText
+            .replace(/<think>([\s\S]*?)<\/think>/gi, "")
+            .trim();
+        }
+
+        if (!summaryText) throw new Error("Received empty summary from AI.");
+
+        // Grab the timestamp of the last message in the chunk to position the summary chronologically
+        const lastMsgTimestamp =
+          msgsToSummarize[msgsToSummarize.length - 1].timestamp;
+
+        // Delete the 10 original messages from DB
+        for (const m of msgsToSummarize) {
+          await db.chats.delete(m.id);
+        }
+
+        // Add the new Summary message to DB (timestamp + 1ms places it perfectly after the gap)
+        await db.chats.add({
+          role: "summary",
+          text: summaryText,
+          thought: "",
+          options: null,
+          timestamp: lastMsgTimestamp + 1,
+        });
+
+        // Reload UI
+        messages.value = await db.chats.orderBy("timestamp").toArray();
+        await updateCounts();
+        scrollToBottom();
+      } catch (err) {
+        console.error("Summarize Error:", err);
+        alert("Summarize failed: " + err.message);
+      } finally {
+        isSummarizing.value = false;
+      }
+    };
 
     const updateCounts = async () => {
       try {
@@ -600,14 +711,21 @@ createApp({
 
         // 1. GEMMA TRICK: Inject context directly into the first User message
         const contents = messages.value.map((msg, index) => {
-          let role = msg.role === "user" ? "user" : "model";
+          // Send summaries as 'user' role so the AI accepts the format
+          let role =
+            msg.role === "user" || msg.role === "summary" ? "user" : "model";
           let text = msg.text;
+
+          // Flag it explicitly so the AI understands this is past events
+          if (msg.role === "summary") {
+            text = `[PREVIOUS EVENTS SUMMARY]\n${text}`;
+          }
 
           if (index === 0) {
             text = `[STORY GRIMOIRE]
-    ${factsSummary || "No facts established yet."}[END GRIMOIRE]
+            ${factsSummary || "No facts established yet."}[END GRIMOIRE]
 
-    STORY PREMISE: ${text}`;
+            STORY PREMISE: ${text}`;
           }
 
           return {
@@ -849,6 +967,8 @@ createApp({
       addManualFact,
       isOptimizingFacts,
       optimizeFacts,
+      isSummarizing,
+      summarizeStory,
       isGeneratingRules,
       randomizeRules,
     };
