@@ -341,13 +341,16 @@ createApp({
           })
           .join("\n\n");
 
-        const prompt = `You are an expert editor. Summarize the following chronological excerpt of a story concisely.
-            Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
-            Do not include game mechanics or raw options.
-            Write the summary strictly in the SECOND-PERSON ("You").
+        const prompt = `You are an expert editor. Summarize the following chronological excerpt of a story concisely into a few flowing paragraphs.
 
-            STORY EXCERPT:
-            ${transcript}`;
+                CRITICAL RULES:
+                1. Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
+                2. Write the summary strictly in the SECOND-PERSON ("You").
+                3. DO NOT output your thinking process, constraints, or segment breakdowns.
+                4. DO NOT use lists or bullet points. Output ONLY the final narrative story text.
+
+                STORY EXCERPT:
+                ${transcript}`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
