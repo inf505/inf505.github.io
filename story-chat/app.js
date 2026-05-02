@@ -305,7 +305,7 @@ createApp({
         return;
       }
 
-      // Filter candidates for summarization
+      // 1. Identify candidates (Skip premise, skip existing summaries, skip last 2)
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
@@ -313,21 +313,19 @@ createApp({
 
       if (candidates.length < 10) {
         alert(
-          `Not enough unsummarized messages. You currently have ${candidates.length}/10 ready for compression. Play a bit more!`,
+          `Not enough unsummarized messages. You currently have ${candidates.length}/10 ready for compression.`,
         );
         return;
       }
 
       const warnMsg =
-        "This will compress the oldest 10 active messages into a permanent Chapter Summary. Continue?";
+        "This will use the Randomizer Model to compress the oldest 10 messages into a Chapter Summary. Continue?";
       if (!confirm(warnMsg)) return;
 
       isSummarizing.value = true;
 
       try {
         const msgsToSummarize = candidates.slice(0, 10);
-
-        // Build Transcript
         const transcript = msgsToSummarize
           .map((m) => {
             let text = m.text;
@@ -339,35 +337,30 @@ createApp({
           .join("\n\n");
 
         const prompt = `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.
-            Focus entirely on the narrative progression, major actions taken, and the immediate outcomes.
+            Focus entirely on the narrative progression and major actions.
             Write the summary strictly in the SECOND-PERSON ("You").
 
             STORY EXCERPT:
             ${transcript}`;
 
+        // Using randomizerModel (Gemini Flash) which supports strict responseSchema
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.3,
+            temperature: 0.2, // Lower temperature for more factual summaries
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
               properties: {
-                thought_process: {
-                  type: "string",
-                  description: "Your internal segment breakdown and planning.",
-                },
-                summary: {
-                  type: "string",
-                  description:
-                    "The final, polished narrative summary paragraph. No lists. Written in second-person.",
-                },
+                thought_process: { type: "string" },
+                summary: { type: "string" },
               },
               required: ["thought_process", "summary"],
             },
           },
         };
 
+        // TARGET: randomizerModel.value (Gemini Flash)
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
 
         const res = await fetch(url, {
@@ -388,7 +381,7 @@ createApp({
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
 
-          // Clean up markdown block if model wraps the JSON
+          // Safety: Handle potential backticks
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -415,7 +408,7 @@ createApp({
         await db.chats.add({
           role: "summary",
           text: summaryText,
-          thought: "", // We throw away the AI's thought_process field here
+          thought: "",
           options: null,
           timestamp: lastMsgTimestamp + 1,
         });
@@ -426,7 +419,7 @@ createApp({
         scrollToBottom();
       } catch (err) {
         console.error("Summarize Error:", err);
-        alert("Summarize failed: " + err.message);
+        alert("Summarize failed with Flash model: " + err.message);
       } finally {
         isSummarizing.value = false;
       }
