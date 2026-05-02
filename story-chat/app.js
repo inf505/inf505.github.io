@@ -66,6 +66,7 @@ createApp({
     const newFactText = ref("");
     const newFactCategory = ref("Lore");
     const facts = ref([]);
+    const summaryBatchSize = ref(10);
 
     const loadFacts = async () => {
       try {
@@ -305,27 +306,28 @@ createApp({
         return;
       }
 
+      const batchSize = parseInt(summaryBatchSize.value) || 10;
+
       // 1. Identify candidates (Skip premise, skip existing summaries, skip last 2)
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
       );
 
-      if (candidates.length < 10) {
+      if (candidates.length < batchSize) {
         alert(
-          `Not enough unsummarized messages. You currently have ${candidates.length}/10 ready for compression.`,
+          `Not enough unsummarized messages. You requested ${batchSize}, but only have ${candidates.length} available for compression.`,
         );
         return;
       }
 
-      const warnMsg =
-        "This will use the Randomizer Model to compress the oldest 10 messages into a Chapter Summary. Continue?";
+      const warnMsg = `This will use the Randomizer Model to compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`;
       if (!confirm(warnMsg)) return;
 
       isSummarizing.value = true;
 
       try {
-        const msgsToSummarize = candidates.slice(0, 10);
+        const msgsToSummarize = candidates.slice(0, batchSize);
         const transcript = msgsToSummarize
           .map((m) => {
             let text = m.text;
@@ -473,6 +475,12 @@ createApp({
       const storedSystemPrompt = localStorage.getItem("story_system_prompt");
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
 
+      if (localStorage.getItem("story_summary_batch")) {
+        summaryBatchSize.value = parseInt(
+          localStorage.getItem("story_summary_batch"),
+        );
+      }
+
       try {
         messages.value = await db.chats.orderBy("timestamp").toArray();
         scrollToBottom();
@@ -531,6 +539,7 @@ createApp({
       localStorage.setItem("story_tts_model", selectedTTSModel.value);
       localStorage.setItem("story_tts_voice", selectedVoice.value);
       localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
+      localStorage.setItem("story_summary_batch", summaryBatchSize.value);
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -988,6 +997,7 @@ createApp({
       optimizeFacts,
       isSummarizing,
       summarizeStory,
+      summaryBatchSize,
       isGeneratingRules,
       randomizeRules,
     };

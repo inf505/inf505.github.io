@@ -148,6 +148,31 @@
                                 totalTokens }} tokens
                             </div>
 
+                            <!-- NEW: Batch Size Input -->
+                            <div
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    margin-bottom: 10px;
+                                "
+                            >
+                                <label style="font-size: 0.8rem; flex: 1"
+                                    >Messages to summarize:</label
+                                >
+                                <input
+                                    type="number"
+                                    v-model="summaryBatchSize"
+                                    min="2"
+                                    max="50"
+                                    style="
+                                        width: 60px;
+                                        text-align: center;
+                                        padding: 4px;
+                                    "
+                                />
+                            </div>
+
                             <button
                                 class="small-btn"
                                 @click="summarizeStory"
