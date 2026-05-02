@@ -412,7 +412,10 @@ createApp({
     const updateCounts = async () => {
       try {
         const chats = await db.chats.toArray();
-        const fullDb = { chats };
+        const facts = await db.facts.toArray(); // <-- Fetch facts too
+
+        const fullDb = { chats, facts }; // <-- Combine them
+
         const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
       } catch (err) {
