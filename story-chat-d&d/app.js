@@ -59,9 +59,9 @@ createApp({
     const inputArea = ref(null);
     const isGeneratingRules = ref(false);
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
-    const selectedVoice = ref("Aoede");
+    const selectedVoice = ref("Achird");
     const ttsProsodyNudge = ref(
-      "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
+      "Read the following text like a professional narrator. Tone: Use a tone to match the content.",
     );
     const newFactText = ref("");
     const newFactCategory = ref("Lore");
