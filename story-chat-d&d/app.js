@@ -19,7 +19,7 @@ Return a single JSON object.
    - CATEGORIES: Character, Item, Location, Lore.
 `;
 
-const db = new Dexie("StoryWriterDB");
+const db = new Dexie("StoryDNDDB");
 db.version(2).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
@@ -453,18 +453,20 @@ createApp({
     });
 
     onMounted(async () => {
-      const storedKey = localStorage.getItem("story_api_key");
-      const storedModel = localStorage.getItem("story_model");
+      const storedKey = localStorage.getItem("storydnd_api_key");
+      const storedModel = localStorage.getItem("storydnd_model");
 
-      if (localStorage.getItem("story_tts_model"))
-        selectedTTSModel.value = localStorage.getItem("story_tts_model");
-      if (localStorage.getItem("story_randomizer_model")) {
-        randomizerModel.value = localStorage.getItem("story_randomizer_model");
+      if (localStorage.getItem("storydnd_tts_model"))
+        selectedTTSModel.value = localStorage.getItem("storydnd_tts_model");
+      if (localStorage.getItem("storydnd_randomizer_model")) {
+        randomizerModel.value = localStorage.getItem(
+          "storydnd_randomizer_model",
+        );
       }
-      if (localStorage.getItem("story_tts_voice"))
-        selectedVoice.value = localStorage.getItem("story_tts_voice");
-      if (localStorage.getItem("story_tts_prosody"))
-        ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
+      if (localStorage.getItem("storydnd_tts_voice"))
+        selectedVoice.value = localStorage.getItem("storydnd_tts_voice");
+      if (localStorage.getItem("storydnd_tts_prosody"))
+        ttsProsodyNudge.value = localStorage.getItem("storydnd_tts_prosody");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -472,12 +474,12 @@ createApp({
         isConfigured.value = true;
       }
 
-      const storedSystemPrompt = localStorage.getItem("story_system_prompt");
+      const storedSystemPrompt = localStorage.getItem("storydnd_system_prompt");
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
 
-      if (localStorage.getItem("story_summary_batch")) {
+      if (localStorage.getItem("storydnd_summary_batch")) {
         summaryBatchSize.value = parseInt(
-          localStorage.getItem("story_summary_batch"),
+          localStorage.getItem("storydnd_summary_batch"),
         );
       }
 
@@ -528,18 +530,18 @@ createApp({
 
     const saveAllSettings = () => {
       // Check if the rules actually changed compared to what's in storage
-      var oldRules = localStorage.getItem("story_system_prompt") || "";
+      var oldRules = localStorage.getItem("storydnd_system_prompt") || "";
       var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
       // Save everything to localStorage
-      localStorage.setItem("story_api_key", apiKey.value);
-      localStorage.setItem("story_model", selectedModel.value);
-      localStorage.setItem("story_randomizer_model", randomizerModel.value);
-      localStorage.setItem("story_system_prompt", systemPrompt.value);
-      localStorage.setItem("story_tts_model", selectedTTSModel.value);
-      localStorage.setItem("story_tts_voice", selectedVoice.value);
-      localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
-      localStorage.setItem("story_summary_batch", summaryBatchSize.value);
+      localStorage.setItem("storydnd_api_key", apiKey.value);
+      localStorage.setItem("storydnd_model", selectedModel.value);
+      localStorage.setItem("storydnd_randomizer_model", randomizerModel.value);
+      localStorage.setItem("storydnd_system_prompt", systemPrompt.value);
+      localStorage.setItem("storydnd_tts_model", selectedTTSModel.value);
+      localStorage.setItem("storydnd_tts_voice", selectedVoice.value);
+      localStorage.setItem("storydnd_tts_prosody", ttsProsodyNudge.value);
+      localStorage.setItem("storydnd_summary_batch", summaryBatchSize.value);
 
       showSettings.value = false;
       isConfigured.value = true;
