@@ -133,7 +133,7 @@ createApp({
 
       try {
         // Updated prompt for D&D Campaign generation
-        const p = `Act as a Master Dungeon Master and Fantasy Author.
+        const p = `Act as a seasoned Dungeon Master and master RPG & Fantasy Author.
             In your 'thought' field, brainstorm three unique D&D campaign settings (e.g., a city inside a dead god, a frozen post-apocalypse, or a world of floating islands and airships).
             Pick the most compelling one and develop a 'Campaign Hook'.
 
