@@ -1,28 +1,34 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are a creative and collaborative storytelling partner.
-TASK: Work with the user to write an engaging story.
+const CORE_SYSTEM_PROMPT = `You are a professional Dungeon Master.
+TASK: Lead the player through a D&D-style adventure.
 
 PERSPECTIVE:
 - Write exclusively in the SECOND-PERSON ("You").
-- The user is the protagonist.
-- NEVER assign a name, gender, or appearance to the protagonist.
-- Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
+- Maintain a natural progression of time and atmospheric shifts.
+
+MECHANICS & DATA:
+1. STATS: You must track and respect the user's current attributes (HP, AC, Ability Scores).
+2. ITEMS: Manage the user's inventory. Describe items found and track their usage.
+3. ROLLS: When an action has a chance of failure, state the required Skill Check and Difficulty Class (DC). Simulate 1d20 rolls for the user.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Check the Grimoire for existing facts and the current time. Briefly plan how the next scene progresses the timeline and adheres to established lore.
-2. "response": The story text.
-3. "options": Array of 3 distinct action choices.
-4. "facts": An array of objects (text, category).
-   - TIME TRACKING: Always include one "Lore" fact stating the current time of day (e.g., "Time: Early Morning"). Update this naturally based on the actions taken.
-   - CATEGORIES: Character, Item, Location, Lore.
+1. "thought": DM logic. Plan the encounter, determine DCs, and track hidden NPC motives.
+2. "response": The story text. Use bold for key items/locations.
+3. "options": 3 action choices. One should include a bracketed [Skill Check] (e.g., "[Athletics] Climb the wall").
+4. "stats_update": Array of objects {name, value} to update the Character Sheet.
+5. "items_update": Array of objects {name, description, quantity, action}
+   - action: "add", "remove", or "update".
+6. "facts": Array of objects {text, category} for Lore/NPC/Location updates.
 `;
 
 const db = new Dexie("StoryDNDDB");
-db.version(2).stores({
+db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
+  stats: "++id, name, value", // e.g., name: "HP", value: "15/15"
+  items: "++id, name, description, quantity", // e.g., name: "Health Potion", quantity: 2
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -67,6 +73,18 @@ createApp({
     const newFactCategory = ref("Lore");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
+
+    const stats = ref([]);
+    const items = ref([]);
+
+    const loadCharacterData = async () => {
+      try {
+        stats.value = await db.stats.toArray();
+        items.value = await db.items.toArray();
+      } catch (err) {
+        console.error("Error loading character data:", err);
+      }
+    };
 
     const loadFacts = async () => {
       try {
@@ -441,6 +459,59 @@ createApp({
       }
     };
 
+    const randomizeStats = async () => {
+      // Prevent randomization if the game has already started
+      if (messages.value.length > 0) {
+        alert(
+          "The die is cast! You cannot randomize stats once the adventure has begun.",
+        );
+        return;
+      }
+
+      await db.stats.clear();
+
+      // Standard D&D 4d6 drop lowest logic
+      const rollAbility = () => {
+        const rolls = Array.from(
+          { length: 4 },
+          () => Math.floor(Math.random() * 6) + 1,
+        );
+        rolls.sort((a, b) => a - b);
+        return rolls[1] + rolls[2] + rolls[3];
+      };
+
+      const startingStats = [
+        { name: "Strength", value: rollAbility() },
+        { name: "Dexterity", value: rollAbility() },
+        { name: "Constitution", value: rollAbility() },
+        { name: "Intelligence", value: rollAbility() },
+        { name: "Wisdom", value: rollAbility() },
+        { name: "Charisma", value: rollAbility() },
+        { name: "HP", value: "20/20" },
+        { name: "AC", value: "10" },
+        { name: "Level", value: "1" },
+      ];
+
+      for (const s of startingStats) {
+        await db.stats.add(s);
+      }
+
+      // Clear items and add basic starting gear
+      await db.items.clear();
+      await db.items.add({
+        name: "Rations",
+        description: "Standard traveling food.",
+        quantity: 5,
+      });
+      await db.items.add({
+        name: "Waterskin",
+        description: "Full of fresh water.",
+        quantity: 1,
+      });
+
+      await loadCharacterData();
+    };
+
     const adjustHeight = () => {
       const el = inputArea.value;
       if (!el) return;
@@ -525,6 +596,7 @@ createApp({
         handleFallbackResize();
       }
 
+      await loadCharacterData();
       await loadFacts();
     });
 
@@ -596,21 +668,22 @@ createApp({
 
     const startOver = async () => {
       var warnMsg =
-        "Are you sure? This will permanently delete the story AND all remembered facts in the Grimoire.";
+        "Are you sure? This will permanently delete the story, your character stats, and all inventory.";
       if (!confirm(warnMsg)) return;
 
       await db.chats.clear();
       await db.facts.clear();
+      await db.stats.clear(); // Clear stats
+      await db.items.clear(); // Clear items
+
       messages.value = [];
       facts.value = [];
+      stats.value = [];
+      items.value = [];
 
       await updateCounts();
-
-      if (apiKey.value) {
-        initializeStory();
-      } else {
-        showSettings.value = true;
-      }
+      showSettings.value = true;
+      activeTab.value = "character"; // Take them straight to character creation
     };
 
     const initializeStory = async () => {
@@ -739,6 +812,16 @@ createApp({
           .map((f) => `- [${f.category}] ${f.text}`)
           .join("\n");
 
+        const currentStats = await db.stats.toArray();
+        const currentItems = await db.items.toArray();
+
+        const statsBlock = currentStats
+          .map((s) => `${s.name}: ${s.value}`)
+          .join(", ");
+        const itemsBlock = currentItems
+          .map((i) => `- ${i.name} (${i.quantity}): ${i.description}`)
+          .join("\n");
+
         // 1. GEMMA TRICK: Inject context directly into the first User message
         const contents = messages.value.map((msg, index) => {
           // Send summaries as 'user' role so the AI accepts the format
@@ -752,10 +835,16 @@ createApp({
           }
 
           if (index === 0) {
-            text = `[STORY GRIMOIRE]
-            ${factsSummary || "No facts established yet."}[END GRIMOIRE]
+            text = `[CHARACTER SHEET]
+          STATS: ${statsBlock || "Not initialized."}
+          INVENTORY:
+          ${itemsBlock || "Empty."}
 
-            STORY PREMISE: ${text}`;
+          [STORY GRIMOIRE]
+          ${factsSummary || "No lore established yet."}
+          [END CONTEXT]
+
+          STORY PREMISE: ${text}`;
           }
 
           return {
@@ -889,6 +978,52 @@ createApp({
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
+            // 1. Handle Stats Updates
+            if (parsed.stats_update && Array.isArray(parsed.stats_update)) {
+              for (const s of parsed.stats_update) {
+                // We use a "put" with a key-check or just overwrite by name
+                const existing = await db.stats
+                  .where("name")
+                  .equalsIgnoreCase(s.name)
+                  .first();
+                if (existing) {
+                  await db.stats.update(existing.id, { value: s.value });
+                } else {
+                  await db.stats.add({ name: s.name, value: s.value });
+                }
+              }
+            }
+
+            // 2. Handle Item Updates
+            if (parsed.items_update && Array.isArray(parsed.items_update)) {
+              for (const item of parsed.items_update) {
+                const existing = await db.items
+                  .where("name")
+                  .equalsIgnoreCase(item.name)
+                  .first();
+
+                if (item.action === "remove") {
+                  if (existing) await db.items.delete(existing.id);
+                } else if (item.action === "add" || item.action === "update") {
+                  if (existing) {
+                    await db.items.update(existing.id, {
+                      quantity: item.quantity,
+                      description: item.description || existing.description,
+                    });
+                  } else {
+                    await db.items.add({
+                      name: item.name,
+                      description: item.description,
+                      quantity: item.quantity,
+                    });
+                  }
+                }
+              }
+            }
+
+            // 3. Refresh the UI
+            await loadCharacterData();
+
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
                 if (f.text && f.category) {
@@ -939,6 +1074,21 @@ createApp({
       await updateCounts();
     };
 
+    const updateStatManually = async (name, value) => {
+      const existing = await db.stats
+        .where("name")
+        .equalsIgnoreCase(name)
+        .first();
+      if (existing) await db.stats.update(existing.id, { value });
+      else await db.stats.add({ name, value });
+      await loadCharacterData();
+    };
+
+    const deleteItemManually = async (id) => {
+      await db.items.delete(id);
+      await loadCharacterData();
+    };
+
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
@@ -962,6 +1112,19 @@ createApp({
     };
 
     return {
+      // --- NEW CHARACTER & D&D DATA ---
+      stats, // The reactive array of stats (HP, Level, etc.)
+      items, // The reactive array of inventory items
+      loadCharacterData, // Function to refresh stats/items from Dexie
+      updateStatManually, // Function for the UI to edit a stat
+      deleteItemManually, // Function for the UI to remove an item
+      rollDice, // Helper function to roll a d20/d6 into the chat
+
+      stats,
+      items,
+      randomizeStats,
+      loadCharacterData,
+
       apiKey,
       selectedModel,
       randomizerModel,

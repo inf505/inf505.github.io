@@ -48,6 +48,12 @@
                             Settings
                         </button>
                         <button
+                            :class="['tab-btn', { active: activeTab === 'character' }]"
+                            @click="activeTab = 'character'"
+                        >
+                            ⚔️ Character
+                        </button>
+                        <button
                             :class="['tab-btn', { active: activeTab === 'facts' }]"
                             @click="activeTab = 'facts'"
                         >
@@ -206,6 +212,114 @@
                         >
                             Apply Settings
                         </button>
+                    </div>
+
+                    <div v-if="activeTab === 'character'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Character Sheet</label>
+
+                            <!-- Randomize Button: Only visible if story hasn't started -->
+                            <button
+                                v-if="messages.length === 0"
+                                class="small-btn"
+                                @click="randomizeStats"
+                                style="
+                                    width: 100%;
+                                    margin-bottom: 15px;
+                                    background: #800;
+                                    border: 1px solid #ff4444;
+                                "
+                            >
+                                🎲 Randomize Starting Stats
+                            </button>
+
+                            <!-- Stats Grid -->
+                            <div
+                                class="stats-display-grid"
+                                style="
+                                    display: grid;
+                                    grid-template-columns: 1fr 1fr;
+                                    gap: 8px;
+                                "
+                            >
+                                <div
+                                    v-for="stat in stats"
+                                    :key="stat.id"
+                                    class="stat-card"
+                                    style="
+                                        background: rgba(255, 255, 255, 0.05);
+                                        padding: 8px;
+                                        border-radius: 4px;
+                                        border: 1px solid
+                                            rgba(255, 255, 255, 0.1);
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            font-size: 0.7rem;
+                                            color: #aaa;
+                                            text-transform: uppercase;
+                                        "
+                                    >
+                                        {{ stat.name }}
+                                    </div>
+                                    <div
+                                        style="
+                                            font-size: 1.1rem;
+                                            font-weight: bold;
+                                            color: #fff;
+                                        "
+                                    >
+                                        {{ stat.value }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Inventory List -->
+                            <label style="margin-top: 20px; display: block"
+                                >Inventory</label
+                            >
+                            <div class="inventory-list" style="margin-top: 8px">
+                                <div
+                                    v-for="item in items"
+                                    :key="item.id"
+                                    style="
+                                        font-size: 0.9rem;
+                                        padding: 5px 0;
+                                        border-bottom: 1px solid
+                                            rgba(255, 255, 255, 0.05);
+                                        display: flex;
+                                        justify-content: space-between;
+                                    "
+                                >
+                                    <span
+                                        ><strong>{{item.quantity}}x</strong> {{
+                                        item.name }}</span
+                                    >
+                                    <button
+                                        @click="deleteItemManually(item.id)"
+                                        style="
+                                            background: none;
+                                            border: none;
+                                            color: #f44;
+                                            cursor: pointer;
+                                        "
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                <div
+                                    v-if="items.length === 0"
+                                    style="
+                                        color: #666;
+                                        font-style: italic;
+                                        font-size: 0.8rem;
+                                    "
+                                >
+                                    Inventory is empty.
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- TAB CONTENT: FACTS  -->
