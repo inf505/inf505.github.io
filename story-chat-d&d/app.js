@@ -130,16 +130,23 @@ createApp({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
+      const currentStats = await db.stats.toArray();
+      const statsSummary =
+        currentStats.length > 0
+          ? currentStats.map((s) => `${s.name}: ${s.value}`).join(", ")
+          : "None assigned yet";
+
       try {
         // DIRECTIVE: Focus on traditional High Fantasy
-        const p = `Act as a classic Dungeon Master for a traditional High Fantasy setting.
-            In your 'thought' field, plan a traditional D&D adventure hook (e.g., a haunted crypt, a dragon's ransom, or a goblin-infested trade route).
-            Then, in 'premise', provide the final story description.
+        const p = `Act as a seasoned Dungeon Master for a traditional High Fantasy setting. Create a traditional D&D adventure *hook* for a player with these stats: ${statsSummary}.
 
-            REQUIREMENTS:
+          In your 'thought' field, plan a traditional D&D adventure hook (e.g., a haunted crypt, a dragon's ransom, or a goblin-infested trade route).
+          Then, in 'premise', provide the final story description.
+
+          REQUIREMENTS:
             - Setting: Traditional High Fantasy (castles, taverns, forests, dungeons).
             - Address the player as 'You'.
-            - Describe their immediate situation and a clear goal.
+            - Describe their immediate situation and a clear goal (quest).
             - LIMIT: One paragraph, maximum 80 words.`;
 
         const payload = {
