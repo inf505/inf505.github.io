@@ -138,7 +138,7 @@ createApp({
 
       try {
         // DIRECTIVE: Focus on traditional High Fantasy
-        const p = `Act as a seasoned Dungeon Master for a traditional High Fantasy setting. Create a traditional D&D adventure *hook* for a player with these stats: ${statsSummary}.
+        const p = `Act as a seasoned Dungeon Master for a traditional High Fantasy setting. Create a traditional D&D adventure *hook* for a player with these stats: ${statsSummary}. (Assign a Dungeons & Dragons "Class" based on these stats.)
 
           In your 'thought' field, plan a traditional D&D adventure hook (e.g., a haunted crypt, a dragon's ransom, or a goblin-infested trade route).
           Then, in 'premise', provide the final story description.
