@@ -220,7 +220,7 @@
 
                             <!-- Randomize Button: Only visible if story hasn't started -->
                             <button
-                                v-if="messages.length === 0"
+                                v-if="messages && messages.length === 0"
                                 class="small-btn"
                                 @click="randomizeStats"
                                 style="

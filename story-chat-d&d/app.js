@@ -47,6 +47,9 @@ const formatRelativeTime = (timestamp) => {
 
 createApp({
   setup() {
+    const messages = ref([]);
+    const stats = ref([]);
+    const items = ref([]);
     const apiKey = ref("");
     const selectedModel = ref("gemma-4-31b-it");
     const isConfigured = ref(false);
@@ -58,7 +61,7 @@ createApp({
     const isSummarizing = ref(false);
     const totalSizeKb = ref("0.0");
     const totalTokens = ref("0");
-    const messages = ref([]);
+
     const currentInput = ref("");
     const isLoading = ref(false);
     const messagesContainer = ref(null);
@@ -73,9 +76,6 @@ createApp({
     const newFactCategory = ref("Lore");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
-
-    const stats = ref([]);
-    const items = ref([]);
 
     const loadCharacterData = async () => {
       try {
@@ -457,6 +457,12 @@ createApp({
       } catch (err) {
         console.error("Error updating stats:", err);
       }
+    };
+
+    const rollDice = (sides = 20) => {
+      const roll = Math.floor(Math.random() * sides) + 1;
+      // This pushes the roll result into the input area so the user can send it
+      currentInput.value = `I roll a d${sides}. Result: **${roll}**`;
     };
 
     const randomizeStats = async () => {
