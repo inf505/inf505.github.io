@@ -147,7 +147,7 @@ createApp({
             - Setting: Traditional High Fantasy (castles, taverns, forests, dungeons).
             - Address the player as 'You'.
             - Describe their immediate situation and a clear goal (quest).
-            - LIMIT: One paragraph, maximum 80 words.`;
+            - LIMIT: One paragraph, maximum 99 words.`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
