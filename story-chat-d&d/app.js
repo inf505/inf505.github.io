@@ -141,7 +141,7 @@ createApp({
             - Describe the world's current state and the immediate mystery.
             - Address the player as 'You' and define their starting situation or role (e.g., 'You are a prisoner of the Crimson Cult', 'You are a mercenary guarding a cursed relic').
             - Establish the stakes of the adventure.
-            - STRICT LIMIT: One paragraph, maximum 180 words.`;
+            - STRICT LIMIT: One paragraph, maximum 100 words.`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
