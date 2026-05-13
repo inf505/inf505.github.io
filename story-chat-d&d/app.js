@@ -16,7 +16,8 @@ OUTPUT REQUIREMENTS:
 Return a single JSON object.
 1. "thought": DM logic. Plan the encounter, determine DCs, and track hidden NPC motives.
 2. "response": The story text. Use bold for key items/locations.
-3. "options": 3 action choices. One should include a bracketed [Skill Check] (e.g., "[Athletics] Climb the wall").
+3. "options": Array of 3 strings (e.g. ["Action 1", "Action 2", "Action 3"]).
+   Do NOT return objects in this array.
 4. "stats_update": Array of objects {name, value} to update the Character Sheet.
 5. "items_update": Array of objects {name, description, quantity, action}
    - action: "add", "remove", or "update".
@@ -979,7 +980,22 @@ createApp({
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
-            if (parsed.options) finalOptions = parsed.options;
+
+            if (parsed.options && Array.isArray(parsed.options)) {
+              finalOptions = parsed.options.map((opt) => {
+                // If the AI accidentally sent an object like { "text": "..." }
+                if (typeof opt === "object" && opt !== null) {
+                  return (
+                    opt.text ||
+                    opt.description ||
+                    opt.option ||
+                    JSON.stringify(opt)
+                  );
+                }
+                // Otherwise, ensure it's a string
+                return String(opt);
+              });
+            }
 
             // 1. Handle Stats Updates
             if (parsed.stats_update && Array.isArray(parsed.stats_update)) {
