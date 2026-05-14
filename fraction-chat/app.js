@@ -984,11 +984,27 @@ createApp({
       await triggerAIResponse();
     };
 
+    const renderInlineMath = (text) => {
+      if (!text) return "";
+      // This looks for $...$ and replaces it with KaTeX HTML
+      return text.replace(/\$(.*?)\$/g, (match, formula) => {
+        try {
+          return katex.renderToString(formula, {
+            displayMode: false,
+            throwOnError: false,
+          });
+        } catch (e) {
+          return match;
+        }
+      });
+    };
+
     return {
       apiKey,
       selectedModel,
       randomizerModel,
       isConfigured,
+      renderInlineMath,
       renderMarkdown,
       formatRelativeTime,
       messages,

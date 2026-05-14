@@ -631,3 +631,21 @@ button.small-btn {
     overflow-y: auto;
     padding-right: 5px; /* Keeps the scrollbar from hiding text */
 }
+/* Ensure the horizontal bar in the fraction is visible */
+.katex-rule {
+    border-color: currentColor !important;
+}
+/* Fix KaTeX spacing inside buttons */
+.option-btn .katex {
+    font-size: 1.2em; /* Make the fraction slightly larger */
+    line-height: 1;
+}
+/* Ensure buttons expand to fit the height of fractions */
+.option-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px; /* Give it some extra room */
+    padding: 10px 15px;
+    font-size: 1.1rem; /* Make the math easy to read */
+}

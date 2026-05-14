@@ -467,7 +467,8 @@
                                     class="option-btn"
                                     @click="sendOption(opt)"
                                 >
-                                    {{ opt }}
+                                    <!-- Use v-html to render the KaTeX output -->
+                                    <span v-html="renderInlineMath(opt)"></span>
                                 </button>
                             </div>
                         </div>
