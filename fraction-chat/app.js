@@ -21,6 +21,11 @@ Return a single JSON object.
 4. "facts": Track student data.
    - Include a "Lore" fact for "Current Level" (e.g., "Topic: Simplifying Fractions").
    - Track "Strengths" and "Weaknesses".
+
+STRICT MATH SYNTAX:
+   1. ALWAYS use double-backslashes for LaTeX commands in your JSON response.
+      - Example: Use "$\\frac{1}{2}$" (which is typed as \\\\frac in your raw output).
+   2. Never allow the string "\\f" to appear alone; always ensure it is "\\\\f".
 `;
 
 const db = new Dexie("FractionChatDB");
@@ -301,16 +306,55 @@ createApp({
     };
 
     const renderMarkdown = (text) => {
-      // 1. Identify LaTeX patterns like $\frac{1}{2}$
-      const processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
+      if (!text) return "";
+
+      // 1. FIX: Restore "frac" if it was turned into a Form Feed (\f)
+      let sanitized = text.replace(/\x0c/g, "\\f");
+
+      const processedText = sanitized.replace(
+        /\$(.*?)\$/g,
+        (match, formula) => {
+          try {
+            let cleanFormula = formula;
+
+            // 2. SAFETY NET: If the AI sent "rac" instead of "\frac", fix it
+            // This catches "rac{1}{2}" and turns it into "\frac{1}{2}"
+            if (
+              cleanFormula.includes("rac{") &&
+              !cleanFormula.includes("\\frac{")
+            ) {
+              cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
+            }
+
+            return katex.renderToString(cleanFormula, { throwOnError: false });
+          } catch (e) {
+            return match;
+          }
+        },
+      );
+      return marked.parse(processedText);
+    };
+
+    const renderInlineMath = (text) => {
+      if (!text) return "";
+
+      // Same fix for the buttons
+      let sanitized = text.replace(/\x0c/g, "\\f");
+
+      return sanitized.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          return katex.renderToString(formula, { throwOnError: false });
+          let cleanFormula = formula.replace(/\x0c/g, "f");
+          if (cleanFormula.startsWith("frac"))
+            cleanFormula = "\\" + cleanFormula;
+
+          return katex.renderToString(cleanFormula, {
+            displayMode: false,
+            throwOnError: false,
+          });
         } catch (e) {
           return match;
         }
       });
-      // 2. Pass to marked for standard markdown
-      return marked.parse(processedText);
     };
 
     const summarizeStory = async () => {
@@ -984,20 +1028,33 @@ createApp({
       await triggerAIResponse();
     };
 
-    const renderInlineMath = (text) => {
-      if (!text) return "";
-      // This looks for $...$ and replaces it with KaTeX HTML
-      return text.replace(/\$(.*?)\$/g, (match, formula) => {
-        try {
-          return katex.renderToString(formula, {
-            displayMode: false,
-            throwOnError: false,
-          });
-        } catch (e) {
-          return match;
-        }
-      });
-    };
+    // const renderInlineMath = (text) => {
+    //   if (!text) return "";
+
+    //   // Same fix for the buttons
+    //   let sanitized = text.replace(/\x0c/g, "\\f");
+
+    //   return sanitized.replace(/\$(.*?)\$/g, (match, formula) => {
+    //     try {
+    //       let cleanFormula = formula;
+
+    //       // SAFETY NET: Fix "rac" in buttons too
+    //       if (
+    //         cleanFormula.includes("rac{") &&
+    //         !cleanFormula.includes("\\frac{")
+    //       ) {
+    //         cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
+    //       }
+
+    //       return katex.renderToString(cleanFormula, {
+    //         displayMode: false,
+    //         throwOnError: false,
+    //       });
+    //     } catch (e) {
+    //       return match;
+    //     }
+    //   });
+    // };
 
     return {
       apiKey,
