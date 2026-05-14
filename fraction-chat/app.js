@@ -343,9 +343,15 @@ createApp({
 
       return sanitized.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let cleanFormula = formula.replace(/\x0c/g, "f");
-          if (cleanFormula.startsWith("frac"))
-            cleanFormula = "\\" + cleanFormula;
+          let cleanFormula = formula;
+
+          // SAFETY NET: Fix "rac" in buttons too
+          if (
+            cleanFormula.includes("rac{") &&
+            !cleanFormula.includes("\\frac{")
+          ) {
+            cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
+          }
 
           return katex.renderToString(cleanFormula, {
             displayMode: false,
