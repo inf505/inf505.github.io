@@ -23,7 +23,7 @@ Return a single JSON object.
    - Track "Strengths" and "Weaknesses".
 `;
 
-const db = new Dexie("StoryWriterDB");
+const db = new Dexie("FractionChatDB");
 db.version(2).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
@@ -226,7 +226,6 @@ createApp({
         }
 
         const prompt = `Merge duplicate facts and resolve contradictions.
-        Preserve categories (Character, Item, Location, Lore).
         Keep text concise. Do not invent new facts.
         DATA: ${fData}`;
 
@@ -467,18 +466,22 @@ createApp({
     });
 
     onMounted(async () => {
-      const storedKey = localStorage.getItem("story_api_key");
-      const storedModel = localStorage.getItem("story_model");
+      const storedKey = localStorage.getItem("fractionchat_api_key");
+      const storedModel = localStorage.getItem("fractionchat_model");
 
-      if (localStorage.getItem("story_tts_model"))
-        selectedTTSModel.value = localStorage.getItem("story_tts_model");
-      if (localStorage.getItem("story_randomizer_model")) {
-        randomizerModel.value = localStorage.getItem("story_randomizer_model");
+      if (localStorage.getItem("fractionchat_tts_model"))
+        selectedTTSModel.value = localStorage.getItem("fractionchat_tts_model");
+      if (localStorage.getItem("fractionchat_randomizer_model")) {
+        randomizerModel.value = localStorage.getItem(
+          "fractionchat_randomizer_model",
+        );
       }
-      if (localStorage.getItem("story_tts_voice"))
-        selectedVoice.value = localStorage.getItem("story_tts_voice");
-      if (localStorage.getItem("story_tts_prosody"))
-        ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
+      if (localStorage.getItem("fractionchat_tts_voice"))
+        selectedVoice.value = localStorage.getItem("fractionchat_tts_voice");
+      if (localStorage.getItem("fractionchat_tts_prosody"))
+        ttsProsodyNudge.value = localStorage.getItem(
+          "fractionchat_tts_prosody",
+        );
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -486,12 +489,14 @@ createApp({
         isConfigured.value = true;
       }
 
-      const storedSystemPrompt = localStorage.getItem("story_system_prompt");
+      const storedSystemPrompt = localStorage.getItem(
+        "fractionchat_system_prompt",
+      );
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
 
-      if (localStorage.getItem("story_summary_batch")) {
+      if (localStorage.getItem("fractionchat_summary_batch")) {
         summaryBatchSize.value = parseInt(
-          localStorage.getItem("story_summary_batch"),
+          localStorage.getItem("fractionchat_summary_batch"),
         );
       }
 
@@ -542,18 +547,24 @@ createApp({
 
     const saveAllSettings = () => {
       // Check if the rules actually changed compared to what's in storage
-      var oldRules = localStorage.getItem("story_system_prompt") || "";
+      var oldRules = localStorage.getItem("fractionchat_system_prompt") || "";
       var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
       // Save everything to localStorage
-      localStorage.setItem("story_api_key", apiKey.value);
-      localStorage.setItem("story_model", selectedModel.value);
-      localStorage.setItem("story_randomizer_model", randomizerModel.value);
-      localStorage.setItem("story_system_prompt", systemPrompt.value);
-      localStorage.setItem("story_tts_model", selectedTTSModel.value);
-      localStorage.setItem("story_tts_voice", selectedVoice.value);
-      localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
-      localStorage.setItem("story_summary_batch", summaryBatchSize.value);
+      localStorage.setItem("fractionchat_api_key", apiKey.value);
+      localStorage.setItem("fractionchat_model", selectedModel.value);
+      localStorage.setItem(
+        "fractionchaty_randomizer_model",
+        randomizerModel.value,
+      );
+      localStorage.setItem("fractionchat_system_prompt", systemPrompt.value);
+      localStorage.setItem("fractionchat_tts_model", selectedTTSModel.value);
+      localStorage.setItem("fractionchat_tts_voice", selectedVoice.value);
+      localStorage.setItem("fractionchat_tts_prosody", ttsProsodyNudge.value);
+      localStorage.setItem(
+        "fractionchat_summary_batch",
+        summaryBatchSize.value,
+      );
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -632,7 +643,7 @@ createApp({
       // If it's empty, use a default fallback.
       const firstMessage =
         systemPrompt.value.trim() ||
-        "The story begins in a mysterious world...";
+        "The story begins in a mysterious world of fractions...";
 
       const userId = await saveToDb("user", firstMessage);
 
