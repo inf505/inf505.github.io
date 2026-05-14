@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
+        />
+        <title>Story Chat | AI Co-Author</title>
+        <link rel="shortcut icon" href="favicon.ico" />
+        <link rel="stylesheet" href="style.css" />
+
+        <!-- External Libraries -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+        <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+        <!-- KaTeX for beautiful fractions -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <!-- CHAT INTERFACE -->
+            <div class="chat-container">
+                <!-- FLOATING CONTROLS -->
+                <div class="floating-header">
+                    <button
+                        class="float-btn archive-btn"
+                        @click="startOver"
+                        :title="'Start Over - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'"
+                    >
+                        <span>📜</span>
+                    </button>
+
+                    <button
+                        class="float-btn settings-btn"
+                        @click="showSettings = !showSettings"
+                    >
+                        ⚙️
+                    </button>
+                </div>
+
+                <!-- SETTINGS PANEL -->
+                <div v-if="showSettings" class="settings-panel">
+                    <!-- TABS NAVIGATION -->
+                    <div class="tabs-header">
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'settings' }]"
+                            @click="activeTab = 'settings'"
+                        >
+                            Settings
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'facts' }]"
+                            @click="activeTab = 'facts'"
+                        >
+                            Facts
+                        </button>
+                        <button
+                            :class="['tab-btn', { active: activeTab === 'audio' }]"
+                            @click="activeTab = 'audio'"
+                        >
+                            Audio
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: SETTINGS -->
+                    <div v-if="activeTab === 'settings'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Story Model:</label>
+                            <input
+                                type="text"
+                                v-model="selectedModel"
+                                placeholder="e.g., gemma-4-31b-it"
+                            />
+                            <small
+                                >gemma-4-26b-a4b-it , gemma-4-31b-it,
+                                gemini-2.5-flash-lite ,
+                                gemini-3.1-flash-lite-preview</small
+                            >
+                        </div>
+
+                        <div class="settings-group">
+                            <label>API Key:</label>
+                            <input
+                                type="password"
+                                v-model="apiKey"
+                                placeholder="AIzaSy..."
+                            />
+                        </div>
+
+                        <div class="settings-group">
+                            <label>World / Character / Tone Rules</label>
+
+                            <!-- New Randomizer Model Input -->
+                            <div style="margin-bottom: 8px">
+                                <small>Randomizer Model:</small>
+                                <input
+                                    type="text"
+                                    v-model="randomizerModel"
+                                    placeholder="gemma-4-31b-it"
+                                    style="font-size: 0.8rem; padding: 4px"
+                                />
+                            </div>
+                            <small
+                                >gemma-4-31b-it , gemini-2.5-flash ,
+                                gemini-3-flash-preview</small
+                            >
+
+                            <button
+                                class="small-btn"
+                                @click="randomizeRules"
+                                :disabled="isGeneratingRules"
+                                style="margin-bottom: 8px; width: 100%"
+                            >
+                                {{ isGeneratingRules ? "🎲 Rolling the dice..."
+                                : "🎲 Generate New Topic" }}
+                            </button>
+                            <textarea
+                                v-model="systemPrompt"
+                                rows="4"
+                                placeholder="Describe the world..."
+                            ></textarea>
+                        </div>
+
+                        <div
+                            class="settings-group"
+                            style="
+                                margin-top: 20px;
+                                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                                padding-top: 15px;
+                            "
+                        >
+                            <label style="color: #ff9d00"
+                                >Memory & Data Management</label
+                            >
+
+                            <div
+                                style="
+                                    font-size: 0.85rem;
+                                    margin-bottom: 10px;
+                                    color: #aaa;
+                                    background: rgba(0, 0, 0, 0.2);
+                                    padding: 8px;
+                                    border-radius: 6px;
+                                "
+                            >
+                                <strong>Database Size:</strong> {{ totalSizeKb
+                                }} KB<br />
+                                <strong>Last Token Usage:</strong> {{
+                                totalTokens }} tokens
+                            </div>
+
+                            <!-- NEW: Batch Size Input -->
+                            <div
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    margin-bottom: 10px;
+                                "
+                            >
+                                <label style="font-size: 0.8rem; flex: 1"
+                                    >Messages to summarize:</label
+                                >
+                                <input
+                                    type="number"
+                                    v-model="summaryBatchSize"
+                                    min="2"
+                                    max="50"
+                                    style="
+                                        width: 60px;
+                                        text-align: center;
+                                        padding: 4px;
+                                    "
+                                />
+                            </div>
+
+                            <button
+                                class="small-btn"
+                                @click="summarizeStory"
+                                :disabled="isSummarizing"
+                                style="
+                                    width: 100%;
+                                    border: 1px solid #ff9d00;
+                                    color: #ff9d00;
+                                    background: rgba(255, 157, 0, 0.1);
+                                "
+                            >
+                                {{ isSummarizing ? "🗜️ Compressing Batch..." :
+                                "🗜️ Summarize Oldest Messages" }}
+                            </button>
+                            <small
+                                style="
+                                    display: block;
+                                    margin-top: 6px;
+                                    text-align: center;
+                                    color: #888;
+                                "
+                            >
+                                Compresses the oldest 10 unsummarized messages
+                                into a single Chapter Summary block.
+                            </small>
+                        </div>
+
+                        <button
+                            class="small-btn apply-btn"
+                            @click="saveAllSettings"
+                        >
+                            Apply Settings
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT: FACTS  -->
+                    <div v-if="activeTab === 'facts'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Student Progress</label>
+                            <div
+                                class="manual-fact-entry"
+                                style="
+                                    margin-top: 15px;
+                                    background: rgba(255, 255, 255, 0.05);
+                                    padding: 10px;
+                                    border-radius: 8px;
+                                    border: 1px solid rgba(255, 255, 255, 0.1);
+                                "
+                            >
+                                <textarea
+                                    v-model="newFactText"
+                                    placeholder="Add a new fact manually..."
+                                    rows="2"
+                                    style="
+                                        width: 100%;
+                                        margin-bottom: 8px;
+                                        font-size: 0.9rem;
+                                    "
+                                ></textarea>
+
+                                <div style="display: flex; gap: 8px">
+                                    <select
+                                        v-model="newFactCategory"
+                                        style="
+                                            flex: 1;
+                                            font-size: 0.8rem;
+                                            height: 32px;
+                                        "
+                                    >
+                                        <option>Character</option>
+                                        <option>Item</option>
+                                        <option>Location</option>
+                                        <option>Lore</option>
+                                    </select>
+                                    <button
+                                        class="small-btn"
+                                        @click="addManualFact"
+                                        :disabled="!newFactText.trim()"
+                                        style="flex: 1; height: 32px"
+                                    >
+                                        Add Fact
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                class="small-btn apply-btn"
+                                @click="optimizeFacts"
+                                :disabled="isOptimizingFacts || facts.length < 2"
+                                style="
+                                    margin-top: 10px;
+                                    margin-bottom: 10px;
+                                    width: 100%;
+                                "
+                            >
+                                {{ isOptimizingFacts ? "✨ Merging Facts..." :
+                                "✨ Optimize & Merge Facts" }}
+                            </button>
+                        </div>
+
+                        <div
+                            class="facts-container"
+                            style="
+                                max-height: 40vh;
+                                overflow-y: auto;
+                                padding-right: 5px;
+                            "
+                        >
+                            <div
+                                v-for="fact in facts"
+                                :key="fact.id"
+                                class="fact-row"
+                            >
+                                <div class="fact-content">
+                                    <!-- Badge for Category -->
+                                    <span
+                                        :class="['fact-badge', fact.category.toLowerCase()]"
+                                    >
+                                        {{ fact.category }}
+                                    </span>
+                                    <div class="fact-text">{{ fact.text }}</div>
+                                </div>
+                                <button
+                                    class="delete-fact-btn"
+                                    @click="deleteFact(fact.id)"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+
+                            <div v-if="facts.length === 0" class="empty-facts">
+                                No facts recorded yet.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB CONTENT: AUDIO / TTS -->
+                    <div v-if="activeTab === 'audio'" class="tab-content">
+                        <div class="settings-group">
+                            <label>Native TTS Model:</label>
+                            <input
+                                type="text"
+                                v-model="selectedTTSModel"
+                                placeholder="gemini-3.1-flash-tts-preview"
+                            />
+                        </div>
+
+                        <div class="settings-group">
+                            <label>Voice Profile:</label>
+                            <input
+                                type="text"
+                                v-model="selectedVoice"
+                                placeholder="e.g., Aoede, Puck"
+                            />
+                        </div>
+
+                        <div class="settings-group">
+                            <label>Prosody Nudge (Narration Tone):</label>
+                            <textarea
+                                v-model="ttsProsodyNudge"
+                                rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCROLLING MESSAGES -->
+                <div
+                    class="chat-messages"
+                    ref="messagesContainer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    <div v-if="messages.length === 0" class="empty-state">
+                        Configure your API Key and Rules in Settings to begin!
+                    </div>
+
+                    <div
+                        v-for="(msg, index) in messages"
+                        :key="msg.id || index"
+                        :class="['message', msg.role]"
+                    >
+                        <div class="bubble">
+                            <!-- NEW: Summary Badge -->
+                            <div
+                                v-if="msg.role === 'summary'"
+                                style="
+                                    font-size: 0.75rem;
+                                    color: #ff9d00;
+                                    text-transform: uppercase;
+                                    font-weight: bold;
+                                    margin-bottom: 8px;
+                                    border-bottom: 1px solid
+                                        rgba(255, 157, 0, 0.3);
+                                    padding-bottom: 4px;
+                                "
+                            >
+                                📜 Chapter Summary
+                            </div>
+
+                            <!-- Action Buttons Container -->
+                            <div class="msg-actions">
+                                <!-- Speaker / Read Aloud Button -->
+                                <button
+                                    v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
+                                    class="action-msg-btn speaker-btn"
+                                    @click="triggerTTS(index)"
+                                    title="Synthesize Audio"
+                                >
+                                    🔊
+                                </button>
+
+                                <!-- Retry Button (Only for the last model message) -->
+                                <button
+                                    v-if="msg.role === 'model' && index === messages.length - 1"
+                                    class="action-msg-btn retry-btn"
+                                    @click="retryMessage(index)"
+                                    title="Retry / Regenerate"
+                                >
+                                    ↻
+                                </button>
+
+                                <!-- Delete Button -->
+                                <button
+                                    class="action-msg-btn delete-btn"
+                                    @click="deleteMessage(index)"
+                                    title="Delete Message"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+
+                            <!-- Thought Process -->
+                            <div v-if="msg.thought" class="thought-box">
+                                <details>
+                                    <summary>AI Story Logic</summary>
+                                    <pre>{{ msg.thought }}</pre>
+                                </details>
+                            </div>
+
+                            <!-- Content -->
+                            <div
+                                class="message-text"
+                                v-html="renderMarkdown(msg.text)"
+                            ></div>
+
+                            <!-- AUDIO LOADING STATE -->
+                            <div
+                                v-if="msg.isGeneratingAudio"
+                                class="audio-loading"
+                                style="
+                                    font-size: 0.8em;
+                                    color: #888;
+                                    margin-top: 10px;
+                                "
+                            >
+                                <i>Synthesizing audio...</i>
+                            </div>
+
+                            <!-- AUDIO PLAYER -->
+                            <div
+                                v-if="msg.audioData"
+                                class="audio-player"
+                                style="margin-top: 10px"
+                            >
+                                <audio
+                                    controls
+                                    autoplay
+                                    :src="'data:audio/wav;base64,' + msg.audioData"
+                                    style="width: 100%; height: 36px"
+                                ></audio>
+                            </div>
+
+                            <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
+                            <div
+                                v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
+                                class="story-options"
+                            >
+                                <p class="options-label">
+                                    What do you do next?
+                                </p>
+                                <button
+                                    v-for="(opt, i) in msg.options"
+                                    :key="i"
+                                    class="option-btn"
+                                    @click="sendOption(opt)"
+                                >
+                                    {{ opt }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div v-if="isLoading" class="message model">
+                        <div class="bubble typing">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="chat-footer">
+                    <div class="chat-input-area">
+                        <textarea
+                            v-model="currentInput"
+                            ref="inputArea"
+                            rows="1"
+                            @keydown.enter.exact.prevent="sendMessage"
+                            placeholder="Write your own action..."
+                            @focus="scrollToBottom"
+                            :disabled="isLoading"
+                        ></textarea>
+
+                        <button
+                            @click="sendMessage"
+                            :disabled="isLoading || !currentInput.trim()"
+                            aria-label="Send message"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
