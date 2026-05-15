@@ -1,6 +1,5 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-// 1. UPDATED: The "Gold Standard" Core Prompt
 const CORE_SYSTEM_PROMPT = `You are a patient and expert Math Tutor. Wrap every number, variable, and fraction in dollar signs ($).
 
 STRICT VISUAL RULES:
@@ -84,14 +83,12 @@ createApp({
 
     const addManualFact = async () => {
       if (!newFactText.value.trim()) return;
-
       try {
         await db.facts.add({
           text: newFactText.value.trim(),
           category: newFactCategory.value,
           timestamp: Date.now(),
         });
-
         newFactText.value = "";
         await loadFacts();
       } catch (err) {
@@ -169,13 +166,11 @@ createApp({
           }
         }
       } catch (err) {
-        if (err.name === "AbortError") {
+        if (err.name === "AbortError")
           alert(
             "The request timed out. The AI is taking too long to think—try again!",
           );
-        } else {
-          alert("Randomizer failed: " + err.message);
-        }
+        else alert("Randomizer failed: " + err.message);
       } finally {
         isGeneratingRules.value = false;
         clearTimeout(timeoutId);
@@ -190,7 +185,6 @@ createApp({
         const timeFacts = facts.value
           .filter((f) => f.text.toLowerCase().startsWith("time:"))
           .sort((a, b) => b.timestamp - a.timestamp);
-
         const latestTimeFact = timeFacts[0];
         const otherFacts = facts.value.filter(
           (f) => !f.text.toLowerCase().startsWith("time:"),
@@ -208,10 +202,7 @@ createApp({
           return;
         }
 
-        const prompt = `Merge duplicate facts and resolve contradictions.
-        Keep text concise. Do not invent new facts.
-        DATA: ${fData}`;
-
+        const prompt = `Merge duplicate facts and resolve contradictions. Keep text concise. Do not invent new facts. DATA: ${fData}`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
 
         const res = await fetch(url, {
@@ -255,20 +246,18 @@ createApp({
 
           if (parsed.merged_facts) {
             await db.facts.clear();
-            if (latestTimeFact) {
+            if (latestTimeFact)
               await db.facts.add({
                 text: latestTimeFact.text,
                 category: latestTimeFact.category,
                 timestamp: Date.now(),
               });
-            }
-            for (const mf of parsed.merged_facts) {
+            for (const mf of parsed.merged_facts)
               await db.facts.add({
                 text: mf.text,
                 category: mf.category,
                 timestamp: Date.now(),
               });
-            }
             await loadFacts();
           }
         }
@@ -279,25 +268,26 @@ createApp({
       }
     };
 
-    // 2. THE INVISIBLE JANITOR (Markdown)
+    // --- THE MASTER JANITOR ---
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      let content = text
-        .replace(/\x0c/g, "f") // Fixes actual Unicode Form Feeds
-        .replace(/\\f\s?/g, "") // Deletes literal "\f" or "\f "
-        .replace(/rac(?=\{)/g, "frac") // Fixes "rac{" -> "frac"
-        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}"); // Fixes "rac12" -> "\frac{1}{2}"
+      // 1. Scrub JSON Form Feeds back to 'f' BEFORE math processing
+      let content = text.replace(/\x0c/g, "f");
 
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let clean = formula
-            .trim()
-            .replace(/^\\?f?rac/, "\\frac")
-            .replace(/^\\f/, "");
+          // STEP A: Standardize rac, frac, \rac, \frac, \\frac to exactly \frac
+          // (Negative lookbehind logic via (^|[^a-zA-Z]) to prevent altering actual words like "traction")
+          let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
 
-          if (clean.startsWith("frac")) clean = "\\" + clean;
-          return katex.renderToString(clean, { throwOnError: false });
+          // STEP B: If AI dropped braces for single characters (e.g., \frac14 or \frac x y), wrap them: \frac{1}{4}
+          clean = clean.replace(
+            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
+            "\\frac{$1}{$2}",
+          );
+
+          return katex.renderToString(clean.trim(), { throwOnError: false });
         } catch (e) {
           return match;
         }
@@ -306,25 +296,20 @@ createApp({
       return marked.parse(processedText);
     };
 
-    // 3. THE INVISIBLE JANITOR (Inline/Buttons)
     const renderInlineMath = (text) => {
       if (!text) return "";
 
-      let content = text
-        .replace(/\x0c/g, "f")
-        .replace(/\\f\s?/g, "")
-        .replace(/rac(?=\{)/g, "frac")
-        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}");
+      let content = text.replace(/\x0c/g, "f");
 
       return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let clean = formula
-            .trim()
-            .replace(/^\\?f?rac/, "\\frac")
-            .replace(/^\\f/, "");
+          let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
+          clean = clean.replace(
+            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
+            "\\frac{$1}{$2}",
+          );
 
-          if (clean.startsWith("frac")) clean = "\\" + clean;
-          return katex.renderToString(clean, {
+          return katex.renderToString(clean.trim(), {
             displayMode: false,
             throwOnError: false,
           });
@@ -333,6 +318,7 @@ createApp({
         }
       });
     };
+    // ----------------------------
 
     const summarizeStory = async () => {
       if (!apiKey.value) {
@@ -348,13 +334,17 @@ createApp({
 
       if (candidates.length < batchSize) {
         alert(
-          `Not enough unsummarized messages. You requested ${batchSize}, but only have ${candidates.length} available for compression.`,
+          `Not enough unsummarized messages. You requested ${batchSize}, but only have ${candidates.length} available.`,
         );
         return;
       }
 
-      const warnMsg = `This will use the Randomizer Model to compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`;
-      if (!confirm(warnMsg)) return;
+      if (
+        !confirm(
+          `This will compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`,
+        )
+      )
+        return;
 
       isSummarizing.value = true;
 
@@ -363,22 +353,23 @@ createApp({
         const transcript = msgsToSummarize
           .map((m) => {
             let text = m.text;
-            if (m.role === "model" && m.options && m.options.length > 0) {
+            if (m.role === "model" && m.options && m.options.length > 0)
               text += `\n(Options chosen: ${m.options.join(", ")})`;
-            }
             return `${m.role === "user" ? "USER" : "STORYTELLER"}: ${text}`;
           })
           .join("\n\n");
 
-        const prompt = `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.
-            Focus entirely on the narrative progression and major actions.
-            Write the summary strictly in the SECOND-PERSON ("You").
-
-            STORY EXCERPT:
-            ${transcript}`;
-
         const payload = {
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.\nFocus entirely on the narrative progression and major actions.\nWrite strictly in the SECOND-PERSON ("You").\n\nSTORY EXCERPT:\n${transcript}`,
+                },
+              ],
+            },
+          ],
           generationConfig: {
             temperature: 0.2,
             responseMimeType: "application/json",
@@ -393,16 +384,17 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey.value,
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload),
-        });
+        );
 
         const data = await res.json();
         if (!res.ok)
@@ -415,7 +407,6 @@ createApp({
             end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1)
             rawText = rawText.substring(start, end + 1);
-
           const parsed = JSON.parse(rawText);
           if (parsed.summary) summaryText = parsed.summary.trim();
         }
@@ -424,7 +415,6 @@ createApp({
 
         const lastMsgTimestamp =
           msgsToSummarize[msgsToSummarize.length - 1].timestamp;
-
         for (const m of msgsToSummarize) await db.chats.delete(m.id);
 
         await db.chats.add({
@@ -439,7 +429,7 @@ createApp({
         await updateCounts();
         scrollToBottom();
       } catch (err) {
-        alert("Summarize failed with Flash model: " + err.message);
+        alert("Summarize failed: " + err.message);
       } finally {
         isSummarizing.value = false;
       }
@@ -468,9 +458,10 @@ createApp({
     watch(currentInput, () => nextTick(adjustHeight));
 
     onMounted(async () => {
-      const storedKey = localStorage.getItem("fractionchat_api_key");
-      const storedModel = localStorage.getItem("fractionchat_model");
-
+      if (localStorage.getItem("fractionchat_api_key"))
+        apiKey.value = localStorage.getItem("fractionchat_api_key");
+      if (localStorage.getItem("fractionchat_model"))
+        selectedModel.value = localStorage.getItem("fractionchat_model");
       if (localStorage.getItem("fractionchat_tts_model"))
         selectedTTSModel.value = localStorage.getItem("fractionchat_tts_model");
       if (localStorage.getItem("fractionchat_randomizer_model"))
@@ -483,25 +474,18 @@ createApp({
         ttsProsodyNudge.value = localStorage.getItem(
           "fractionchat_tts_prosody",
         );
-      if (storedKey && storedModel) {
-        apiKey.value = storedKey;
-        selectedModel.value = storedModel;
-        isConfigured.value = true;
-      }
-
-      const storedSystemPrompt = localStorage.getItem(
-        "fractionchat_system_prompt",
-      );
-      if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
+      if (localStorage.getItem("fractionchat_system_prompt"))
+        systemPrompt.value = localStorage.getItem("fractionchat_system_prompt");
       if (localStorage.getItem("fractionchat_summary_batch"))
         summaryBatchSize.value = parseInt(
           localStorage.getItem("fractionchat_summary_batch"),
         );
 
+      if (apiKey.value && selectedModel.value) isConfigured.value = true;
+
       try {
         messages.value = await db.chats.orderBy("timestamp").toArray();
         scrollToBottom();
-
         if (messages.value.length === 0) {
           if (apiKey.value) initializeStory();
           else showSettings.value = true;
@@ -520,7 +504,6 @@ createApp({
         document.body.style.height = `${h}px`;
         scrollToBottom();
       };
-
       if (window.visualViewport)
         window.visualViewport.addEventListener("resize", handleResize);
       else window.addEventListener("resize", handleResize);
@@ -571,10 +554,9 @@ createApp({
 
     const scrollToBottom = () => {
       setTimeout(() => {
-        if (messagesContainer.value) {
+        if (messagesContainer.value)
           messagesContainer.value.scrollTop =
             messagesContainer.value.scrollHeight;
-        }
       }, 300);
     };
 
@@ -602,7 +584,6 @@ createApp({
         )
       )
         return;
-
       await db.chats.clear();
       await db.facts.clear();
       messages.value = [];
@@ -615,19 +596,16 @@ createApp({
 
     const initializeStory = async () => {
       if (isLoading.value) return;
-
       const firstMessage =
         systemPrompt.value.trim() ||
         "The story begins in a mysterious world of fractions...";
       const userId = await saveToDb("user", firstMessage);
-
       messages.value.push({
         id: userId,
         role: "user",
         text: firstMessage,
         isHidden: false,
       });
-
       await triggerAIResponse();
     };
 
@@ -636,7 +614,6 @@ createApp({
       const dataSize = binaryString.length;
       const buffer = new ArrayBuffer(44);
       const view = new DataView(buffer);
-
       const writeString = (offset, string) => {
         for (let i = 0; i < string.length; i++)
           view.setUint8(offset + i, string.charCodeAt(i));
@@ -660,14 +637,12 @@ createApp({
       const headerBytes = new Uint8Array(buffer);
       for (let i = 0; i < headerBytes.length; i++)
         headerString += String.fromCharCode(headerBytes[i]);
-
       return btoa(headerString + binaryString);
     };
 
     const triggerTTS = async (messageIndex) => {
       const msg = messages.value[messageIndex];
       if (!msg || !msg.text || msg.isGeneratingAudio) return;
-
       msg.isGeneratingAudio = true;
 
       try {
@@ -691,7 +666,6 @@ createApp({
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedTTSModel.value}:generateContent`;
-
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -700,7 +674,6 @@ createApp({
           },
           body: JSON.stringify(payload),
         });
-
         const data = await response.json();
         if (!response.ok)
           throw new Error(data.error?.message || "TTS API Error");
@@ -732,16 +705,10 @@ createApp({
           let role =
             msg.role === "user" || msg.role === "summary" ? "user" : "model";
           let text = msg.text;
-
           if (msg.role === "summary")
             text = `[PREVIOUS EVENTS SUMMARY]\n${text}`;
-          if (index === 0) {
-            text = `[STORY GRIMOIRE]
-            ${factsSummary || "No facts established yet."}[END GRIMOIRE]
-
-            STORY PREMISE: ${text}`;
-          }
-
+          if (index === 0)
+            text = `[STORY GRIMOIRE]\n${factsSummary || "No facts established yet."}[END GRIMOIRE]\n\nSTORY PREMISE: ${text}`;
           return { role: role, parts: [{ text: text }] };
         });
 
@@ -780,7 +747,6 @@ createApp({
         };
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
-
         let data;
         let attempt = 0;
         const retryDelays = [5000, 10000, 15000];
@@ -799,7 +765,6 @@ createApp({
               body: JSON.stringify(payload),
               signal: controller.signal,
             });
-
             clearTimeout(timeoutId);
 
             if (!response.ok) {
@@ -831,9 +796,8 @@ createApp({
 
         if (data.candidates && data.candidates[0].content.parts) {
           for (const part of data.candidates[0].content.parts) {
-            if (part.thought) {
-              thoughtText += (part.text || "") + "\n\n";
-            } else if (part.text) {
+            if (part.thought) thoughtText += (part.text || "") + "\n\n";
+            else if (part.text) {
               let text = part.text.replace(
                 /<think>([\s\S]*?)<\/think>/gi,
                 (m, inner) => {
@@ -856,20 +820,17 @@ createApp({
             const parsed = JSON.parse(
               finalResponse.substring(jsonStartIndex, jsonEndIndex + 1),
             );
-
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
-
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
-                if (f.text && f.category) {
+                if (f.text && f.category)
                   await db.facts.add({
                     text: f.text,
                     category: f.category,
                     timestamp: Date.now(),
                   });
-                }
               }
               await loadFacts();
             }
@@ -884,7 +845,6 @@ createApp({
           thoughtText.trim(),
           finalOptions,
         );
-
         messages.value.push({
           id: modelId,
           role: "model",
@@ -899,7 +859,6 @@ createApp({
         if (error.name === "AbortError")
           errorMsg =
             "⏳ Request timed out. The AI took too long to respond. Please hit the ↻ retry button.";
-
         const errId = await saveToDb("model", errorMsg);
         messages.value.push({ id: errId, role: "model", text: errorMsg });
       } finally {
@@ -913,10 +872,8 @@ createApp({
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
-
       const userId = await saveToDb("user", userText);
       messages.value.push({ id: userId, role: "user", text: userText });
-
       currentInput.value = "";
       await triggerAIResponse();
     };
