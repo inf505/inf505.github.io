@@ -1,27 +1,24 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are a world-class, adaptive Math Tutor.
-TASK: Guide the user through any mathematical concept.
+const CORE_SYSTEM_PROMPT = `You are a world-class Math Tutor.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Wrap EVERY number, variable, and expression in dollar signs (e.g., $x$, $5$, or $\\frac{1}{2}$).
-2. NO SLASHES: Use $\\frac{1}{2}$ for all fractions.
+1. UNIVERSAL LATEX: Wrap EVERY number/variable in dollar signs.
+2. FRACTIONS: Always use the exact syntax $\\frac{num}{den}$. Always use curly braces {}.
 3. Use **bold** for math terms.
 
-EXAMPLE RESPONSE:
+ONE-SHOT EXAMPLE:
 {
-  "thought": "User is learning addition.",
-  "response": "To add $\\frac{1}{5}$ and $\\frac{2}{5}$, we just add the top numbers! \n\n$\\frac{1+2}{5} = \\frac{3}{5}$. \n\nTry this: what is $\\frac{3}{8} + \\frac{2}{8}$?",
-  "options": ["$\\frac{5}{8}$", "$\\frac{5}{16}$", "Explain the rule"],
-  "facts": [{"text": "Topic: Adding Fractions", "category": "Lore"}]
+  "thought": "Teaching addition of like fractions.",
+  "response": "Since the **Denominators** are the same, we just add the **Numerators**! \n\n$\\frac{1}{5} + \\frac{2}{5} = \\frac{1+2}{5} = \\frac{3}{5}$. \n\nWhat is $\\frac{2}{7} + \\frac{3}{7}$?",
+  "options": ["$\\frac{5}{7}$", "$\\frac{5}{14}$", "Explain the rule"],
+  "facts": [{"text": "Topic: Adding Like Fractions", "category": "Lore"}]
 }
 
 REQUIREMENTS:
-- Return a single JSON object.
-- Use double-backslashes (\\\\) for LaTeX commands (Example: \\\\frac).
-- Focus on being encouraging and clear.
-
-TASK: Continue the lesson based on the user's input.
+- Use DOUBLE BACKSLASHES in your JSON: \\\\frac{1}{2}.
+- Never omit the curly braces in a fraction.
+- Be encouraging and patient.
 `;
 
 const db = new Dexie("FractionChatDB");
@@ -312,27 +309,24 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
+      // 1. THE RESCUE SCRUBBER
       let content = text
-        // 1. THE NUCLEAR OPTION: Delete any literal "\f" or Form Feed character
-        // that appears right before a backslash or at the start of math.
-        .replace(/\x0c/g, "") // Delete raw form feed characters
-        .replace(/\\f\s?\\/g, "\\") // Turns "\f \" or "\f\" into just "\"
-        .replace(/\\f(?=frac)/g, "") // Turns "\ffrac" into "frac"
-        .replace(/rac\{/g, "\\frac{"); // Fixes the "missing f" bug
+        .replace(/\x0c/g, "f") // Replaces invisible Form Feed characters with 'f'
+        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}") // Fixes "rac15" -> "\frac{1}{5}"
+        .replace(/\\?rac\{/g, "\\frac{") // Fixes "rac{" -> "\frac{"
+        .replace(/([^\\$])frac/g, "$1\\frac"); // Adds backslash if missing
 
-      // 2. DELIMITER RENDERER
+      // 2. RENDERER
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          // Clean the inside of the $ signs too
-          let cleanFormula = formula
+          let clean = formula
             .trim()
-            .replace(/^\\f\s?/, "") // Remove leading \f or \f [space]
-            .replace(/\\f\s?\\/, "\\"); // Remove \f inside the formula
+            .replace(/^\\?f?rac/, "\\frac") // Ensures it starts with \frac
+            .replace(/rac(\d)(\d)/, "frac{$1}{$2}"); // Fixes button-style rac15
 
-          if (cleanFormula.startsWith("frac"))
-            cleanFormula = "\\" + cleanFormula;
+          if (clean.startsWith("frac")) clean = "\\" + clean;
 
-          return katex.renderToString(cleanFormula, { throwOnError: false });
+          return katex.renderToString(clean, { throwOnError: false });
         } catch (e) {
           return match;
         }
@@ -341,24 +335,19 @@ createApp({
       return marked.parse(processedText);
     };
 
-    // Same "Super Scrub" for the buttons
+    // Apply the same scrub to the buttons
     const renderInlineMath = (text) => {
       if (!text) return "";
       let content = text
-        .replace(/\x0c/g, "")
-        .replace(/\\f\s?\\/g, "\\")
-        .replace(/\\f(?=frac)/g, "")
-        .replace(/rac\{/g, "\\frac{");
+        .replace(/\x0c/g, "f")
+        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}")
+        .replace(/\\?rac\{/g, "\\frac{");
 
       return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let cleanFormula = formula
-            .trim()
-            .replace(/^\\f\s?/, "")
-            .replace(/\\f\s?\\/, "\\");
-          if (cleanFormula.startsWith("frac"))
-            cleanFormula = "\\" + cleanFormula;
-          return katex.renderToString(cleanFormula, {
+          let clean = formula.trim().replace(/^\\?f?rac/, "\\frac");
+          if (clean.startsWith("frac")) clean = "\\" + clean;
+          return katex.renderToString(clean, {
             displayMode: false,
             throwOnError: false,
           });
