@@ -183,20 +183,24 @@ createApp({
       }
     };
 
-    // --- THE MASTER JANITOR ---
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. Reverse JSON control character mutations globally
       let content = text
-        .replace(/\x0c/g, "\\f") // Form Feed -> \f (Fixes \frac)
-        .replace(/\t/g, "\\t") // Tab -> \t (Fixes \times, \tan, \theta)
-        .replace(/\x08/g, "\\b") // Backspace -> \b (Fixes \beta, \binom)
-        .replace(/\x0b/g, "\\v"); // Vertical Tab -> \v (Fixes \vec)
+        .replace(/\x0c/g, "\\f")
+        .replace(/\t/g, "\\t")
+        .replace(/\x08/g, "\\b")
+        .replace(/\x0b/g, "\\v");
 
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
+          // HEALING LOGIC: If AI sends "div" or "times" or "frac" without \, add it.
+          let clean = formula
+            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
+            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
+            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
+
+          // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
@@ -214,19 +218,13 @@ createApp({
     const renderInlineMath = (text) => {
       if (!text) return "";
 
-      let content = text
-        .replace(/\x0c/g, "\\f")
-        .replace(/\t/g, "\\t")
-        .replace(/\x08/g, "\\b")
-        .replace(/\x0b/g, "\\v");
-
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+      // We use the same healing logic for the buttons/options
+      const processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
-          clean = clean.replace(
-            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
-            "\\frac{$1}{$2}",
-          );
+          let clean = formula
+            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
+            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
+            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
 
           return katex.renderToString(clean.trim(), {
             displayMode: false,
