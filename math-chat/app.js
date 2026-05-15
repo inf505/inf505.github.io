@@ -770,6 +770,12 @@ createApp({
           }
 
           if (jsonString) {
+            jsonString = jsonString
+              .replace(/\x0c/g, "\\\\f") // Fixes \frac
+              .replace(/\t/g, "\\\\t") // Fixes \times, \tan
+              .replace(/\x08/g, "\\\\b") // Fixes \beta
+              .replace(/\x0b/g, "\\\\v"); // Fixes \vec
+
             const parsed = JSON.parse(jsonString);
 
             if (parsed.thought) thoughtText = parsed.thought;
