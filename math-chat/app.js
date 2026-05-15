@@ -828,29 +828,51 @@ createApp({
         let finalOptions = null;
 
         try {
-          const jsonStartIndex = finalResponse.indexOf("{");
-          const jsonEndIndex = finalResponse.lastIndexOf("}");
-          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-            const parsed = JSON.parse(
-              finalResponse.substring(jsonStartIndex, jsonEndIndex + 1),
+          let jsonString = "";
+
+          // 1. Try to extract JSON from markdown code blocks (e.g., ```json ... ```)
+          const codeBlockMatch = finalResponse.match(
+            /```(?:json)?\s*([\s\S]*?)```/i,
+          );
+
+          if (codeBlockMatch) {
+            jsonString = codeBlockMatch[1].trim();
+          } else {
+            // 2. Look for the true start of the JSON object, ignoring LaTeX math braces
+            const startMatch = finalResponse.match(
+              /\{\s*"(?:thought|response|options|facts)"/i,
             );
+            if (startMatch) {
+              const startIndex = startMatch.index;
+              const endIndex = finalResponse.lastIndexOf("}");
+              if (startIndex !== -1 && endIndex !== -1) {
+                jsonString = finalResponse.substring(startIndex, endIndex + 1);
+              }
+            }
+          }
+
+          if (jsonString) {
+            const parsed = JSON.parse(jsonString);
+
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
+
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
-                if (f.text && f.category)
+                if (f.text && f.category) {
                   await db.facts.add({
                     text: f.text,
                     category: f.category,
                     timestamp: Date.now(),
                   });
+                }
               }
               await loadFacts();
             }
           }
         } catch (e) {
-          console.error("JSON Parse error", e);
+          console.error("JSON Parse error:", e, "\nRaw String:", finalResponse);
         }
 
         const modelId = await saveToDb(
