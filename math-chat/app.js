@@ -778,25 +778,17 @@ createApp({
               .replace(/\x0c/g, "\\\\f")
               .replace(/\x0b/g, "\\\\v")
               .replace(/\t/g, "\\\\t")
-              .replace(/\\/g, "\\\\");
+              .replace(/\\/g, "\\\\")
+              .replace(/\\\\n/g, "\\n")
+              .replace(/\\\\"/g, '\\"');
 
-            // 2. The AI often mixes \frac and \\frac.
-            // We ensure all backslashes are doubled UNLESS they are
-            // part of a valid JSON escape like \n or \"
-            sanitized = sanitized.replace(/\\/g, "\\\\");
+            const parsed = JSON.parse(sanitized);
 
             thoughtText =
               parsed.thought ||
               parsed.thought_process ||
               parsed.diagnosis ||
               "";
-
-            // 3. Fix the "Double-Double" problem we just created for \n and \"
-            sanitized = sanitized
-              .replace(/\\\\n/g, "\\n")
-              .replace(/\\\\"/g, '\\"');
-
-            const parsed = JSON.parse(sanitized);
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
