@@ -280,16 +280,16 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. Scrub JSON Form Feeds back to 'f' BEFORE math processing
-      let content = text.replace(/\x0c/g, "f");
+      // 1. Reverse JSON control character mutations globally
+      let content = text
+        .replace(/\x0c/g, "\\f") // Form Feed -> \f (Fixes \frac)
+        .replace(/\t/g, "\\t") // Tab -> \t (Fixes \times, \tan, \theta)
+        .replace(/\x08/g, "\\b") // Backspace -> \b (Fixes \beta, \binom)
+        .replace(/\x0b/g, "\\v"); // Vertical Tab -> \v (Fixes \vec)
 
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          // STEP A: Standardize rac, frac, \rac, \frac, \\frac to exactly \frac
-          // (Negative lookbehind logic via (^|[^a-zA-Z]) to prevent altering actual words like "traction")
           let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
-
-          // STEP B: If AI dropped braces for single characters (e.g., \frac14 or \frac x y), wrap them: \frac{1}{4}
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
@@ -307,9 +307,12 @@ createApp({
     const renderInlineMath = (text) => {
       if (!text) return "";
 
-      let content = text.replace(/\x0c/g, "f");
+      let content = text
+        .replace(/\x0c/g, "\\f")
+        .replace(/\t/g, "\\t")
+        .replace(/\x08/g, "\\b")
+        .replace(/\x0b/g, "\\v");
 
-      // 1. Process KaTeX first
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
           let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
@@ -327,8 +330,6 @@ createApp({
         }
       });
 
-      // 2. Use the standard marked.parse (which we know works),
-      // then strip the <p> and </p> tags so it fits perfectly in the button!
       let html = marked.parse(processedText);
       return html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
     };
