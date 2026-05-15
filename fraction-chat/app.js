@@ -6,35 +6,33 @@ TASK: Guide the user through any mathematical concept, from basic arithmetic to 
 ADAPTIVE PEDAGOGY:
 1. Socratic Method: Ask questions that lead the student to the solution.
 2. Scaffolding: Break complex problems into smaller, manageable steps.
-3. Visualization: Use text-based descriptions of visual aids to explain concepts.
-4. Mastery Learning: Use the Grimoire to track progress. Only move forward once the student is ready.
+3. Mastery Learning: Use the Grimoire to track progress.
 
 STRICT VISUAL RULES:
 1. UNIVERSAL LATEX: Every single mathematical expression, variable, or number MUST be wrapped in dollar signs (e.g., $x$, $5$, or $\\frac{1}{2}$).
 2. NO SLASHES: Never use "1/2". Always use "$\\frac{1}{2}$".
-3. TERMINOLOGY: Use **bold** for formal math terms (e.g., **Derivative**, **Common Denominator**).
+3. TERMINOLOGY: Use **bold** for formal math terms.
 
 ONE-SHOT EXAMPLE OF PERFECT FORMATTING:
 {
-  "thought": "The user is learning about basic linear equations. I will explain the concept of balance and then provide a step-by-step problem.",
-  "response": "To solve for $x$ in the equation $x + \\\\frac{1}{2} = 5$, we need to **Isolate** the variable. \n\nImagine a balance scale: If we subtract \\\\frac{1}{2} from one side, we must do the same to the other to keep it level! \n\n$x + \\\\frac{1}{2} - \\\\frac{1}{2} = 5 - \\\\frac{1}{2}$ \n\nWhat is $5$ minus $\\\\frac{1}{2}$?",
+  "thought": "The user needs to solve for x.",
+  "response": "To solve $x + \\\\frac{1}{2} = 5$, we subtract \\\\frac{1}{2} from both sides! \n\n$x = 5 - \\\\frac{1}{2}$ \n\nWhat is the result?",
   "options": [
     "$\\\\frac{9}{2}$",
     "$4.5$",
-    "Explain the subtraction step"
+    "Explain the step"
   ],
   "facts": [
-    {"text": "Topic: Linear Equations with Fractions", "category": "Lore"},
-    {"text": "Student understands the balance scale analogy", "category": "Character"}
+    {"text": "Topic: Linear Equations", "category": "Lore"}
   ]
 }
 
 OUTPUT REQUIREMENTS:
-- Return a single JSON object with the keys: "thought", "response", "options", and "facts".
-- Use double-backslashes (\\\\\\\\) for all LaTeX commands to ensure they survive JSON parsing (e.g., \\\\\\\\frac, \\\\\\\\sqrt).
-- NEVER allow the raw sequence "\f" to appear; always use "\\\\f" to prevent Form Feed errors.
+- Return a single JSON object.
+- Use double-backslashes (\\\\) for LaTeX (e.g., \\\\frac, \\\\sqrt).
+- Focus on clarity and encouraging the student.
 
-TASK: Continue the lesson or start a new topic based on the user's input, following the style and formatting of the example above.
+TASK: Continue the lesson based on the user's input.
 `;
 
 const db = new Dexie("FractionChatDB");
@@ -325,26 +323,23 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. FIX: Restore "frac" if it was turned into a Form Feed (\f)
-      let content = text.replace(/\x0c/g, "\\f");
+      // 1. CLEANUP: Remove common AI formatting artifacts
+      let content = text
+        .replace(/\x0c/g, "f") // Fix raw form feeds
+        .replace(/\\f\\frac/g, "\\frac") // Fix the "\f\frac" double-up
+        .replace(/\\f\s?\\frac/g, "\\frac") // Fix "\f \frac"
+        .replace(/rac\{/g, "\\frac{"); // Fix missing "f"
 
-      // 2. REPAIR: If the AI sent raw \frac{...}{...} without dollar signs, add them.
-      // This regex finds \frac{anything}{anything} and wraps it in $ if it isn't already.
-      content = content.replace(/\\frac\{[^{}]*\}\{[^{}]*\}/g, (match) => {
-        // If it's already got a $ in front, don't add another one
-        return match.startsWith("$") ? match : `$${match}$`;
-      });
-
-      // 3. REPAIR: Catch the "rac" bug too, just in case
-      content = content.replace(/rac\{/g, "\\frac{");
-
-      // 4. MAIN RENDERER: Turn $...$ into beautiful KaTeX
+      // 2. MAIN RENDERER: Turn $...$ into beautiful KaTeX
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          // Final check to ensure formula starts with \ if it's a frac
-          let cleanFormula = formula;
+          let cleanFormula = formula.trim();
+
+          // Ensure the formula starts with a backslash if it's a fraction
           if (cleanFormula.startsWith("frac"))
             cleanFormula = "\\" + cleanFormula;
+          // Remove any leading \f if the AI still included it inside the $ signs
+          cleanFormula = cleanFormula.replace(/^\\f/, "");
 
           return katex.renderToString(cleanFormula, { throwOnError: false });
         } catch (e) {
@@ -355,19 +350,17 @@ createApp({
       return marked.parse(processedText);
     };
 
+    // Apply the same logic to the buttons
     const renderInlineMath = (text) => {
       if (!text) return "";
-
-      // Same repair logic for buttons
-      let content = text.replace(/\x0c/g, "\\f");
-      content = content.replace(/\\frac\{[^{}]*\}\{[^{}]*\}/g, (match) => {
-        return match.startsWith("$") ? match : `$${match}$`;
-      });
-      content = content.replace(/rac\{/g, "\\frac{");
+      let content = text
+        .replace(/\x0c/g, "f")
+        .replace(/\\f\\frac/g, "\\frac")
+        .replace(/rac\{/g, "\\frac{");
 
       return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let cleanFormula = formula;
+          let cleanFormula = formula.trim().replace(/^\\f/, "");
           if (cleanFormula.startsWith("frac"))
             cleanFormula = "\\" + cleanFormula;
 
