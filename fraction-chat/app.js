@@ -128,10 +128,18 @@ createApp({
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
-        const p = `Act as a curriculum designer.
-        Brainstorm 3 different fraction topics (e.g., Equivalent Fractions, Mixed Numbers, Multiplying Fractions).
-        Pick one and write a 1-sentence "Hook" to start the lesson.
-        STRICT LIMIT: Max 50 words.`;
+        const p = `Act as an innovative Educational Game Designer.
+        TASK: Create a high-concept "Math Adventure" premise where the user must learn math to succeed in a strange world.
+
+        In your 'thought' field:
+        - Brainstorm 3 weird, unrelated scenarios where math is a "power" (e.g., Potion-making ratios, Space-flight geometry, Ancient pyramid structural logic).
+        - Pick the most creative one.
+
+        In your 'premise' field:
+        - Write a 1-paragraph "World Rule" (Max 80 words).
+        - Describe the user's role and WHY they need math (e.g., "You are a Cyber-Navigator. To jump through hyperspace, you must calculate precise fractions of light-speed. If your ratios are off, you'll end up in a black hole.").
+        - Keep the tone atmospheric but educational.
+        - Do NOT mention specific math problems yet, just the theme.`;
 
         const payload = {
           contents: [{ role: "user", parts: [{ text: p }] }],
@@ -1038,34 +1046,6 @@ createApp({
       await deleteMessage(index);
       await triggerAIResponse();
     };
-
-    // const renderInlineMath = (text) => {
-    //   if (!text) return "";
-
-    //   // Same fix for the buttons
-    //   let sanitized = text.replace(/\x0c/g, "\\f");
-
-    //   return sanitized.replace(/\$(.*?)\$/g, (match, formula) => {
-    //     try {
-    //       let cleanFormula = formula;
-
-    //       // SAFETY NET: Fix "rac" in buttons too
-    //       if (
-    //         cleanFormula.includes("rac{") &&
-    //         !cleanFormula.includes("\\frac{")
-    //       ) {
-    //         cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
-    //       }
-
-    //       return katex.renderToString(cleanFormula, {
-    //         displayMode: false,
-    //         throwOnError: false,
-    //       });
-    //     } catch (e) {
-    //       return match;
-    //     }
-    //   });
-    // };
 
     return {
       apiKey,
