@@ -370,6 +370,7 @@ button.small-btn {
 /* Message Content Markdown Styling */
 .message-text {
     word-break: break-word;
+    line-height: 1.3em;
 }
 
 .message-text h1,

@@ -928,7 +928,7 @@ createApp({
     return {
       apiKey,
       selectedModel,
-      randomizerModel,
+      //randomizerModel,
       isConfigured,
       renderInlineMath,
       renderMarkdown,
