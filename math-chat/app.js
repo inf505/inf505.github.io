@@ -965,7 +965,7 @@ createApp({
       isSummarizing,
       summarizeStory,
       summaryBatchSize,
-      isGeneratingRules,
+      //isGeneratingRules,
       //randomizeRules,
     };
   },
