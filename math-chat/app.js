@@ -327,8 +327,10 @@ createApp({
         }
       });
 
-      // 2. Process inline markdown (bold/italics) WITHOUT wrapping in <p> tags
-      return marked.parseInline(processedText);
+      // 2. Use the standard marked.parse (which we know works),
+      // then strip the <p> and </p> tags so it fits perfectly in the button!
+      let html = marked.parse(processedText);
+      return html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
     };
 
     const summarizeStory = async () => {
