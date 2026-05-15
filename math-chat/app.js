@@ -532,10 +532,10 @@ createApp({
 
       localStorage.setItem("fractionchat_api_key", apiKey.value);
       localStorage.setItem("fractionchat_model", selectedModel.value);
-      localStorage.setItem(
-        "fractionchat_randomizer_model",
-        randomizerModel.value,
-      );
+      // localStorage.setItem(
+      //   "fractionchat_randomizer_model",
+      //   randomizerModel.value,
+      // );
       localStorage.setItem("fractionchat_system_prompt", systemPrompt.value);
       localStorage.setItem("fractionchat_tts_model", selectedTTSModel.value);
       localStorage.setItem("fractionchat_tts_voice", selectedVoice.value);
