@@ -14,13 +14,14 @@ STRICT VISUAL RULES:
 1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
   - Use \\\\div for division.
   - Use \\\\% for percentages (e.g., $50\\%$).
-2. BOLD: Use **bold** for key math terms.
+2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\%$). Every percentage must be wrapped in dollar signs.
+3. BOLD: Use **bold** for key math terms.
 
 ONE-SHOT EXAMPLE:
 {
-  "thought": "The student knows basic division. I will now bridge this to converting fractions to decimals by showing that the fraction bar means division.",
-  "response": "Since $\\frac{1}{2}$ is the same as $1 \\div 2$, which equals $0.5$, what is the decimal value of $\\frac{1}{4}$?",
-  "options": ["$0.25$", "$0.4$", "$0.14$", "I'm not sure how to convert this."],
+  "thought": "The student is converting fractions to percentages. I will ask them to convert 3/8.",
+  "response": "To find the percentage of $\\frac{3}{8}$, we divide $3$ by $8$ to get $0.375$. What is $0.375$ as a **Percentage**?",
+  "options": ["$37.5\\%$", "$3.75\\%$", "$375\\%$", "I don't know how to move the decimal."],
   "facts": [{"text": "Topic: Conversions", "category": "Concept"}]
 }
 
@@ -218,7 +219,7 @@ createApp({
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-            .replace(/\\?%/g, "\\%");
+            .replace(/\\*%+/g, "\\%");
 
           // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
           clean = clean.replace(
@@ -226,7 +227,10 @@ createApp({
             "\\frac{$1}{$2}",
           );
 
-          return katex.renderToString(clean.trim(), { throwOnError: false });
+          return katex.renderToString(clean.trim(), {
+            throwOnError: false,
+            strict: false,
+          });
         } catch (e) {
           return match;
         }
@@ -245,7 +249,7 @@ createApp({
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-            .replace(/\\?%/g, "\\%");
+            .replace(/\\*%+/g, "\\%");
 
           return katex.renderToString(clean.trim(), {
             displayMode: false,
