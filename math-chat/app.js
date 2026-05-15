@@ -3,28 +3,17 @@ const { createApp, ref, onMounted, nextTick, watch } = Vue;
 const CORE_SYSTEM_PROMPT = `You are a patient, Socratic Math Tutor. Wrap every number, variable, and fraction in dollar signs ($).
 
 PEDAGOGY & OPTIONS RULES:
-1. THOUGHT PROCESS: Use the "thought" field to act as a teacher. Diagnose the student's current understanding, identify potential mistakes, and plan your next specific question.
-2. ONE STEP AT A TIME: End your "response" with exactly ONE clear question. Never lecture for too long.
-3. OPTIONS DESIGN: Always provide up to 4 options. They MUST include:
-   - The correct answer.
-   - 1 or 2 common math misconceptions or distractors.
-   - A safe "I don't know / Can you explain?" option.
+1. THOUGHT PROCESS: Diagnose the student's math logic. Plan a bridge from what they know to the new concept.
+2. ONE STEP AT A TIME: End your "response" with exactly ONE specific math question.
+3. OPTIONS DESIGN: Provide 4 options: 1 correct, 2 common mistakes, 1 "Help/Explain".
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
-2. BOLD: Use **bold** for key math terms.
-
-ONE-SHOT EXAMPLE:
-{
-  "thought": "The student is learning fraction anatomy. I will ask them to identify the denominator.",
-  "response": "If a pizza has $8$ slices and you eat $3$, you ate $\\frac{3}{8}$ of the pizza. \\n\\nLooking at $\\frac{3}{8}$, which number is the **Denominator**?",
-  "options": ["$8$", "$3$", "$11$", "I don't know what a denominator is."],
-  "facts": [{"text": "Topic: Intro to Fractions", "category": "Concept"}]
-}
+1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for all math. Use \\div for division and \\times for multiplication.
+2. BOLD: Use **bold** for math terms (e.g., **Reciprocal**).
 
 REQUIREMENTS:
-- Return JSON.
-- Use double-backslashes for LaTeX: \\\\frac{1}{2}, \\\\div, \\\\times.`;
+- Return JSON only.
+- Double-escape backslashes: \\\\frac{1}{2}.`;
 
 const db = new Dexie("FractionChatDB");
 db.version(2).stores({
@@ -771,13 +760,19 @@ createApp({
 
           if (jsonString) {
             let sanitized = jsonString
-              .replace(/\\n/g, "[[NEWLINE]]")
-              .replace(/\\(?![u"bfnrt\/\\\[])/g, "\\\\")
-              .replace(/\[\[NEWLINE\]\]/g, "\\n")
               .replace(/\x0c/g, "\\\\f")
-              .replace(/\t/g, "\\\\t")
-              .replace(/\x08/g, "\\\\b")
-              .replace(/\x0b/g, "\\\\v");
+              .replace(/\x0b/g, "\\\\v")
+              .replace(/\t/g, "\\\\t");
+
+            // 2. The AI often mixes \frac and \\frac.
+            // We ensure all backslashes are doubled UNLESS they are
+            // part of a valid JSON escape like \n or \"
+            sanitized = sanitized.replace(/\\/g, "\\\\");
+
+            // 3. Fix the "Double-Double" problem we just created for \n and \"
+            sanitized = sanitized
+              .replace(/\\\\n/g, "\\n")
+              .replace(/\\\\"/g, '\\"');
 
             const parsed = JSON.parse(sanitized);
 
