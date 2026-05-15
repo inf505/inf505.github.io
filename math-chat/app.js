@@ -64,7 +64,6 @@ createApp({
     const isLoading = ref(false);
     const messagesContainer = ref(null);
     const inputArea = ref(null);
-    const isGeneratingRules = ref(false);
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
     const selectedVoice = ref("Aoede");
     const ttsProsodyNudge = ref(
@@ -101,87 +100,6 @@ createApp({
         await loadFacts();
       } catch (err) {
         console.error("Error adding manual fact:", err);
-      }
-    };
-
-    const randomizeRules = async () => {
-      if (!apiKey.value) {
-        alert("Please enter your API Key first.");
-        return;
-      }
-
-      isGeneratingRules.value = true;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-      try {
-        const p = `Act as an innovative Educational Game Designer.
-        TASK: Create a high-concept "Math Adventure" premise where the user must learn math to succeed in a strange world.
-
-        In your 'thought' field:
-        - Brainstorm 3 weird, unrelated scenarios where math is a "power".
-        - Pick the most creative one.
-
-        In your 'premise' field:
-        - Write a 1-paragraph "World Rule" (Max 80 words).
-        - Describe the user's role and WHY they need math.
-        - Keep the tone atmospheric but educational.
-        - Do NOT mention specific math problems yet, just the theme.`;
-
-        const payload = {
-          contents: [{ role: "user", parts: [{ text: p }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: { type: "string" },
-                premise: { type: "string" },
-              },
-              required: ["thought", "premise"],
-            },
-          },
-        };
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        const data = await res.json();
-
-        if (!res.ok)
-          throw new Error(data.error?.message || "API request failed");
-
-        if (data.candidates && data.candidates[0].content.parts) {
-          let rawText = data.candidates[0].content.parts[0].text;
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
-            rawText = rawText.substring(start, end + 1);
-          }
-          const parsedData = JSON.parse(rawText);
-          if (parsedData.premise) {
-            systemPrompt.value = parsedData.premise.trim();
-          }
-        }
-      } catch (err) {
-        if (err.name === "AbortError")
-          alert(
-            "The request timed out. The AI is taking too long to think—try again!",
-          );
-        else alert("Randomizer failed: " + err.message);
-      } finally {
-        isGeneratingRules.value = false;
-        clearTimeout(timeoutId);
       }
     };
 
@@ -965,8 +883,6 @@ createApp({
       isSummarizing,
       summarizeStory,
       summaryBatchSize,
-      isGeneratingRules,
-      randomizeRules,
     };
   },
 }).mount("#app");

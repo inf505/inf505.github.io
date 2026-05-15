@@ -92,28 +92,6 @@
                         </div>
                         <div class="settings-group">
                             <label>Starting Prompt</label>
-                            <!--<div style="margin-bottom: 8px">
-                                <small>Randomizer Model:</small>
-                                <input
-                                    type="text"
-                                    v-model="randomizerModel"
-                                    placeholder="gemma-4-31b-it"
-                                    style="font-size: 0.8rem; padding: 4px"
-                                />
-                            </div>
-                            <small
-                                >gemma-4-31b-it , gemini-2.5-flash ,
-                                gemini-3-flash-preview</small
-                            >
-                            <button
-                                class="small-btn"
-                                @click="randomizeRules"
-                                :disabled="isGeneratingRules"
-                                style="margin-bottom: 8px; width: 100%"
-                            >
-                                {{ isGeneratingRules ? "🎲 Rolling the dice..."
-                                : "🎲 Generate New Topic" }}
-                            </button>-->
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
