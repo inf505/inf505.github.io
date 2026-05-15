@@ -425,9 +425,6 @@
                                 v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
                                 class="story-options"
                             >
-                                <p class="options-label">
-                                    What do you do next?
-                                </p>
                                 <button
                                     v-for="(opt, i) in msg.options"
                                     :key="i"
