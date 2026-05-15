@@ -1,24 +1,24 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are a world-class Math Tutor.
+const CORE_SYSTEM_PROMPT = `You are a patient and expert Math Tutor.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Wrap EVERY number/variable in dollar signs.
-2. FRACTIONS: Always use the exact syntax $\\frac{num}{den}$. Always use curly braces {}.
-3. Use **bold** for math terms.
+1. UNIVERSAL LATEX: Wrap every number, variable, and fraction in dollar signs.
+2. FRACTIONS: Use the standard syntax: $\\frac{numerator}{denominator}$.
+3. BOLD: Use **bold** for key math terms.
 
 ONE-SHOT EXAMPLE:
 {
-  "thought": "Teaching addition of like fractions.",
-  "response": "Since the **Denominators** are the same, we just add the **Numerators**! \n\n$\\frac{1}{5} + \\frac{2}{5} = \\frac{1+2}{5} = \\frac{3}{5}$. \n\nWhat is $\\frac{2}{7} + \\frac{3}{7}$?",
-  "options": ["$\\frac{5}{7}$", "$\\frac{5}{14}$", "Explain the rule"],
-  "facts": [{"text": "Topic: Adding Like Fractions", "category": "Lore"}]
+  "thought": "I will teach the student how to identify the numerator and denominator.",
+  "response": "A **Fraction** represents a part of a whole. For example, if you have $\\frac{1}{4}$ of a cake, it means the cake was cut into $4$ equal pieces and you have $1$ of them. \n\nIf a pizza is cut into $8$ slices and you eat $3$, what fraction did you eat?",
+  "options": ["$\\frac{3}{8}$", "$\\frac{8}{3}$", "$\\frac{5}{8}$"],
+  "facts": [{"text": "Topic: Intro to Fractions", "category": "Lore"}]
 }
 
 REQUIREMENTS:
-- Use DOUBLE BACKSLASHES in your JSON: \\\\frac{1}{2}.
-- Never omit the curly braces in a fraction.
-- Be encouraging and patient.
+- Return a single JSON object.
+- In your JSON, write fractions as $\\\\frac{1}{2}$ (use double backslashes for LaTeX).
+- Do not add any extra backslashes or symbols before the fraction.
 `;
 
 const db = new Dexie("FractionChatDB");
@@ -309,20 +309,20 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. THE RESCUE SCRUBBER
+      // 1. THE INVISIBLE JANITOR: Scrub glitches before rendering
       let content = text
-        .replace(/\x0c/g, "f") // Replaces invisible Form Feed characters with 'f'
-        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}") // Fixes "rac15" -> "\frac{1}{5}"
-        .replace(/\\?rac\{/g, "\\frac{") // Fixes "rac{" -> "\frac{"
-        .replace(/([^\\$])frac/g, "$1\\frac"); // Adds backslash if missing
+        .replace(/\x0c/g, "f") // Fix actual Unicode Form Feeds
+        .replace(/\\f\s?/g, "") // Deletes literal "\f" or "\f "
+        .replace(/rac(?=\{)/g, "frac") // Fixes "rac{" -> "frac"
+        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}"); // Fixes "rac12" -> "\frac{1}{2}"
 
-      // 2. RENDERER
+      // 2. MATH RENDERER
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
           let clean = formula
             .trim()
-            .replace(/^\\?f?rac/, "\\frac") // Ensures it starts with \frac
-            .replace(/rac(\d)(\d)/, "frac{$1}{$2}"); // Fixes button-style rac15
+            .replace(/^\\?f?rac/, "\\frac") // Standardize to \frac
+            .replace(/^\\f/, ""); // Remove leading \f glitches
 
           if (clean.startsWith("frac")) clean = "\\" + clean;
 
@@ -335,17 +335,21 @@ createApp({
       return marked.parse(processedText);
     };
 
-    // Apply the same scrub to the buttons
+    // Same scrub for the buttons
     const renderInlineMath = (text) => {
       if (!text) return "";
       let content = text
         .replace(/\x0c/g, "f")
-        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}")
-        .replace(/\\?rac\{/g, "\\frac{");
+        .replace(/\\f\s?/g, "")
+        .replace(/rac(?=\{)/g, "frac")
+        .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}");
 
       return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let clean = formula.trim().replace(/^\\?f?rac/, "\\frac");
+          let clean = formula
+            .trim()
+            .replace(/^\\?f?rac/, "\\frac")
+            .replace(/^\\f/, "");
           if (clean.startsWith("frac")) clean = "\\" + clean;
           return katex.renderToString(clean, {
             displayMode: false,
