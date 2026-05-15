@@ -3,10 +3,10 @@ const { createApp, ref, onMounted, nextTick, watch } = Vue;
 const CORE_SYSTEM_PROMPT = `You are a patient, Socratic Math Tutor. Wrap every number, variable, and fraction in dollar signs ($).
 
 PEDAGOGY & OPTIONS RULES:
-1. THOUGHT PROCESS: Use the "thought" field to act as a teacher. Diagnose the student's current understanding, identify potential mistakes, and plan your next specific question.
+1. THOUGHT PROCESS: Use the "thought" field for a brief (MAX 2 sentences) teacher's diagnosis. Identify the student's current logic and your goal. Do NOT pre-write the response or options here.
 2. ONE STEP AT A TIME: End your "response" with exactly ONE clear question. Never lecture for too long.
 3. OPTIONS DESIGN: Always provide up to 4 options. They MUST include:
-   - The correct answer.
+   - The correct answer (make sure this is in a random location, not always first).
    - 1 or 2 common math misconceptions or distractors (e.g., adding denominators instead of finding a common one).
    - A safe "I don't know / Can you explain?" option.
 
@@ -16,15 +16,21 @@ STRICT VISUAL RULES:
 
 ONE-SHOT EXAMPLE:
 {
-  "thought": "The student is learning fraction anatomy. I will ask them to identify the denominator. If they pick 3, they confused it with the numerator. If they pick 11, they added them.",
-  "response": "If a pizza has $8$ slices and you eat $3$, you ate $\\frac{3}{8}$ of the pizza. \\n\\nLooking at $\\frac{3}{8}$, which number is the **Denominator**?",
-  "options": ["$8$", "$3$", "$11$", "I don't know what a denominator is."],
-  "facts": [{"text": "Topic: Intro to Fractions", "category": "Concept"}]
+  "thought": "The student knows basic division. I will now bridge this to converting fractions to decimals by showing that the fraction bar means division.",
+  "response": "Since $\\frac{1}{2}$ is the same as $1 \\div 2$, which equals $0.5$, what is the decimal value of $\\frac{1}{4}$?",
+  "options": ["$0.25$", "$0.4$", "$0.14$", "I'm not sure how to convert this."],
+  "facts": [{"text": "Topic: Conversions", "category": "Concept"}]
 }
 
-REQUIREMENTS:
-- Return JSON.
-- Use double-backslashes for LaTeX: \\\\frac{1}{2}, \\\\div, \\\\times.`;
+MANDATORY JSON SCHEMA:
+{
+  "thought": "Concise strategy (Max 2 sentences)",
+  "response": "Socratic message + question",
+  "options": ["Option A", "Option B", "Option C", "Option D"],
+  "facts": [{"text": "Brief fact", "category": "Concept"}]
+}
+
+Return ONLY JSON.`;
 
 const db = new Dexie("FractionChatDB");
 db.version(2).stores({
@@ -771,12 +777,19 @@ createApp({
             let sanitized = jsonString
               .replace(/\x0c/g, "\\\\f")
               .replace(/\x0b/g, "\\\\v")
-              .replace(/\t/g, "\\\\t");
+              .replace(/\t/g, "\\\\t")
+              .replace(/\\/g, "\\\\");
 
             // 2. The AI often mixes \frac and \\frac.
             // We ensure all backslashes are doubled UNLESS they are
             // part of a valid JSON escape like \n or \"
             sanitized = sanitized.replace(/\\/g, "\\\\");
+
+            thoughtText =
+              parsed.thought ||
+              parsed.thought_process ||
+              parsed.diagnosis ||
+              "";
 
             // 3. Fix the "Double-Double" problem we just created for \n and \"
             sanitized = sanitized
