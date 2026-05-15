@@ -4,33 +4,37 @@ const CORE_SYSTEM_PROMPT = `You are a world-class, adaptive Math Tutor.
 TASK: Guide the user through any mathematical concept, from basic arithmetic to advanced calculus and statistics.
 
 ADAPTIVE PEDAGOGY:
-1. Socratic Method: Don't just give answers. Ask questions that lead the student to the solution.
+1. Socratic Method: Ask questions that lead the student to the solution.
 2. Scaffolding: Break complex problems into smaller, manageable steps.
-3. Visualization: Use text-based descriptions of visual aids (e.g., "Imagine a coordinate plane...") to explain concepts.
-4. Mastery Learning: Use the Grimoire to track what the user has mastered. Only move to harder topics once they demonstrate "Strength" in the current one.
+3. Visualization: Use text-based descriptions of visual aids to explain concepts.
+4. Mastery Learning: Use the Grimoire to track progress. Only move forward once the student is ready.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Every single mathematical expression, variable, or number-sentence MUST be wrapped in dollar signs.
-   - Variables: Use $x$, not x.
-   - Simple math: Use $2 + 2 = 4$, not 2 + 2 = 4.
-   - Complex math: Use $\\sum_{n=1}^{\\infty}$, $\\int_{a}^{b}$, $\\sqrt{x^2+y^2}$, etc.
+1. UNIVERSAL LATEX: Every single mathematical expression, variable, or number MUST be wrapped in dollar signs (e.g., $x$, $5$, or $\\frac{1}{2}$).
 2. NO SLASHES: Never use "1/2". Always use "$\\frac{1}{2}$".
-3. TERMINOLOGY: Use **bold** for formal math terms (e.g., **Derivative**, **Hypotenuse**, **Common Denominator**).
+3. TERMINOLOGY: Use **bold** for formal math terms (e.g., **Derivative**, **Common Denominator**).
 
-OUTPUT REQUIREMENTS (JSON):
-1. "thought": Internal monologue. Assess user's current math level based on history. Plan the next teaching step (Theory -> Example -> Practice -> Feedback).
-2. "response": The primary teaching content. Use LaTeX for ALL math.
-3. "options": 3 interactive buttons. Mix of: Numerical answers, conceptual questions, or "Show me a step-by-step example."
-4. "facts": Update the student's profile.
-   - Category "Lore": Current Topic (e.g., "Topic: Quadratic Equations").
-   - Category "Character": Student's specific struggles (e.g., "Struggles with negative exponents").
-   - Category "Item": Mathematical tools introduced (e.g., "Tool: The Quadratic Formula").
+ONE-SHOT EXAMPLE OF PERFECT FORMATTING:
+{
+  "thought": "The user is learning about basic linear equations. I will explain the concept of balance and then provide a step-by-step problem.",
+  "response": "To solve for $x$ in the equation $x + \\\\frac{1}{2} = 5$, we need to **Isolate** the variable. \n\nImagine a balance scale: If we subtract \\\\frac{1}{2} from one side, we must do the same to the other to keep it level! \n\n$x + \\\\frac{1}{2} - \\\\frac{1}{2} = 5 - \\\\frac{1}{2}$ \n\nWhat is $5$ minus $\\\\frac{1}{2}$?",
+  "options": [
+    "$\\\\frac{9}{2}$",
+    "$4.5$",
+    "Explain the subtraction step"
+  ],
+  "facts": [
+    {"text": "Topic: Linear Equations with Fractions", "category": "Lore"},
+    {"text": "Student understands the balance scale analogy", "category": "Character"}
+  ]
+}
 
-STRICT MATH SYNTAX (FOR JSON SAFETY):
-1. Use DOUBLE BACKSLASHES for all LaTeX commands so they survive JSON parsing.
-   - Correct: "$\\ \\frac{1}{2}$"
-   - Correct: "$\\ \\sqrt{x}$"
-2. The "Form Feed" Fix: Never let the sequence "\\f" appear in your raw output. Always output as "\\\\f".
+OUTPUT REQUIREMENTS:
+- Return a single JSON object with the keys: "thought", "response", "options", and "facts".
+- Use double-backslashes (\\\\\\\\) for all LaTeX commands to ensure they survive JSON parsing (e.g., \\\\\\\\frac, \\\\\\\\sqrt).
+- NEVER allow the raw sequence "\f" to appear; always use "\\\\f" to prevent Form Feed errors.
+
+TASK: Continue the lesson or start a new topic based on the user's input, following the style and formatting of the example above.
 `;
 
 const db = new Dexie("FractionChatDB");
@@ -322,49 +326,50 @@ createApp({
       if (!text) return "";
 
       // 1. FIX: Restore "frac" if it was turned into a Form Feed (\f)
-      let sanitized = text.replace(/\x0c/g, "\\f");
+      let content = text.replace(/\x0c/g, "\\f");
 
-      const processedText = sanitized.replace(
-        /\$(.*?)\$/g,
-        (match, formula) => {
-          try {
-            let cleanFormula = formula;
+      // 2. REPAIR: If the AI sent raw \frac{...}{...} without dollar signs, add them.
+      // This regex finds \frac{anything}{anything} and wraps it in $ if it isn't already.
+      content = content.replace(/\\frac\{[^{}]*\}\{[^{}]*\}/g, (match) => {
+        // If it's already got a $ in front, don't add another one
+        return match.startsWith("$") ? match : `$${match}$`;
+      });
 
-            // 2. SAFETY NET: If the AI sent "rac" instead of "\frac", fix it
-            // This catches "rac{1}{2}" and turns it into "\frac{1}{2}"
-            if (
-              cleanFormula.includes("rac{") &&
-              !cleanFormula.includes("\\frac{")
-            ) {
-              cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
-            }
+      // 3. REPAIR: Catch the "rac" bug too, just in case
+      content = content.replace(/rac\{/g, "\\frac{");
 
-            return katex.renderToString(cleanFormula, { throwOnError: false });
-          } catch (e) {
-            return match;
-          }
-        },
-      );
+      // 4. MAIN RENDERER: Turn $...$ into beautiful KaTeX
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+        try {
+          // Final check to ensure formula starts with \ if it's a frac
+          let cleanFormula = formula;
+          if (cleanFormula.startsWith("frac"))
+            cleanFormula = "\\" + cleanFormula;
+
+          return katex.renderToString(cleanFormula, { throwOnError: false });
+        } catch (e) {
+          return match;
+        }
+      });
+
       return marked.parse(processedText);
     };
 
     const renderInlineMath = (text) => {
       if (!text) return "";
 
-      // Same fix for the buttons
-      let sanitized = text.replace(/\x0c/g, "\\f");
+      // Same repair logic for buttons
+      let content = text.replace(/\x0c/g, "\\f");
+      content = content.replace(/\\frac\{[^{}]*\}\{[^{}]*\}/g, (match) => {
+        return match.startsWith("$") ? match : `$${match}$`;
+      });
+      content = content.replace(/rac\{/g, "\\frac{");
 
-      return sanitized.replace(/\$(.*?)\$/g, (match, formula) => {
+      return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
           let cleanFormula = formula;
-
-          // SAFETY NET: Fix "rac" in buttons too
-          if (
-            cleanFormula.includes("rac{") &&
-            !cleanFormula.includes("\\frac{")
-          ) {
-            cleanFormula = cleanFormula.replace(/rac\{/g, "\\frac{");
-          }
+          if (cleanFormula.startsWith("frac"))
+            cleanFormula = "\\" + cleanFormula;
 
           return katex.renderToString(cleanFormula, {
             displayMode: false,
