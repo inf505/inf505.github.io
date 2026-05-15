@@ -1,25 +1,23 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are a patient and expert Math Tutor.
+// 1. UPDATED: The "Gold Standard" Core Prompt
+const CORE_SYSTEM_PROMPT = `You are a patient and expert Math Tutor. Wrap every number, variable, and fraction in dollar signs ($).
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Wrap every number, variable, and fraction in dollar signs.
-2. FRACTIONS: Use the standard syntax: $\\frac{numerator}{denominator}$.
-3. BOLD: Use **bold** for key math terms.
+1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
+2. BOLD: Use **bold** for key terms.
 
 ONE-SHOT EXAMPLE:
 {
-  "thought": "I will teach the student how to identify the numerator and denominator.",
-  "response": "A **Fraction** represents a part of a whole. For example, if you have $\\frac{1}{4}$ of a cake, it means the cake was cut into $4$ equal pieces and you have $1$ of them. \n\nIf a pizza is cut into $8$ slices and you eat $3$, what fraction did you eat?",
-  "options": ["$\\frac{3}{8}$", "$\\frac{8}{3}$", "$\\frac{5}{8}$"],
+  "thought": "Teaching fraction basics.",
+  "response": "If a pizza has $8$ slices and you eat $3$, you ate $\\frac{3}{8}$ of the pizza. \\n\\nWhat is the **Denominator** in $\\frac{3}{8}$?",
+  "options": ["$8$", "$3$", "What is a denominator?"],
   "facts": [{"text": "Topic: Intro to Fractions", "category": "Lore"}]
 }
 
 REQUIREMENTS:
-- Return a single JSON object.
-- In your JSON, write fractions as $\\\\frac{1}{2}$ (use double backslashes for LaTeX).
-- Do not add any extra backslashes or symbols before the fraction.
-`;
+- Return JSON.
+- Use double-backslashes for LaTeX: \\\\frac{1}{2}.`;
 
 const db = new Dexie("FractionChatDB");
 db.version(2).stores({
@@ -72,7 +70,6 @@ createApp({
 
     const loadFacts = async () => {
       try {
-        // Sort by timestamp so newest or oldest appear in order
         const data = await db.facts.orderBy("timestamp").toArray();
         facts.value = data;
       } catch (err) {
@@ -95,7 +92,6 @@ createApp({
           timestamp: Date.now(),
         });
 
-        // Reset inputs and refresh list
         newFactText.value = "";
         await loadFacts();
       } catch (err) {
@@ -110,8 +106,6 @@ createApp({
       }
 
       isGeneratingRules.value = true;
-
-      // 1. Create the controller
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
@@ -120,12 +114,12 @@ createApp({
         TASK: Create a high-concept "Math Adventure" premise where the user must learn math to succeed in a strange world.
 
         In your 'thought' field:
-        - Brainstorm 3 weird, unrelated scenarios where math is a "power" (e.g., Potion-making ratios, Space-flight geometry, Ancient pyramid structural logic).
+        - Brainstorm 3 weird, unrelated scenarios where math is a "power".
         - Pick the most creative one.
 
         In your 'premise' field:
         - Write a 1-paragraph "World Rule" (Max 80 words).
-        - Describe the user's role and WHY they need math (e.g., "You are a Cyber-Navigator. To jump through hyperspace, you must calculate precise fractions of light-speed. If your ratios are off, you'll end up in a black hole.").
+        - Describe the user's role and WHY they need math.
         - Keep the tone atmospheric but educational.
         - Do NOT mention specific math problems yet, just the theme.`;
 
@@ -136,11 +130,7 @@ createApp({
             responseSchema: {
               type: "object",
               properties: {
-                thought: {
-                  type: "string",
-                  description:
-                    "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
-                },
+                thought: { type: "string" },
                 premise: { type: "string" },
               },
               required: ["thought", "premise"],
@@ -157,12 +147,10 @@ createApp({
             "x-goog-api-key": apiKey.value,
           },
           body: JSON.stringify(payload),
-          signal: controller.signal, // 2. Pass the signal to fetch
+          signal: controller.signal,
         });
 
-        // 3. Clear the timeout since the request finished
         clearTimeout(timeoutId);
-
         const data = await res.json();
 
         if (!res.ok)
@@ -170,33 +158,27 @@ createApp({
 
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
-
-          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
             rawText = rawText.substring(start, end + 1);
           }
-
           const parsedData = JSON.parse(rawText);
           if (parsedData.premise) {
             systemPrompt.value = parsedData.premise.trim();
           }
         }
       } catch (err) {
-        // 4. Handle specifically the timeout/abort error
         if (err.name === "AbortError") {
-          console.error("Randomizer timed out.");
           alert(
             "The request timed out. The AI is taking too long to think—try again!",
           );
         } else {
-          console.error("Error generating rules:", err);
           alert("Randomizer failed: " + err.message);
         }
       } finally {
         isGeneratingRules.value = false;
-        clearTimeout(timeoutId); // Final safety clear
+        clearTimeout(timeoutId);
       }
     };
 
@@ -205,15 +187,11 @@ createApp({
       isOptimizingFacts.value = true;
 
       try {
-        // 1. EXTRACTION: Find the single most recent "Time" fact and save it
-        // This ensures it NEVER gets lost in the AI shuffle.
         const timeFacts = facts.value
           .filter((f) => f.text.toLowerCase().startsWith("time:"))
           .sort((a, b) => b.timestamp - a.timestamp);
 
         const latestTimeFact = timeFacts[0];
-
-        // 2. FILTERING: Send everything ELSE to the AI for merging
         const otherFacts = facts.value.filter(
           (f) => !f.text.toLowerCase().startsWith("time:"),
         );
@@ -221,7 +199,6 @@ createApp({
           .map((f) => `[${f.category}] ${f.text}`)
           .join(" | ");
 
-        // If there's nothing else to merge but time, just skip the AI part
         if (otherFacts.length < 2 && timeFacts.length > 1) {
           await db.facts.clear();
           if (latestTimeFact) await db.facts.add(latestTimeFact);
@@ -243,7 +220,7 @@ createApp({
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.1, // Keep it robotic
+              temperature: 0.1,
               responseMimeType: "application/json",
               responseSchema: {
                 type: "object",
@@ -278,8 +255,6 @@ createApp({
 
           if (parsed.merged_facts) {
             await db.facts.clear();
-
-            // 3. RE-INSERTION: Add the "Time" fact back first
             if (latestTimeFact) {
               await db.facts.add({
                 text: latestTimeFact.text,
@@ -287,8 +262,6 @@ createApp({
                 timestamp: Date.now(),
               });
             }
-
-            // Then add the AI-merged facts
             for (const mf of parsed.merged_facts) {
               await db.facts.add({
                 text: mf.text,
@@ -306,26 +279,24 @@ createApp({
       }
     };
 
+    // 2. THE INVISIBLE JANITOR (Markdown)
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. THE INVISIBLE JANITOR: Scrub glitches before rendering
       let content = text
-        .replace(/\x0c/g, "f") // Fix actual Unicode Form Feeds
+        .replace(/\x0c/g, "f") // Fixes actual Unicode Form Feeds
         .replace(/\\f\s?/g, "") // Deletes literal "\f" or "\f "
         .replace(/rac(?=\{)/g, "frac") // Fixes "rac{" -> "frac"
         .replace(/\\?rac(\d)(\d)/g, "\\frac{$1}{$2}"); // Fixes "rac12" -> "\frac{1}{2}"
 
-      // 2. MATH RENDERER
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
           let clean = formula
             .trim()
-            .replace(/^\\?f?rac/, "\\frac") // Standardize to \frac
-            .replace(/^\\f/, ""); // Remove leading \f glitches
+            .replace(/^\\?f?rac/, "\\frac")
+            .replace(/^\\f/, "");
 
           if (clean.startsWith("frac")) clean = "\\" + clean;
-
           return katex.renderToString(clean, { throwOnError: false });
         } catch (e) {
           return match;
@@ -335,9 +306,10 @@ createApp({
       return marked.parse(processedText);
     };
 
-    // Same scrub for the buttons
+    // 3. THE INVISIBLE JANITOR (Inline/Buttons)
     const renderInlineMath = (text) => {
       if (!text) return "";
+
       let content = text
         .replace(/\x0c/g, "f")
         .replace(/\\f\s?/g, "")
@@ -350,6 +322,7 @@ createApp({
             .trim()
             .replace(/^\\?f?rac/, "\\frac")
             .replace(/^\\f/, "");
+
           if (clean.startsWith("frac")) clean = "\\" + clean;
           return katex.renderToString(clean, {
             displayMode: false,
@@ -368,8 +341,6 @@ createApp({
       }
 
       const batchSize = parseInt(summaryBatchSize.value) || 10;
-
-      // 1. Identify candidates (Skip premise, skip existing summaries, skip last 2)
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
@@ -406,11 +377,10 @@ createApp({
             STORY EXCERPT:
             ${transcript}`;
 
-        // Using randomizerModel (Gemini Flash) which supports strict responseSchema
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2, // Lower temperature for more factual summaries
+            temperature: 0.2,
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -423,7 +393,6 @@ createApp({
           },
         };
 
-        // TARGET: randomizerModel.value (Gemini Flash)
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
 
         const res = await fetch(url, {
@@ -440,21 +409,15 @@ createApp({
           throw new Error(data.error?.message || "Summarization API failed");
 
         let summaryText = "";
-
         if (data.candidates && data.candidates[0].content.parts) {
           let rawText = data.candidates[0].content.parts[0].text;
-
-          // Safety: Handle potential backticks
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
+          const start = rawText.indexOf("{"),
+            end = rawText.lastIndexOf("}");
+          if (start !== -1 && end !== -1)
             rawText = rawText.substring(start, end + 1);
-          }
 
           const parsed = JSON.parse(rawText);
-          if (parsed.summary) {
-            summaryText = parsed.summary.trim();
-          }
+          if (parsed.summary) summaryText = parsed.summary.trim();
         }
 
         if (!summaryText) throw new Error("Received empty summary from AI.");
@@ -462,12 +425,8 @@ createApp({
         const lastMsgTimestamp =
           msgsToSummarize[msgsToSummarize.length - 1].timestamp;
 
-        // Delete the 10 original messages from DB
-        for (const m of msgsToSummarize) {
-          await db.chats.delete(m.id);
-        }
+        for (const m of msgsToSummarize) await db.chats.delete(m.id);
 
-        // Add the new Summary message to DB
         await db.chats.add({
           role: "summary",
           text: summaryText,
@@ -476,12 +435,10 @@ createApp({
           timestamp: lastMsgTimestamp + 1,
         });
 
-        // Reload UI
         messages.value = await db.chats.orderBy("timestamp").toArray();
         await updateCounts();
         scrollToBottom();
       } catch (err) {
-        console.error("Summarize Error:", err);
         alert("Summarize failed with Flash model: " + err.message);
       } finally {
         isSummarizing.value = false;
@@ -491,11 +448,10 @@ createApp({
     const updateCounts = async () => {
       try {
         const chats = await db.chats.toArray();
-        const facts = await db.facts.toArray(); // <-- Fetch facts too
-
-        const fullDb = { chats, facts }; // <-- Combine them
-
-        const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
+        const facts = await db.facts.toArray();
+        const bytes = new TextEncoder().encode(
+          JSON.stringify({ chats, facts }),
+        ).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
       } catch (err) {
         console.error("Error updating stats:", err);
@@ -509,9 +465,7 @@ createApp({
       el.style.height = el.scrollHeight + "px";
     };
 
-    watch(currentInput, () => {
-      nextTick(adjustHeight);
-    });
+    watch(currentInput, () => nextTick(adjustHeight));
 
     onMounted(async () => {
       const storedKey = localStorage.getItem("fractionchat_api_key");
@@ -519,18 +473,16 @@ createApp({
 
       if (localStorage.getItem("fractionchat_tts_model"))
         selectedTTSModel.value = localStorage.getItem("fractionchat_tts_model");
-      if (localStorage.getItem("fractionchat_randomizer_model")) {
+      if (localStorage.getItem("fractionchat_randomizer_model"))
         randomizerModel.value = localStorage.getItem(
           "fractionchat_randomizer_model",
         );
-      }
       if (localStorage.getItem("fractionchat_tts_voice"))
         selectedVoice.value = localStorage.getItem("fractionchat_tts_voice");
       if (localStorage.getItem("fractionchat_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem(
           "fractionchat_tts_prosody",
         );
-
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
         selectedModel.value = storedModel;
@@ -541,24 +493,18 @@ createApp({
         "fractionchat_system_prompt",
       );
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
-
-      if (localStorage.getItem("fractionchat_summary_batch")) {
+      if (localStorage.getItem("fractionchat_summary_batch"))
         summaryBatchSize.value = parseInt(
           localStorage.getItem("fractionchat_summary_batch"),
         );
-      }
 
       try {
         messages.value = await db.chats.orderBy("timestamp").toArray();
         scrollToBottom();
 
-        // AUTOLOAD LOGIC: If no messages exist, automatically start the story
         if (messages.value.length === 0) {
-          if (apiKey.value) {
-            initializeStory();
-          } else {
-            showSettings.value = true;
-          }
+          if (apiKey.value) initializeStory();
+          else showSettings.value = true;
         }
       } catch (err) {
         console.error("Dexie Chats Load Error:", err);
@@ -566,43 +512,31 @@ createApp({
 
       await updateCounts();
 
-      if (window.visualViewport) {
-        const handleResize = () => {
-          document.documentElement.style.setProperty(
-            "--app-height",
-            `${window.visualViewport.height}px`,
-          );
-          document.body.style.height = `${window.visualViewport.height}px`;
-          scrollToBottom();
-        };
+      const handleResize = () => {
+        const h = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        document.documentElement.style.setProperty("--app-height", `${h}px`);
+        document.body.style.height = `${h}px`;
+        scrollToBottom();
+      };
+
+      if (window.visualViewport)
         window.visualViewport.addEventListener("resize", handleResize);
-        handleResize();
-      } else {
-        const handleFallbackResize = () => {
-          document.documentElement.style.setProperty(
-            "--app-height",
-            `${window.innerHeight}px`,
-          );
-          document.body.style.height = `${window.innerHeight}px`;
-          scrollToBottom();
-        };
-        window.addEventListener("resize", handleFallbackResize);
-        handleFallbackResize();
-      }
+      else window.addEventListener("resize", handleResize);
+      handleResize();
 
       await loadFacts();
     });
 
     const saveAllSettings = () => {
-      // Check if the rules actually changed compared to what's in storage
-      var oldRules = localStorage.getItem("fractionchat_system_prompt") || "";
-      var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
+      const oldRules = localStorage.getItem("fractionchat_system_prompt") || "";
+      const rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
-      // Save everything to localStorage
       localStorage.setItem("fractionchat_api_key", apiKey.value);
       localStorage.setItem("fractionchat_model", selectedModel.value);
       localStorage.setItem(
-        "fractionchaty_randomizer_model",
+        "fractionchat_randomizer_model",
         randomizerModel.value,
       );
       localStorage.setItem("fractionchat_system_prompt", systemPrompt.value);
@@ -617,17 +551,14 @@ createApp({
       showSettings.value = false;
       isConfigured.value = true;
 
-      // Case 1: The chat is empty, just start the story
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
-      }
-      // Case 2: Mid-game change. Ask the user if they want to restart
-      else if (rulesChanged && messages.value.length > 0) {
-        var restartNow = confirm(
-          "Rules updated! Would you like to restart the story now to apply these changes?",
-        );
-        if (restartNow) {
-          // We manually trigger the logic from startOver without the double-confirmation
+      } else if (rulesChanged && messages.value.length > 0) {
+        if (
+          confirm(
+            "Rules updated! Would you like to restart the story now to apply these changes?",
+          )
+        ) {
           db.chats.clear();
           db.facts.clear();
           messages.value = [];
@@ -648,14 +579,13 @@ createApp({
     };
 
     const saveToDb = async (role, text, thought = "", options = null) => {
-      const id = await db.chats.add({
+      return await db.chats.add({
         role,
         text,
         thought,
         options,
         timestamp: Date.now(),
       });
-      return id;
     };
 
     const deleteMessage = async (index) => {
@@ -666,33 +596,29 @@ createApp({
     };
 
     const startOver = async () => {
-      var warnMsg =
-        "Are you sure? This will permanently delete the story AND all remembered facts in the Grimoire.";
-      if (!confirm(warnMsg)) return;
+      if (
+        !confirm(
+          "Are you sure? This will permanently delete the story AND all remembered facts in the Grimoire.",
+        )
+      )
+        return;
 
       await db.chats.clear();
       await db.facts.clear();
       messages.value = [];
       facts.value = [];
-
       await updateCounts();
 
-      if (apiKey.value) {
-        initializeStory();
-      } else {
-        showSettings.value = true;
-      }
+      if (apiKey.value) initializeStory();
+      else showSettings.value = true;
     };
 
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      // Use the Premise as the first message.
-      // If it's empty, use a default fallback.
       const firstMessage =
         systemPrompt.value.trim() ||
         "The story begins in a mysterious world of fractions...";
-
       const userId = await saveToDb("user", firstMessage);
 
       messages.value.push({
@@ -712,9 +638,8 @@ createApp({
       const view = new DataView(buffer);
 
       const writeString = (offset, string) => {
-        for (let i = 0; i < string.length; i++) {
+        for (let i = 0; i < string.length; i++)
           view.setUint8(offset + i, string.charCodeAt(i));
-        }
       };
 
       writeString(0, "RIFF");
@@ -733,9 +658,8 @@ createApp({
 
       let headerString = "";
       const headerBytes = new Uint8Array(buffer);
-      for (let i = 0; i < headerBytes.length; i++) {
+      for (let i = 0; i < headerBytes.length; i++)
         headerString += String.fromCharCode(headerBytes[i]);
-      }
 
       return btoa(headerString + binaryString);
     };
@@ -760,9 +684,7 @@ createApp({
             responseModalities: ["AUDIO"],
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: selectedVoice.value,
-                },
+                prebuiltVoiceConfig: { voiceName: selectedVoice.value },
               },
             },
           },
@@ -780,20 +702,16 @@ createApp({
         });
 
         const data = await response.json();
-
         if (!response.ok)
           throw new Error(data.error?.message || "TTS API Error");
 
         const base64Audio =
           data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
         if (base64Audio) {
-          const playableWavBase64 = addWavHeader(base64Audio);
-          msg.audioData = playableWavBase64;
+          msg.audioData = addWavHeader(base64Audio);
           scrollToBottom();
         }
       } catch (err) {
-        console.error("Audio Synthesis Pipeline Failed:", err);
         alert("Failed to synthesize audio: " + err.message);
       } finally {
         msg.isGeneratingAudio = false;
@@ -810,18 +728,13 @@ createApp({
           .map((f) => `- [${f.category}] ${f.text}`)
           .join("\n");
 
-        // 1. GEMMA TRICK: Inject context directly into the first User message
         const contents = messages.value.map((msg, index) => {
-          // Send summaries as 'user' role so the AI accepts the format
           let role =
             msg.role === "user" || msg.role === "summary" ? "user" : "model";
           let text = msg.text;
 
-          // Flag it explicitly so the AI understands this is past events
-          if (msg.role === "summary") {
+          if (msg.role === "summary")
             text = `[PREVIOUS EVENTS SUMMARY]\n${text}`;
-          }
-
           if (index === 0) {
             text = `[STORY GRIMOIRE]
             ${factsSummary || "No facts established yet."}[END GRIMOIRE]
@@ -829,23 +742,18 @@ createApp({
             STORY PREMISE: ${text}`;
           }
 
-          return {
-            role: role,
-            parts: [{ text: text }],
-          };
+          return { role: role, parts: [{ text: text }] };
         });
 
         const isGemma = selectedModel.value.toLowerCase().includes("gemma");
 
         const payload = {
           contents,
-          // Use the static core prompt
           systemInstruction: { parts: [{ text: CORE_SYSTEM_PROMPT }] },
           generationConfig: {
             temperature: 0.9,
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
-            // Only include responseSchema if NOT a Gemma model
             ...(!isGemma && {
               responseSchema: {
                 type: "object",
@@ -879,7 +787,6 @@ createApp({
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          // 3. FIXED TIMEOUT: 45000 ms = 45 seconds
           const timeoutId = setTimeout(() => controller.abort(), 45000);
 
           try {
@@ -897,9 +804,6 @@ createApp({
 
             if (!response.ok) {
               if (response.status === 500 && attempt < retryDelays.length) {
-                console.warn(
-                  `API 500 Error. Retrying... (Attempt ${attempt + 1})`,
-                );
                 await new Promise((res) =>
                   setTimeout(res, retryDelays[attempt]),
                 );
@@ -930,8 +834,7 @@ createApp({
             if (part.thought) {
               thoughtText += (part.text || "") + "\n\n";
             } else if (part.text) {
-              let text = part.text;
-              text = text.replace(
+              let text = part.text.replace(
                 /<think>([\s\S]*?)<\/think>/gi,
                 (m, inner) => {
                   thoughtText += inner.trim() + "\n\n";
@@ -950,11 +853,9 @@ createApp({
           const jsonStartIndex = finalResponse.indexOf("{");
           const jsonEndIndex = finalResponse.lastIndexOf("}");
           if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-            const jsonString = finalResponse.substring(
-              jsonStartIndex,
-              jsonEndIndex + 1,
+            const parsed = JSON.parse(
+              finalResponse.substring(jsonStartIndex, jsonEndIndex + 1),
             );
-            const parsed = JSON.parse(jsonString);
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
@@ -995,10 +896,9 @@ createApp({
         });
       } catch (error) {
         let errorMsg = `❌ Error: ${error.message}`;
-        if (error.name === "AbortError") {
+        if (error.name === "AbortError")
           errorMsg =
             "⏳ Request timed out. The AI took too long to respond. Please hit the ↻ retry button.";
-        }
 
         const errId = await saveToDb("model", errorMsg);
         messages.value.push({ id: errId, role: "model", text: errorMsg });

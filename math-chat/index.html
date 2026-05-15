@@ -35,7 +35,6 @@
                     >
                         <span>📜</span>
                     </button>
-
                     <button
                         class="float-btn settings-btn"
                         @click="showSettings = !showSettings"
@@ -83,7 +82,6 @@
                                 gemini-3.1-flash-lite-preview</small
                             >
                         </div>
-
                         <div class="settings-group">
                             <label>API Key:</label>
                             <input
@@ -92,11 +90,8 @@
                                 placeholder="AIzaSy..."
                             />
                         </div>
-
                         <div class="settings-group">
                             <label>World / Character / Tone Rules</label>
-
-                            <!-- New Randomizer Model Input -->
                             <div style="margin-bottom: 8px">
                                 <small>Randomizer Model:</small>
                                 <input
@@ -110,7 +105,6 @@
                                 >gemma-4-31b-it , gemini-2.5-flash ,
                                 gemini-3-flash-preview</small
                             >
-
                             <button
                                 class="small-btn"
                                 @click="randomizeRules"
@@ -126,7 +120,6 @@
                                 placeholder="Describe the world..."
                             ></textarea>
                         </div>
-
                         <div
                             class="settings-group"
                             style="
@@ -138,7 +131,6 @@
                             <label style="color: #ff9d00"
                                 >Memory & Data Management</label
                             >
-
                             <div
                                 style="
                                     font-size: 0.85rem;
@@ -154,8 +146,6 @@
                                 <strong>Last Token Usage:</strong> {{
                                 totalTokens }} tokens
                             </div>
-
-                            <!-- NEW: Batch Size Input -->
                             <div
                                 style="
                                     display: flex;
@@ -179,7 +169,6 @@
                                     "
                                 />
                             </div>
-
                             <button
                                 class="small-btn"
                                 @click="summarizeStory"
@@ -201,12 +190,10 @@
                                     text-align: center;
                                     color: #888;
                                 "
+                                >Compresses the oldest 10 unsummarized messages
+                                into a single Chapter Summary block.</small
                             >
-                                Compresses the oldest 10 unsummarized messages
-                                into a single Chapter Summary block.
-                            </small>
                         </div>
-
                         <button
                             class="small-btn apply-btn"
                             @click="saveAllSettings"
@@ -239,7 +226,6 @@
                                         font-size: 0.9rem;
                                     "
                                 ></textarea>
-
                                 <div style="display: flex; gap: 8px">
                                     <select
                                         v-model="newFactCategory"
@@ -264,7 +250,6 @@
                                     </button>
                                 </div>
                             </div>
-
                             <button
                                 class="small-btn apply-btn"
                                 @click="optimizeFacts"
@@ -279,7 +264,6 @@
                                 "✨ Optimize & Merge Facts" }}
                             </button>
                         </div>
-
                         <div
                             class="facts-container"
                             style="
@@ -294,12 +278,10 @@
                                 class="fact-row"
                             >
                                 <div class="fact-content">
-                                    <!-- Badge for Category -->
                                     <span
                                         :class="['fact-badge', fact.category.toLowerCase()]"
+                                        >{{ fact.category }}</span
                                     >
-                                        {{ fact.category }}
-                                    </span>
                                     <div class="fact-text">{{ fact.text }}</div>
                                 </div>
                                 <button
@@ -309,7 +291,6 @@
                                     &times;
                                 </button>
                             </div>
-
                             <div v-if="facts.length === 0" class="empty-facts">
                                 No facts recorded yet.
                             </div>
@@ -326,7 +307,6 @@
                                 placeholder="gemini-3.1-flash-tts-preview"
                             />
                         </div>
-
                         <div class="settings-group">
                             <label>Voice Profile:</label>
                             <input
@@ -335,7 +315,6 @@
                                 placeholder="e.g., Aoede, Puck"
                             />
                         </div>
-
                         <div class="settings-group">
                             <label>Prosody Nudge (Narration Tone):</label>
                             <textarea
@@ -363,7 +342,6 @@
                         :class="['message', msg.role]"
                     >
                         <div class="bubble">
-                            <!-- NEW: Summary Badge -->
                             <div
                                 v-if="msg.role === 'summary'"
                                 style="
@@ -380,9 +358,7 @@
                                 📜 Chapter Summary
                             </div>
 
-                            <!-- Action Buttons Container -->
                             <div class="msg-actions">
-                                <!-- Speaker / Read Aloud Button -->
                                 <button
                                     v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
                                     class="action-msg-btn speaker-btn"
@@ -391,8 +367,6 @@
                                 >
                                     🔊
                                 </button>
-
-                                <!-- Retry Button (Only for the last model message) -->
                                 <button
                                     v-if="msg.role === 'model' && index === messages.length - 1"
                                     class="action-msg-btn retry-btn"
@@ -401,8 +375,6 @@
                                 >
                                     ↻
                                 </button>
-
-                                <!-- Delete Button -->
                                 <button
                                     class="action-msg-btn delete-btn"
                                     @click="deleteMessage(index)"
@@ -412,7 +384,6 @@
                                 </button>
                             </div>
 
-                            <!-- Thought Process -->
                             <div v-if="msg.thought" class="thought-box">
                                 <details>
                                     <summary>AI Thought</summary>
@@ -420,13 +391,11 @@
                                 </details>
                             </div>
 
-                            <!-- Content -->
                             <div
                                 class="message-text"
                                 v-html="renderMarkdown(msg.text)"
                             ></div>
 
-                            <!-- AUDIO LOADING STATE -->
                             <div
                                 v-if="msg.isGeneratingAudio"
                                 class="audio-loading"
@@ -439,7 +408,6 @@
                                 <i>Synthesizing audio...</i>
                             </div>
 
-                            <!-- AUDIO PLAYER -->
                             <div
                                 v-if="msg.audioData"
                                 class="audio-player"
@@ -453,7 +421,6 @@
                                 ></audio>
                             </div>
 
-                            <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
                             <div
                                 v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
                                 class="story-options"
@@ -467,7 +434,6 @@
                                     class="option-btn"
                                     @click="sendOption(opt)"
                                 >
-                                    <!-- Use v-html to render the KaTeX output -->
                                     <span v-html="renderInlineMath(opt)"></span>
                                 </button>
                             </div>
@@ -496,7 +462,6 @@
                             @focus="scrollToBottom"
                             :disabled="isLoading"
                         ></textarea>
-
                         <button
                             @click="sendMessage"
                             :disabled="isLoading || !currentInput.trim()"
