@@ -7,7 +7,7 @@ PEDAGOGY & OPTIONS RULES:
 2. ONE STEP AT A TIME: End your "response" with exactly ONE clear question. Never lecture for too long.
 3. OPTIONS DESIGN: Always provide up to 4 options. They MUST include:
    - The correct answer.
-   - 1 or 2 common math misconceptions or distractors (e.g., adding denominators instead of finding a common one).
+   - 1 or 2 common math misconceptions or distractors.
    - A safe "I don't know / Can you explain?" option.
 
 STRICT VISUAL RULES:
@@ -16,15 +16,15 @@ STRICT VISUAL RULES:
 
 ONE-SHOT EXAMPLE:
 {
-  "thought": "The student is learning fraction anatomy. I will ask them to identify the denominator. If they pick 3, they confused it with the numerator. If they pick 11, they added them.",
+  "thought": "The student is learning fraction anatomy. I will ask them to identify the denominator.",
   "response": "If a pizza has $8$ slices and you eat $3$, you ate $\\frac{3}{8}$ of the pizza. \\n\\nLooking at $\\frac{3}{8}$, which number is the **Denominator**?",
   "options": ["$8$", "$3$", "$11$", "I don't know what a denominator is."],
-  "facts": [{"text": "Topic: Intro to Fractions", "category": "Lore"}]
+  "facts": [{"text": "Topic: Intro to Fractions", "category": "Concept"}]
 }
 
 REQUIREMENTS:
 - Return JSON.
-- Use double-backslashes for LaTeX: \\\\frac{1}{2}.`;
+- Use double-backslashes for LaTeX: \\\\frac{1}{2}, \\\\div, \\\\times.`;
 
 const db = new Dexie("FractionChatDB");
 db.version(2).stores({
@@ -70,7 +70,7 @@ createApp({
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
     const newFactText = ref("");
-    const newFactCategory = ref("Lore");
+    const newFactCategory = ref("Concept");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
 
@@ -770,13 +770,16 @@ createApp({
           }
 
           if (jsonString) {
-            jsonString = jsonString
-              .replace(/\x0c/g, "\\\\f") // Fixes \frac
-              .replace(/\t/g, "\\\\t") // Fixes \times, \tan
-              .replace(/\x08/g, "\\\\b") // Fixes \beta
-              .replace(/\x0b/g, "\\\\v"); // Fixes \vec
+            let sanitized = jsonString
+              .replace(/\\n/g, "[[NEWLINE]]")
+              .replace(/\\(?![u"bfnrt\/\\\[])/g, "\\\\")
+              .replace(/\[\[NEWLINE\]\]/g, "\\n")
+              .replace(/\x0c/g, "\\\\f")
+              .replace(/\t/g, "\\\\t")
+              .replace(/\x08/g, "\\\\b")
+              .replace(/\x0b/g, "\\\\v");
 
-            const parsed = JSON.parse(jsonString);
+            const parsed = JSON.parse(sanitized);
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
