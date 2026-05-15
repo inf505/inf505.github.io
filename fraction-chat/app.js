@@ -1,36 +1,25 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
 const CORE_SYSTEM_PROMPT = `You are a world-class, adaptive Math Tutor.
-TASK: Guide the user through any mathematical concept, from basic arithmetic to advanced calculus and statistics.
-
-ADAPTIVE PEDAGOGY:
-1. Socratic Method: Ask questions that lead the student to the solution.
-2. Scaffolding: Break complex problems into smaller, manageable steps.
-3. Mastery Learning: Use the Grimoire to track progress.
+TASK: Guide the user through any mathematical concept.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Every single mathematical expression, variable, or number MUST be wrapped in dollar signs (e.g., $x$, $5$, or $\\frac{1}{2}$).
-2. NO SLASHES: Never use "1/2". Always use "$\\frac{1}{2}$".
-3. TERMINOLOGY: Use **bold** for formal math terms.
+1. UNIVERSAL LATEX: Wrap EVERY number, variable, and expression in dollar signs (e.g., $x$, $5$, or $\\frac{1}{2}$).
+2. NO SLASHES: Use $\\frac{1}{2}$ for all fractions.
+3. Use **bold** for math terms.
 
-ONE-SHOT EXAMPLE OF PERFECT FORMATTING:
+EXAMPLE RESPONSE:
 {
-  "thought": "The user needs to solve for x.",
-  "response": "To solve $x + \\\\frac{1}{2} = 5$, we subtract \\\\frac{1}{2} from both sides! \n\n$x = 5 - \\\\frac{1}{2}$ \n\nWhat is the result?",
-  "options": [
-    "$\\\\frac{9}{2}$",
-    "$4.5$",
-    "Explain the step"
-  ],
-  "facts": [
-    {"text": "Topic: Linear Equations", "category": "Lore"}
-  ]
+  "thought": "User is learning addition.",
+  "response": "To add $\\frac{1}{5}$ and $\\frac{2}{5}$, we just add the top numbers! \n\n$\\frac{1+2}{5} = \\frac{3}{5}$. \n\nTry this: what is $\\frac{3}{8} + \\frac{2}{8}$?",
+  "options": ["$\\frac{5}{8}$", "$\\frac{5}{16}$", "Explain the rule"],
+  "facts": [{"text": "Topic: Adding Fractions", "category": "Lore"}]
 }
 
-OUTPUT REQUIREMENTS:
+REQUIREMENTS:
 - Return a single JSON object.
-- Use double-backslashes (\\\\) for LaTeX (e.g., \\\\frac, \\\\sqrt).
-- Focus on clarity and encouraging the student.
+- Use double-backslashes (\\\\) for LaTeX commands (Example: \\\\frac).
+- Focus on being encouraging and clear.
 
 TASK: Continue the lesson based on the user's input.
 `;
@@ -323,23 +312,25 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. CLEANUP: Remove common AI formatting artifacts
       let content = text
-        .replace(/\x0c/g, "f") // Fix raw form feeds
-        .replace(/\\f\\frac/g, "\\frac") // Fix the "\f\frac" double-up
-        .replace(/\\f\s?\\frac/g, "\\frac") // Fix "\f \frac"
-        .replace(/rac\{/g, "\\frac{"); // Fix missing "f"
+        // 1. THE NUCLEAR OPTION: Delete any literal "\f" or Form Feed character
+        // that appears right before a backslash or at the start of math.
+        .replace(/\x0c/g, "") // Delete raw form feed characters
+        .replace(/\\f\s?\\/g, "\\") // Turns "\f \" or "\f\" into just "\"
+        .replace(/\\f(?=frac)/g, "") // Turns "\ffrac" into "frac"
+        .replace(/rac\{/g, "\\frac{"); // Fixes the "missing f" bug
 
-      // 2. MAIN RENDERER: Turn $...$ into beautiful KaTeX
+      // 2. DELIMITER RENDERER
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let cleanFormula = formula.trim();
+          // Clean the inside of the $ signs too
+          let cleanFormula = formula
+            .trim()
+            .replace(/^\\f\s?/, "") // Remove leading \f or \f [space]
+            .replace(/\\f\s?\\/, "\\"); // Remove \f inside the formula
 
-          // Ensure the formula starts with a backslash if it's a fraction
           if (cleanFormula.startsWith("frac"))
             cleanFormula = "\\" + cleanFormula;
-          // Remove any leading \f if the AI still included it inside the $ signs
-          cleanFormula = cleanFormula.replace(/^\\f/, "");
 
           return katex.renderToString(cleanFormula, { throwOnError: false });
         } catch (e) {
@@ -350,20 +341,23 @@ createApp({
       return marked.parse(processedText);
     };
 
-    // Apply the same logic to the buttons
+    // Same "Super Scrub" for the buttons
     const renderInlineMath = (text) => {
       if (!text) return "";
       let content = text
-        .replace(/\x0c/g, "f")
-        .replace(/\\f\\frac/g, "\\frac")
+        .replace(/\x0c/g, "")
+        .replace(/\\f\s?\\/g, "\\")
+        .replace(/\\f(?=frac)/g, "")
         .replace(/rac\{/g, "\\frac{");
 
       return content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
-          let cleanFormula = formula.trim().replace(/^\\f/, "");
+          let cleanFormula = formula
+            .trim()
+            .replace(/^\\f\s?/, "")
+            .replace(/\\f\s?\\/, "\\");
           if (cleanFormula.startsWith("frac"))
             cleanFormula = "\\" + cleanFormula;
-
           return katex.renderToString(cleanFormula, {
             displayMode: false,
             throwOnError: false,
