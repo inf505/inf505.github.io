@@ -11,7 +11,9 @@ PEDAGOGY & OPTIONS RULES:
    - A safe "I don't know / Can you explain?" option.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything. Use \\\\div for division and \\\\times for multiplication.
+1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
+  - Use \\\\div for division.
+  - Use \\\\% for percentages (e.g., $50\\%$).
 2. BOLD: Use **bold** for key math terms.
 
 ONE-SHOT EXAMPLE:
@@ -215,7 +217,8 @@ createApp({
           let clean = formula
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
+            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
+            .replace(/\\?%/g, "\\%");
 
           // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
           clean = clean.replace(
@@ -241,7 +244,8 @@ createApp({
           let clean = formula
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
+            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
+            .replace(/\\?%/g, "\\%");
 
           return katex.renderToString(clean.trim(), {
             displayMode: false,
