@@ -649,3 +649,14 @@ button.small-btn {
     padding: 10px 15px;
     font-size: 1.1rem; /* Make the math easy to read */
 }
+/* Allow math to scroll horizontally if it's too wide for the phone screen */
+.message-text {
+    overflow-x: auto;
+    word-wrap: break-word;
+}
+
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 0;
+}
