@@ -309,7 +309,8 @@ createApp({
 
       let content = text.replace(/\x0c/g, "f");
 
-      return content.replace(/\$(.*?)\$/g, (match, formula) => {
+      // 1. Process KaTeX first
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         try {
           let clean = formula.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
@@ -325,8 +326,10 @@ createApp({
           return match;
         }
       });
+
+      // 2. Process inline markdown (bold/italics) WITHOUT wrapping in <p> tags
+      return marked.parseInline(processedText);
     };
-    // ----------------------------
 
     const summarizeStory = async () => {
       if (!apiKey.value) {
