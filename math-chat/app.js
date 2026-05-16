@@ -14,6 +14,7 @@ STRICT VISUAL RULES:
 1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
   - Use \\\\div for division.
   - Use \\\\% for percentages (e.g., $50\\%$).
+  - NEVER use the $ symbol for currency. Write out the word "dollars" instead (e.g., $5$ dollars). The $ symbol is strictly reserved for math.
 2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\%$). Every percentage must be wrapped in dollar signs.
 3. BOLD: Use **bold** for key math terms.
 
@@ -212,16 +213,28 @@ createApp({
         .replace(/\x08/g, "\\b")
         .replace(/\x0b/g, "\\v");
 
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+      const mathPlaceholders = [];
+
+      // 1. Extract math and replace with safe placeholders that Markdown ignores
+      let processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+        const index = mathPlaceholders.length;
+        mathPlaceholders.push(formula);
+        return `@@MATH_${index}@@`;
+      });
+
+      // 2. Safely parse the Markdown
+      let html = marked.parse(processedText);
+
+      // 3. Heal the math and swap the KaTeX HTML back into the placeholders
+      html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
+        let formula = mathPlaceholders[index];
         try {
-          // HEALING LOGIC: If AI sends "div" or "times" or "frac" without \, add it.
           let clean = formula
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
             .replace(/\\*%+/g, "\\%");
 
-          // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
@@ -232,18 +245,29 @@ createApp({
             strict: false,
           });
         } catch (e) {
-          return match;
+          return `$${formula}$`; // Fallback if KaTeX fails
         }
       });
 
-      return marked.parse(processedText);
+      return html;
     };
 
     const renderInlineMath = (text) => {
       if (!text) return "";
 
-      // We use the same healing logic for the buttons/options
-      const processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
+      const mathPlaceholders = [];
+
+      let processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
+        const index = mathPlaceholders.length;
+        mathPlaceholders.push(formula);
+        return `@@MATH_${index}@@`;
+      });
+
+      let html = marked.parse(processedText);
+      html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
+
+      html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
+        let formula = mathPlaceholders[index];
         try {
           let clean = formula
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
@@ -256,12 +280,11 @@ createApp({
             throwOnError: false,
           });
         } catch (e) {
-          return match;
+          return `$${formula}$`;
         }
       });
 
-      let html = marked.parse(processedText);
-      return html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
+      return html;
     };
 
     const summarizeStory = async () => {
@@ -309,7 +332,7 @@ createApp({
               role: "user",
               parts: [
                 {
-                  text: `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.\nFocus entirely on the narrative progression and major actions.\nWrite strictly in the SECOND-PERSON ("You").\n\nSTORY EXCERPT:\n${transcript}`,
+                  text: `Summarize the following chronological excerpt of a math tutoring session concisely into a flowing progress paragraph.\nFocus entirely on the mathematical concepts covered, what the student struggled with, and what they grasped.\nWrite strictly in the THIRD-PERSON (e.g., "The student...").\n\nTUTORING EXCERPT:\n${transcript}`,
                 },
               ],
             },
@@ -542,7 +565,7 @@ createApp({
       if (isLoading.value) return;
       const firstMessage =
         systemPrompt.value.trim() ||
-        "The story begins in a mysterious world of fractions...";
+        "Welcome to your Math Chat! What math topic would you like to explore today?";
       const userId = await saveToDb("user", firstMessage);
       messages.value.push({
         id: userId,
@@ -650,9 +673,9 @@ createApp({
             msg.role === "user" || msg.role === "summary" ? "user" : "model";
           let text = msg.text;
           if (msg.role === "summary")
-            text = `[PREVIOUS EVENTS SUMMARY]\n${text}`;
+            text = `[PREVIOUS PROGRESS REPORT]\n${text}`;
           if (index === 0)
-            text = `[STORY GRIMOIRE]\n${factsSummary || "No facts established yet."}[END GRIMOIRE]\n\nSTORY PREMISE: ${text}`;
+            text = `[STUDENT KNOWLEDGE BASE]\n${factsSummary || "No facts established yet."}[END KNOWLEDGE BASE]\n\nCURRENT FOCUS: ${text}`;
           return { role: role, parts: [{ text: text }] };
         });
 

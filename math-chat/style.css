@@ -661,3 +661,42 @@ button.small-btn {
     overflow-y: hidden;
     padding: 10px 0;
 }
+/* Base badge styling (if not already defined) */
+.fact-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+/* 📘 Concept: Blue */
+.fact-badge.concept {
+    background-color: rgba(66, 153, 225, 0.15);
+    color: #63b3ed;
+    border: 1px solid rgba(66, 153, 225, 0.3);
+}
+
+/* 🧮 Formula: Purple */
+.fact-badge.formula {
+    background-color: rgba(159, 122, 234, 0.15);
+    color: #b794f4;
+    border: 1px solid rgba(159, 122, 234, 0.3);
+}
+
+/* ⚠️ Student Mistake: Orange/Red */
+.fact-badge.student-mistake {
+    background-color: rgba(237, 137, 54, 0.15);
+    color: #ed8936;
+    border: 1px solid rgba(237, 137, 54, 0.3);
+}
+
+/* ✅ Mastered: Green */
+.fact-badge.mastered {
+    background-color: rgba(72, 187, 120, 0.15);
+    color: #68d391;
+    border: 1px solid rgba(72, 187, 120, 0.3);
+}
