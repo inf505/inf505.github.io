@@ -308,7 +308,7 @@ createApp({
 
       if (
         !confirm(
-          `This will compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`,
+          `This will compress the oldest ${batchSize} messages into a Summary. Continue?`,
         )
       )
         return;
