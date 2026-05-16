@@ -227,33 +227,33 @@ createApp({
 
       // 3. Heal the math and swap the KaTeX HTML back into the placeholders
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
-        let formula = mathPlaceholders[index];
-        try {
-          let clean = formula
-            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
-            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-            .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
-            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
-            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
-            .replace(/\\*%+/g, "\\%");
+              let formula = mathPlaceholders[index];
+              try {
+                // HEALER START
+                let clean = formula
+                  .replace(/\\+/g, "\\") // Collapse multiple backslashes (NEW)
+                  .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
+                  .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
+                  .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
+                  .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
+                  .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
+                  .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
+                  .replace(/\\*%+/g, "\\%");
 
-          clean = clean.replace(
-            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
-            "\\frac{$1}{$2}",
-          );
+                clean = clean.replace(
+                  /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
+                  "\\frac{$1}{$2}",
+                );
+                // HEALER END
 
-          return katex.renderToString(clean.trim(), {
-            throwOnError: false,
-            strict: false,
-          });
-        } catch (e) {
-          return `$${formula}$`; // Fallback if KaTeX fails
-        }
-      });
-
-      return html;
-    };
+                return katex.renderToString(clean.trim(), {
+                  throwOnError: false,
+                  strict: false,
+                });
+              } catch (e) {
+                return `$${formula}$`;
+              }
+            });
 
     const renderInlineMath = (text) => {
       if (!text) return "";
@@ -269,10 +269,13 @@ createApp({
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
 
+      // 3. Un-vault the math and apply the Healer logic
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         let formula = mathPlaceholders[index];
         try {
+          // HEALER START
           let clean = formula
+            .replace(/\\+/g, "\\") // Collapse multiple backslashes (Fixes red LaTeX)
             .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
@@ -281,12 +284,20 @@ createApp({
             .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
             .replace(/\\*%+/g, "\\%");
 
+          // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
+          clean = clean.replace(
+            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
+            "\\frac{$1}{$2}",
+          );
+          // HEALER END
+
           return katex.renderToString(clean.trim(), {
-            displayMode: false,
+            displayMode: false, // Keeps math inline for buttons
             throwOnError: false,
+            strict: false,
           });
         } catch (e) {
-          return `$${formula}$`;
+          return `$${formula}$`; // Fallback if KaTeX still fails
         }
       });
 
