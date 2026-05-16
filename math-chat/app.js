@@ -206,16 +206,26 @@ createApp({
 
     const renderMarkdown = (text) => {
       if (!text) return "";
-      let content = text
-        .replace(/\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g, (match) => {
+
+      // 1. AUTO-WRAPPER: Find raw LaTeX environments and wrap them in $
+      // This fixes the error in your screenshot (missing delimiters)
+      let content = text.replace(
+        /\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g,
+        (match) => {
           return match.startsWith("$") ? match : `$${match}$`;
-        })
+        },
+      );
+
+      // 2. The standard character cleanup
+      content = content
         .replace(/\x0c/g, "\\f")
         .replace(/\t/g, "\\t")
         .replace(/\x08/g, "\\b")
         .replace(/\x0b/g, "\\v");
 
       const mathPlaceholders = [];
+
+      // 3. VAULTING: This now catches the auto-wrapped math!
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
@@ -224,10 +234,13 @@ createApp({
 
       let html = marked.parse(processedText);
 
+      // 4. UN-VAULTING & HEALING
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
+          // Surgical Healer (Halve backslashes)
           let clean = formula.replace(/\\\\/g, "\\");
+
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
@@ -237,12 +250,8 @@ createApp({
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
           clean = clean.replace(/\\*%+/g, "\\%");
-          clean = clean.replace(
-            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
-            "\\frac{$1}{$2}",
-          );
 
-          // FIXED: Check for the presence of a newline command or environment
+          // Smart Display Mode (Centered newline for big math)
           const isBlock = formula.includes("\\\\") || formula.includes("begin");
 
           return katex.renderToString(clean.trim(), {
@@ -254,6 +263,7 @@ createApp({
           return `$${formula}$`;
         }
       });
+
       return html;
     };
 
