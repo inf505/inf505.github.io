@@ -227,45 +227,50 @@ createApp({
 
       // 3. Heal the math and swap the KaTeX HTML back into the placeholders
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
-              let formula = mathPlaceholders[index];
-              try {
-                // HEALER START
-                let clean = formula
-                  .replace(/\\+/g, "\\") // Collapse multiple backslashes (NEW)
-                  .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
-                  .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-                  .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-                  .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
-                  .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
-                  .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
-                  .replace(/\\*%+/g, "\\%");
+        let formula = mathPlaceholders[index];
+        try {
+          // HEALER START
+          let clean = formula
+            .replace(/\\+/g, "\\") // Collapse multiple backslashes (NEW)
+            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
+            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
+            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
+            .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
+            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
+            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
+            .replace(/\\*%+/g, "\\%");
 
-                clean = clean.replace(
-                  /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
-                  "\\frac{$1}{$2}",
-                );
-                // HEALER END
+          clean = clean.replace(
+            /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
+            "\\frac{$1}{$2}",
+          );
+          // HEALER END
 
-                return katex.renderToString(clean.trim(), {
-                  throwOnError: false,
-                  strict: false,
-                });
-              } catch (e) {
-                return `$${formula}$`;
-              }
-            });
+          return katex.renderToString(clean.trim(), {
+            throwOnError: false,
+            strict: false,
+          });
+        } catch (e) {
+          return `$${formula}$`;
+        }
+      });
+
+      return html;
+    };
 
     const renderInlineMath = (text) => {
       if (!text) return "";
 
       const mathPlaceholders = [];
 
+      // 1. Vault the math away in placeholders so Markdown doesn't touch it
       let processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
         return `@@MATH_${index}@@`;
       });
 
+      // 2. Parse Markdown and strip the surrounding <p> tags for the buttons
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
 
