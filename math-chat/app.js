@@ -207,6 +207,9 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
       let content = text
+        .replace(/\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g, (match) => {
+          return match.startsWith("$") ? match : `$${match}$`;
+        })
         .replace(/\x0c/g, "\\f")
         .replace(/\t/g, "\\t")
         .replace(/\x08/g, "\\b")
@@ -224,7 +227,6 @@ createApp({
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
-          // SURGICAL HEALER
           let clean = formula.replace(/\\\\/g, "\\");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
@@ -240,7 +242,11 @@ createApp({
             "\\frac{$1}{$2}",
           );
 
+          // FIXED: Check for the presence of a newline command or environment
+          const isBlock = formula.includes("\\\\") || formula.includes("begin");
+
           return katex.renderToString(clean.trim(), {
+            displayMode: isBlock,
             throwOnError: false,
             strict: false,
           });
@@ -248,15 +254,22 @@ createApp({
           return `$${formula}$`;
         }
       });
-
       return html;
     };
 
     const renderInlineMath = (text) => {
       if (!text) return "";
-      const mathPlaceholders = [];
 
-      const processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
+      // Added auto-wrapper here too for safety
+      let content = text.replace(
+        /\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g,
+        (match) => {
+          return match.startsWith("$") ? match : `$${match}$`;
+        },
+      );
+
+      const mathPlaceholders = [];
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
         return `@@MATH_${index}@@`;
@@ -268,7 +281,6 @@ createApp({
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
-          // SURGICAL HEALER (Must match renderMarkdown)
           let clean = formula.replace(/\\\\/g, "\\");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
@@ -284,10 +296,8 @@ createApp({
             "\\frac{$1}{$2}",
           );
 
-          const isBlock = formula.includes("\\\\") || formula.includes("begin");
-
           return katex.renderToString(clean.trim(), {
-            displayMode: isBlock, // TRUE for systems/large math, FALSE for simple variables
+            displayMode: false, // Buttons should never be "Block"
             throwOnError: false,
             strict: false,
           });
@@ -295,7 +305,6 @@ createApp({
           return `$${formula}$`;
         }
       });
-
       return html;
     };
 
