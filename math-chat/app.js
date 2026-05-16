@@ -206,7 +206,6 @@ createApp({
 
     const renderMarkdown = (text) => {
       if (!text) return "";
-
       let content = text
         .replace(/\x0c/g, "\\f")
         .replace(/\t/g, "\\t")
@@ -214,37 +213,32 @@ createApp({
         .replace(/\x0b/g, "\\v");
 
       const mathPlaceholders = [];
-
-      // 1. Extract math and replace with safe placeholders that Markdown ignores
-      let processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
         return `@@MATH_${index}@@`;
       });
 
-      // 2. Safely parse the Markdown
       let html = marked.parse(processedText);
 
-      // 3. Heal the math and swap the KaTeX HTML back into the placeholders
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
-        let formula = mathPlaceholders[index];
+        const formula = mathPlaceholders[index];
         try {
-          // HEALER START
-          let clean = formula
-            .replace(/\\+/g, "\\") // Collapse multiple backslashes (NEW)
-            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
-            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-            .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
-            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
-            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
-            .replace(/\\*%+/g, "\\%");
-
+          // SURGICAL HEALER
+          let clean = formula.replace(/\\\\/g, "\\");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
+          clean = clean.replace(/\\*%+/g, "\\%");
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
           );
-          // HEALER END
 
           return katex.renderToString(clean.trim(), {
             throwOnError: false,
@@ -260,49 +254,43 @@ createApp({
 
     const renderInlineMath = (text) => {
       if (!text) return "";
-
       const mathPlaceholders = [];
 
-      // 1. Vault the math away in placeholders so Markdown doesn't touch it
-      let processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
+      const processedText = text.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
         return `@@MATH_${index}@@`;
       });
 
-      // 2. Parse Markdown and strip the surrounding <p> tags for the buttons
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
 
-      // 3. Un-vault the math and apply the Healer logic
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
-        let formula = mathPlaceholders[index];
+        const formula = mathPlaceholders[index];
         try {
-          // HEALER START
-          let clean = formula
-            .replace(/\\+/g, "\\") // Collapse multiple backslashes (Fixes red LaTeX)
-            .replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac")
-            .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
-            .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
-            .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
-            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
-            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
-            .replace(/\\*%+/g, "\\%");
-
-          // Ensure fractions have proper braces if the AI forgot them (e.g. \frac12)
+          // SURGICAL HEALER (Must match renderMarkdown)
+          let clean = formula.replace(/\\\\/g, "\\");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
+          clean = clean.replace(/\\*%+/g, "\\%");
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
           );
-          // HEALER END
 
           return katex.renderToString(clean.trim(), {
-            displayMode: false, // Keeps math inline for buttons
+            displayMode: false, // Keep it compact for buttons
             throwOnError: false,
             strict: false,
           });
         } catch (e) {
-          return `$${formula}$`; // Fallback if KaTeX still fails
+          return `$${formula}$`;
         }
       });
 
