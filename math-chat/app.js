@@ -234,6 +234,8 @@ createApp({
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
             .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
+            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
+            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
             .replace(/\\*%+/g, "\\%");
 
           clean = clean.replace(
@@ -275,6 +277,8 @@ createApp({
             .replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div")
             .replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times")
             .replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt")
+            .replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi")
+            .replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta")
             .replace(/\\*%+/g, "\\%");
 
           return katex.renderToString(clean.trim(), {
