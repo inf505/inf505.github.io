@@ -700,3 +700,19 @@ button.small-btn {
     color: #68d391;
     border: 1px solid rgba(72, 187, 120, 0.3);
 }
+/* Ensure large math blocks don't break the bubble on mobile */
+.katex-display {
+    margin: 1em 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px 0;
+    /* Custom scrollbar for a cleaner look */
+    scrollbar-width: thin;
+}
+
+/* Optional: Make the big curly brace and math slightly larger on mobile */
+@media (max-width: 600px) {
+    .katex-display {
+        font-size: 1.1em;
+    }
+}

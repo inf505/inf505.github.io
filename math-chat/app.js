@@ -284,8 +284,10 @@ createApp({
             "\\frac{$1}{$2}",
           );
 
+          const isBlock = formula.includes("\\\\") || formula.includes("begin");
+
           return katex.renderToString(clean.trim(), {
-            displayMode: false, // Keep it compact for buttons
+            displayMode: isBlock, // TRUE for systems/large math, FALSE for simple variables
             throwOnError: false,
             strict: false,
           });
