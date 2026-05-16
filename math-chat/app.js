@@ -353,7 +353,15 @@ createApp({
               role: "user",
               parts: [
                 {
-                  text: `Summarize the following chronological excerpt of a math tutoring session concisely into a flowing progress paragraph.\nFocus entirely on the mathematical concepts covered, what the student struggled with, and what they grasped.\nWrite strictly in the THIRD-PERSON (e.g., "The student...").\n\nTUTORING EXCERPT:\n${transcript}`,
+                  text: `Summarize the following chronological excerpt of a math tutoring session into a single, concise progress paragraph.
+                  Focus on:
+                  1. What mathematical concepts were introduced.
+                  2. Specific mistakes or misconceptions the student had.
+                  3. What the student eventually mastered.
+                  Write strictly in the THIRD-PERSON (e.g., "The student practiced...").
+
+                  TUTORING EXCERPT:
+                  ${transcript}`,
                 },
               ],
             },
@@ -696,7 +704,7 @@ createApp({
           if (msg.role === "summary")
             text = `[PREVIOUS PROGRESS REPORT]\n${text}`;
           if (index === 0)
-            text = `[STUDENT KNOWLEDGE BASE]\n${factsSummary || "No facts established yet."}[END KNOWLEDGE BASE]\n\nCURRENT FOCUS: ${text}`;
+            text = `[STUDENT KNOWLEDGE BASE]\n${factsSummary || "No facts established yet."}\n[END KNOWLEDGE BASE]\n\nCURRENT MATH TOPIC: ${text}`;
           return { role: role, parts: [{ text: text }] };
         });
 

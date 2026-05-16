@@ -656,50 +656,6 @@ button.small-btn {
     word-wrap: break-word;
 }
 
-.katex-display {
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 10px 0;
-}
-/* Base badge styling (if not already defined) */
-.fact-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
-}
-
-/* 📘 Concept: Blue */
-.fact-badge.concept {
-    background-color: rgba(66, 153, 225, 0.15);
-    color: #63b3ed;
-    border: 1px solid rgba(66, 153, 225, 0.3);
-}
-
-/* 🧮 Formula: Purple */
-.fact-badge.formula {
-    background-color: rgba(159, 122, 234, 0.15);
-    color: #b794f4;
-    border: 1px solid rgba(159, 122, 234, 0.3);
-}
-
-/* ⚠️ Student Mistake: Orange/Red */
-.fact-badge.student-mistake {
-    background-color: rgba(237, 137, 54, 0.15);
-    color: #ed8936;
-    border: 1px solid rgba(237, 137, 54, 0.3);
-}
-
-/* ✅ Mastered: Green */
-.fact-badge.mastered {
-    background-color: rgba(72, 187, 120, 0.15);
-    color: #68d391;
-    border: 1px solid rgba(72, 187, 120, 0.3);
-}
 /* Ensure large math blocks don't break the bubble on mobile */
 .katex-display {
     margin: 1em 0 !important;
@@ -715,4 +671,42 @@ button.small-btn {
     .katex-display {
         font-size: 1.1em;
     }
+}
+/* Fact Badge Base */
+.fact-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+/* 📘 Concept: Blue */
+.fact-badge.concept {
+    background: rgba(0, 150, 255, 0.2);
+    color: #00d4ff;
+    border: 1px solid rgba(0, 150, 255, 0.4);
+}
+
+/* 🧮 Formula: Purple */
+.fact-badge.formula {
+    background: rgba(160, 32, 240, 0.2);
+    color: #d896ff;
+    border: 1px solid rgba(160, 32, 240, 0.4);
+}
+
+/* ⚠️ Student Mistake: Orange */
+.fact-badge.student-mistake {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffb347;
+    border: 1px solid rgba(255, 165, 0, 0.4);
+}
+
+/* ✅ Mastered: Green */
+.fact-badge.mastered {
+    background: rgba(0, 255, 127, 0.2);
+    color: #00ff7f;
+    border: 1px solid rgba(0, 255, 127, 0.4);
 }
