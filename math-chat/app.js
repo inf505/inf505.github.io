@@ -214,12 +214,15 @@ createApp({
       // 0. PRE-HEAL: Fix the broken \neq before we even look for math
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-      //text = text.replace(/mathbb/g, "\\mathbb");
 
-      // 1. AUTO-WRAPPER: Find raw LaTeX environments and wrap them in $
-      // This fixes the error in your screenshot (missing delimiters)
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+
+      // 2. AUTO-WRAPPER: Catch \begin even if it has double backslashes \\
+      // And wrap it in $ if Gemma forgot them
       let content = text.replace(
-        /\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g,
+        /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
         (match) => {
           return match.startsWith("$") ? match : `$${match}$`;
         },
@@ -309,11 +312,15 @@ createApp({
 
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-      //text = text.replace(/mathbb/g, "\\mathbb");
 
-      // Added auto-wrapper here too for safety
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+
+      // 2. AUTO-WRAPPER: Catch \begin even if it has double backslashes \\
+      // And wrap it in $ if Gemma forgot them
       let content = text.replace(
-        /\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g,
+        /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
         (match) => {
           return match.startsWith("$") ? match : `$${match}$`;
         },
