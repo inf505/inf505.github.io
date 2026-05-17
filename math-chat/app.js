@@ -11,18 +11,20 @@ PEDAGOGY & OPTIONS RULES:
    - A safe "I don't know / Can you explain?" option.
 
 STRICT VISUAL RULES:
-1. UNIVERSAL LATEX: Use $5$ or $\\frac{1}{2}$ for everything.
-  - Use \\\\div for division.
-  - Use \\\\% for percentages (e.g., $50\\%$).
+1. UNIVERSAL LATEX: Use $5$ or $\\\\frac{1}{2}$ for everything.
+  - Use \\\\div for the division symbol (÷). NEVER use \\\\dividedby or \\\\bdiv.
+  - Use \\\\times for multiplication (×).
+  - Use \\\\longdiv{125}{5} if showing long division specifically.
+  - Use \\\\% for percentages (e.g., $50\\\\%$).
   - NEVER use the $ symbol for currency. Write out the word "dollars" instead (e.g., $5$ dollars). The $ symbol is strictly reserved for math.
-2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\%$). Every percentage must be wrapped in dollar signs.
+2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\\\%$). Every percentage must be wrapped in dollar signs.
 3. BOLD: Use **bold** for key math terms.
 
 ONE-SHOT EXAMPLE:
 {
   "thought": "The student is converting fractions to percentages. I will ask them to convert 3/8.",
-  "response": "To find the percentage of $\\frac{3}{8}$, we divide $3$ by $8$ to get $0.375$. What is $0.375$ as a **Percentage**?",
-  "options": ["$37.5\\%$", "$3.75\\%$", "$375\\%$", "I don't know how to move the decimal."],
+  "response": "To find the percentage of $\\\\frac{3}{8}$, we divide $3$ by $8$ to get $0.375$. What is $0.375$ as a **Percentage**?",
+  "options": ["$37.\\\\%$", "$3.75\\\\%$", "$375\\\\%$", "I don't know how to move the decimal."],
   "facts": [{"text": "Topic: Conversions", "category": "Concept"}]
 }
 
@@ -242,7 +244,11 @@ createApp({
           let clean = formula.replace(/\\\\/g, "\\");
 
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
+            "$1\\div ",
+          );
+          clean = clean.replace(/(^|[^a-zA-Z])\\*longdivision/g, "$1\\longdiv");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -293,7 +299,11 @@ createApp({
         try {
           let clean = formula.replace(/\\\\/g, "\\");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*div/g, "$1\\div");
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
+            "$1\\div ",
+          );
+          clean = clean.replace(/(^|[^a-zA-Z])\\*longdivision/g, "$1\\longdiv");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
