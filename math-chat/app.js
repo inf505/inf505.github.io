@@ -230,11 +230,14 @@ createApp({
       const mathPlaceholders = [];
 
       // 3. VAULTING: This now catches the auto-wrapped math!
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
-        const index = mathPlaceholders.length;
-        mathPlaceholders.push(formula);
-        return `@@MATH_${index}@@`;
-      });
+      const processedText = content.replace(
+        /\$([\s\S]*?)\$/g,
+        (match, formula) => {
+          const index = mathPlaceholders.length;
+          mathPlaceholders.push(formula);
+          return `@@MATH_${index}@@`;
+        },
+      );
 
       let html = marked.parse(processedText);
 
@@ -245,6 +248,7 @@ createApp({
           // Surgical Healer (Halve backslashes)
           let clean = formula.replace(/\\\\/g, "\\");
 
+          clean = clean.replace(/[\n\r]\s*eq/g, "neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -263,7 +267,7 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
-          clean = clean.replace(/[\n\r]\s*eq/g, "\\neq ");
+          clean = clean.replace(/([0-9])n?eq/g, "$1 \\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -313,6 +317,8 @@ createApp({
         const formula = mathPlaceholders[index];
         try {
           let clean = formula.replace(/\\\\/g, "\\");
+
+          clean = clean.replace(/[\n\r]\s*eq/g, "neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -331,7 +337,7 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
-          clean = clean.replace(/[\n\r]\s*eq/g, "\\neq ");
+          clean = clean.replace(/([0-9])n?eq/g, "$1 \\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
