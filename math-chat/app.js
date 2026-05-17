@@ -263,6 +263,7 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
+          clean = clean.replace(/[\n\r]\s*eq/g, "\\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -330,6 +331,7 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
+          clean = clean.replace(/[\n\r]\s*eq/g, "\\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
