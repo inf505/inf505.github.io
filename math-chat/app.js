@@ -221,11 +221,13 @@ createApp({
       text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
       text = text.replace(/\n\s*end/g, " \\end ");
 
-      // 1. AUTO-WRAPPER
+      // 1. AUTO-WRAPPER (Fixed for matrices & newlines!)
+      // Strips erratic $$ or missing $, ensuring exactly one pair of $ surrounds matrices.
+      // Uses \s* to absorb messy newlines around the wrappers.
       let content = text.replace(
-        /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
-        (match) => {
-          return match.startsWith("$") ? match : `$${match}$`;
+        /\$*\s*(\\+begin\{(\w+)\}[\s\S]*?\\+end\{\2\})\s*\$*/g,
+        (match, matrixCore) => {
+          return ` $${matrixCore}$ `;
         },
       );
 
@@ -238,12 +240,16 @@ createApp({
 
       const mathPlaceholders = [];
 
-      // 3. VAULTING
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
-        const index = mathPlaceholders.length;
-        mathPlaceholders.push(formula);
-        return `@@MATH_${index}@@`;
-      });
+      // 3. VAULTING (Fixed for newlines and $$ blocks!)
+      // Matches both $...$ and $$...$$ across multiple lines
+      const processedText = content.replace(
+        /\${1,2}([\s\S]*?)\${1,2}/g,
+        (match, formula) => {
+          const index = mathPlaceholders.length;
+          mathPlaceholders.push(formula);
+          return `@@MATH_${index}@@`;
+        },
+      );
 
       let html = marked.parse(processedText);
 
@@ -254,11 +260,10 @@ createApp({
           let clean = formula;
 
           // --- ROW BREAK & COMMAND HEALER ---
-          // 1. Safely normalize excessive JSON backslashes down to 2 (for row breaks)
+          // 1. Safely normalize excessive JSON backslashes down to 2 (for matrix row breaks)
           clean = clean.replace(/\\{3,}/g, "\\\\");
 
-          // 2. If multiple backslashes are DIRECTLY followed by letters, it is a command, not a row break.
-          // Example: \\frac -> \frac. (Row breaks like `\\ 3` are ignored because of the space).
+          // 2. If multiple backslashes are DIRECTLY attached to letters, it's a command, not a row break.
           clean = clean.replace(/\\{2,}([a-zA-Z]+)/g, "\\$1");
 
           // --- ORIGINAL TARGETED HEALER ---
@@ -323,19 +328,23 @@ createApp({
       text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
       text = text.replace(/\n\s*end/g, " \\end ");
 
+      // AUTO-WRAPPER
       let content = text.replace(
-        /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
-        (match) => {
-          return match.startsWith("$") ? match : `$${match}$`;
+        /\$*\s*(\\+begin\{(\w+)\}[\s\S]*?\\+end\{\2\})\s*\$*/g,
+        (match, matrixCore) => {
+          return ` $${matrixCore}$ `;
         },
       );
 
       const mathPlaceholders = [];
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
-        const index = mathPlaceholders.length;
-        mathPlaceholders.push(formula);
-        return `@@MATH_${index}@@`;
-      });
+      const processedText = content.replace(
+        /\${1,2}([\s\S]*?)\${1,2}/g,
+        (match, formula) => {
+          const index = mathPlaceholders.length;
+          mathPlaceholders.push(formula);
+          return `@@MATH_${index}@@`;
+        },
+      );
 
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
@@ -384,7 +393,6 @@ createApp({
 
           clean = clean.replace(/\\*%+/g, "\\%");
 
-          // Inline specific fix
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
