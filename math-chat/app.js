@@ -19,9 +19,9 @@ STRICT VISUAL RULES:
   - NEVER write \\\\longdiv without braces {}.
   - Use \\\\% for percentages (e.g., $50\\\\%$).
   - NEVER use the $ symbol for currency. Write out the word "dollars" instead (e.g., $5$ dollars). The $ symbol is strictly reserved for math.
-  - For Matrices, always wrap the entire block in dollar signs.
-    Example: $\\\\begin{bmatrix} 1 & 2 \\\\\\\\ 3 & 4 \\\\end{bmatrix}$
-  - Use \\\\\\\\ (four backslashes) for new lines inside a matrix to ensure they survive JSON parsing.
+  - For Matrices, you MUST use exactly this format: $\\\\begin{bmatrix} a & b \\\\\\\\ c & d \\\\end{bmatrix}$
+  - Notice: Use FOUR backslashes (\\\\\\\\) for new rows inside the matrix.
+  - Notice: Always wrap the entire matrix block in dollar signs.
 2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\\\%$). Every percentage must be wrapped in dollar signs.
 3. BOLD: Use **bold** for key math terms.
 
@@ -254,7 +254,18 @@ createApp({
         const formula = mathPlaceholders[index];
         try {
           // Surgical Healer (Halve backslashes)
-          let clean = formula.replace(/\\+/g, "\\");
+          let clean = formula;
+
+          // 1. If Gemma sent 4 backslashes (\\\\), turn them into 2 (\\) for row breaks
+          // If she sent 2, keep 2.
+          if (clean.includes("begin")) {
+            clean = clean.replace(/\\\\\\\\/g, "\\\\"); // 4 -> 2
+            clean = clean.replace(/\\+begin/g, "\\begin"); // Fix command
+            clean = clean.replace(/\\+end/g, "\\end"); // Fix command
+          } else {
+            // For non-matrix math, keep your standard collapsing
+            clean = clean.replace(/\\+/g, "\\");
+          }
 
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
@@ -295,7 +306,7 @@ createApp({
           clean = clean.replace(/\\*%+/g, "\\%");
 
           // Smart Display Mode (Centered newline for big math)
-          const isBlock = formula.includes("\\\\") || formula.includes("begin");
+          const isBlock = formula.includes("begin") || formula.includes("\\\\");
 
           return katex.renderToString(clean.trim(), {
             displayMode: isBlock,
@@ -342,7 +353,18 @@ createApp({
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
-          let clean = formula.replace(/\\+/g, "\\");
+          let clean = formula;
+
+          // 1. If Gemma sent 4 backslashes (\\\\), turn them into 2 (\\) for row breaks
+          // If she sent 2, keep 2.
+          if (clean.includes("begin")) {
+            clean = clean.replace(/\\\\\\\\/g, "\\\\"); // 4 -> 2
+            clean = clean.replace(/\\+begin/g, "\\begin"); // Fix command
+            clean = clean.replace(/\\+end/g, "\\end"); // Fix command
+          } else {
+            // For non-matrix math, keep your standard collapsing
+            clean = clean.replace(/\\+/g, "\\");
+          }
 
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
