@@ -323,6 +323,7 @@ createApp({
             displayMode: isBlock,
             throwOnError: false,
             strict: false,
+            output: "html",
           });
         } catch (e) {
           return `$${formula}$`;
@@ -380,6 +381,7 @@ createApp({
           clean = clean.replace(/\\{2,}([a-zA-Z]+)/g, "\\$1");
 
           // --- ORIGINAL TARGETED HEALER ---
+
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -427,6 +429,7 @@ createApp({
             displayMode: false,
             throwOnError: false,
             strict: false,
+            output: "html",
           });
         } catch (e) {
           return `$${formula}$`;
