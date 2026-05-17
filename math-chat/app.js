@@ -14,7 +14,9 @@ STRICT VISUAL RULES:
 1. UNIVERSAL LATEX: Use $5$ or $\\\\frac{1}{2}$ for everything.
   - Use \\\\div for the division symbol (÷). NEVER use \\\\dividedby or \\\\bdiv.
   - Use \\\\times for multiplication (×).
-  - Use \\\\longdiv{125}{5} if showing long division specifically.
+  - For Long Division, use the format: \\\\longdiv{dividend}{divisor}
+    Example: To show 125 divided by 5, write $\\\\longdiv{125}{5}$.
+  - NEVER write \\\\longdiv without braces {}.
   - Use \\\\% for percentages (e.g., $50\\\\%$).
   - NEVER use the $ symbol for currency. Write out the word "dollars" instead (e.g., $5$ dollars). The $ symbol is strictly reserved for math.
 2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\\\%$). Every percentage must be wrapped in dollar signs.
@@ -248,7 +250,19 @@ createApp({
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
             "$1\\div ",
           );
-          clean = clean.replace(/(^|[^a-zA-Z])\\*longdivision/g, "$1\\longdiv");
+          clean = clean.replace(
+            /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
+            (match, dividend, divisor) => {
+              // This turns it into: divisor | dividend (with a line over it)
+              return `${divisor}\\overline{\\smash{)} ${dividend}}`;
+            },
+          );
+
+          // 2. Also catch the word variations just in case
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
+            "$1\\longdiv",
+          );
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -303,7 +317,19 @@ createApp({
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
             "$1\\div ",
           );
-          clean = clean.replace(/(^|[^a-zA-Z])\\*longdivision/g, "$1\\longdiv");
+          clean = clean.replace(
+            /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
+            (match, dividend, divisor) => {
+              // This turns it into: divisor | dividend (with a line over it)
+              return `${divisor}\\overline{\\smash{)} ${dividend}}`;
+            },
+          );
+
+          // 2. Also catch the word variations just in case
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
+            "$1\\longdiv",
+          );
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
