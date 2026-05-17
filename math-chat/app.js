@@ -212,8 +212,9 @@ createApp({
       if (!text) return "";
 
       // 0. PRE-HEAL: Fix the broken \neq before we even look for math
-
       text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/mathbb/g, "\\mathbb");
 
       // 1. AUTO-WRAPPER: Find raw LaTeX environments and wrap them in $
       // This fixes the error in your screenshot (missing delimiters)
@@ -273,6 +274,18 @@ createApp({
           clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
+
+          // Geometry
+          clean = clean.replace(/(^|[^a-zA-Z])\\*angle/g, "$1\\angle ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*triangle/g, "$1\\triangle ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
+
+          // Greek (Common in Algebra/Trig)
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
+
           clean = clean.replace(/\\*%+/g, "\\%");
 
           // Smart Display Mode (Centered newline for big math)
@@ -295,6 +308,8 @@ createApp({
       if (!text) return "";
 
       text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/mathbb/g, "\\mathbb");
 
       // Added auto-wrapper here too for safety
       let content = text.replace(
@@ -342,6 +357,18 @@ createApp({
           clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
+
+          // Geometry
+          clean = clean.replace(/(^|[^a-zA-Z])\\*angle/g, "$1\\angle ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*triangle/g, "$1\\triangle ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
+
+          // Greek (Common in Algebra/Trig)
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
+
           clean = clean.replace(/\\*%+/g, "\\%");
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
