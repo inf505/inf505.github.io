@@ -211,6 +211,10 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
+      // 0. PRE-HEAL: Fix the broken \neq before we even look for math
+
+      text = text.replace(/\n\s*eq/g, " \\neq ");
+
       // 1. AUTO-WRAPPER: Find raw LaTeX environments and wrap them in $
       // This fixes the error in your screenshot (missing delimiters)
       let content = text.replace(
@@ -230,14 +234,11 @@ createApp({
       const mathPlaceholders = [];
 
       // 3. VAULTING: This now catches the auto-wrapped math!
-      const processedText = content.replace(
-        /\$([\s\S]*?)\$/g,
-        (match, formula) => {
-          const index = mathPlaceholders.length;
-          mathPlaceholders.push(formula);
-          return `@@MATH_${index}@@`;
-        },
-      );
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+        const index = mathPlaceholders.length;
+        mathPlaceholders.push(formula);
+        return `@@MATH_${index}@@`;
+      });
 
       let html = marked.parse(processedText);
 
@@ -248,7 +249,6 @@ createApp({
           // Surgical Healer (Halve backslashes)
           let clean = formula.replace(/\\\\/g, "\\");
 
-          clean = clean.replace(/[\n\r]\s*eq/g, "neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -267,7 +267,6 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
-          clean = clean.replace(/([0-9])n?eq/g, "$1 \\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -295,6 +294,8 @@ createApp({
     const renderInlineMath = (text) => {
       if (!text) return "";
 
+      text = text.replace(/\n\s*eq/g, " \\neq ");
+
       // Added auto-wrapper here too for safety
       let content = text.replace(
         /\\begin\{(\w+)\}[\s\S]*?\\end\{\1\}/g,
@@ -304,14 +305,11 @@ createApp({
       );
 
       const mathPlaceholders = [];
-      const processedText = content.replace(
-        /\$([\s\S]*?)\$/g, // Changed . to [\s\S]
-        (match, formula) => {
-          const index = mathPlaceholders.length;
-          mathPlaceholders.push(formula);
-          return `@@MATH_${index}@@`;
-        },
-      );
+      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
+        const index = mathPlaceholders.length;
+        mathPlaceholders.push(formula);
+        return `@@MATH_${index}@@`;
+      });
 
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
@@ -320,8 +318,6 @@ createApp({
         const formula = mathPlaceholders[index];
         try {
           let clean = formula.replace(/\\\\/g, "\\");
-
-          clean = clean.replace(/[\n\r]\s*eq/g, "neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -340,7 +336,6 @@ createApp({
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
-          clean = clean.replace(/([0-9])n?eq/g, "$1 \\neq ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
