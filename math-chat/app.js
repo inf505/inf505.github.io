@@ -304,11 +304,14 @@ createApp({
       );
 
       const mathPlaceholders = [];
-      const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
-        const index = mathPlaceholders.length;
-        mathPlaceholders.push(formula);
-        return `@@MATH_${index}@@`;
-      });
+      const processedText = content.replace(
+        /\$([\s\S]*?)\$/g, // Changed . to [\s\S]
+        (match, formula) => {
+          const index = mathPlaceholders.length;
+          mathPlaceholders.push(formula);
+          return `@@MATH_${index}@@`;
+        },
+      );
 
       let html = marked.parse(processedText);
       html = html.replace(/^<p>/i, "").replace(/<\/p>\n?$/i, "");
