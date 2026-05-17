@@ -214,15 +214,14 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 0. PRE-HEAL: Fix the broken \neq before we even look for math
+      // 0. PRE-HEAL
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-
       text = text.replace(/\n\s*egin/g, " \\begin ");
       text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
       text = text.replace(/\n\s*end/g, " \\end ");
 
-      // 2. AUTO-WRAPPER: Catch \begin even if it has double backslashes \\
+      // 1. AUTO-WRAPPER: Catch \begin even if it has double backslashes \\
       // And wrap it in $ if Gemma forgot them
       let content = text.replace(
         /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
@@ -231,7 +230,7 @@ createApp({
         },
       );
 
-      // 2. The standard character cleanup
+      // 2. Standard character cleanup
       content = content
         .replace(/\x0c/g, "\\f")
         .replace(/\t/g, "\\t")
@@ -240,7 +239,7 @@ createApp({
 
       const mathPlaceholders = [];
 
-      // 3. VAULTING: This now catches the auto-wrapped math!
+      // 3. VAULTING
       const processedText = content.replace(/\$(.*?)\$/g, (match, formula) => {
         const index = mathPlaceholders.length;
         mathPlaceholders.push(formula);
@@ -253,20 +252,12 @@ createApp({
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
-          // Surgical Healer (Halve backslashes)
           let clean = formula;
 
-          // 1. If Gemma sent 4 backslashes (\\\\), turn them into 2 (\\) for row breaks
-          // If she sent 2, keep 2.
-          if (clean.includes("begin")) {
-            clean = clean.replace(/\\\\\\\\/g, "\\\\"); // 4 -> 2
-            clean = clean.replace(/\\+begin/g, "\\begin"); // Fix command
-            clean = clean.replace(/\\+end/g, "\\end"); // Fix command
-          } else {
-            // For non-matrix math, keep your standard collapsing
-            clean = clean.replace(/\\+/g, "\\");
-          }
+          // --- SURGICAL HEALER V2 ---
 
+          // Step 1: Explicit Command Healing
+          // Ensure these commands always have exactly one backslash
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -275,35 +266,46 @@ createApp({
           clean = clean.replace(
             /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
             (match, dividend, divisor) => {
-              // This turns it into: divisor | dividend (with a line over it)
               return `${divisor}\\overline{\\smash{)} ${dividend}}`;
             },
           );
-
-          // 2. Also catch the word variations just in case
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
 
-          // Geometry
+          // Geometry & Greek (with spaces to prevent KaTeX squishing)
           clean = clean.replace(/(^|[^a-zA-Z])\\*angle/g, "$1\\angle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*triangle/g, "$1\\triangle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
-
-          // Greek (Common in Algebra/Trig)
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
 
+          // Catch other common over-escaped math commands
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(sin|cos|tan|log|ln|mu|sigma|text|textbf|mathbb|mathcal|bmatrix|pmatrix|vmatrix)/g,
+            "$1\\$2",
+          );
           clean = clean.replace(/\\*%+/g, "\\%");
+
+          // Step 2: Matrix & Row-Break Healer
+          // Normalize 3 or 4 backslashes into exactly 2 (KaTeX row breaks require \\)
+          clean = clean.replace(/\\{3,}/g, "\\\\");
+
+          // Step 3: Vault genuine Row Breaks (\\) before generic collapse
+          clean = clean.replace(/\\\\/g, "@@ROWBREAK@@");
+
+          // Step 4: Aggressively collapse any remaining multiple backslashes
+          clean = clean.replace(/\\+/g, "\\");
+
+          // Step 5: Unvault Row Breaks
+          clean = clean.replace(/@@ROWBREAK@@/g, "\\\\");
 
           // Smart Display Mode (Centered newline for big math)
           const isBlock = formula.includes("begin") || formula.includes("\\\\");
@@ -326,13 +328,11 @@ createApp({
 
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-
       text = text.replace(/\n\s*egin/g, " \\begin ");
       text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
       text = text.replace(/\n\s*end/g, " \\end ");
 
-      // 2. AUTO-WRAPPER: Catch \begin even if it has double backslashes \\
-      // And wrap it in $ if Gemma forgot them
+      // AUTO-WRAPPER
       let content = text.replace(
         /\\*begin\{(\w+)\}[\s\S]*?\\*end\{\1\}/g,
         (match) => {
@@ -355,17 +355,9 @@ createApp({
         try {
           let clean = formula;
 
-          // 1. If Gemma sent 4 backslashes (\\\\), turn them into 2 (\\) for row breaks
-          // If she sent 2, keep 2.
-          if (clean.includes("begin")) {
-            clean = clean.replace(/\\\\\\\\/g, "\\\\"); // 4 -> 2
-            clean = clean.replace(/\\+begin/g, "\\begin"); // Fix command
-            clean = clean.replace(/\\+end/g, "\\end"); // Fix command
-          } else {
-            // For non-matrix math, keep your standard collapsing
-            clean = clean.replace(/\\+/g, "\\");
-          }
+          // --- SURGICAL HEALER V2 ---
 
+          // Step 1: Explicit Command Healing
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
@@ -374,35 +366,45 @@ createApp({
           clean = clean.replace(
             /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
             (match, dividend, divisor) => {
-              // This turns it into: divisor | dividend (with a line over it)
               return `${divisor}\\overline{\\smash{)} ${dividend}}`;
             },
           );
-
-          // 2. Also catch the word variations just in case
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
-          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
 
-          // Geometry
           clean = clean.replace(/(^|[^a-zA-Z])\\*angle/g, "$1\\angle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*triangle/g, "$1\\triangle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
-
-          // Greek (Common in Algebra/Trig)
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
 
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(sin|cos|tan|log|ln|mu|sigma|text|textbf|mathbb|mathcal|bmatrix|pmatrix|vmatrix)/g,
+            "$1\\$2",
+          );
           clean = clean.replace(/\\*%+/g, "\\%");
+
+          // Step 2: Matrix & Row-Break Healer
+          clean = clean.replace(/\\{3,}/g, "\\\\");
+
+          // Step 3: Vault genuine Row Breaks
+          clean = clean.replace(/\\\\/g, "@@ROWBREAK@@");
+
+          // Step 4: Aggressively collapse remaining backslashes
+          clean = clean.replace(/\\+/g, "\\");
+
+          // Step 5: Unvault Row Breaks
+          clean = clean.replace(/@@ROWBREAK@@/g, "\\\\");
+
+          // Inline Math specific format healing (catch missing braces in single char fractions)
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
             "\\frac{$1}{$2}",
