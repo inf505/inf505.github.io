@@ -19,6 +19,9 @@ STRICT VISUAL RULES:
   - NEVER write \\\\longdiv without braces {}.
   - Use \\\\% for percentages (e.g., $50\\\\%$).
   - NEVER use the $ symbol for currency. Write out the word "dollars" instead (e.g., $5$ dollars). The $ symbol is strictly reserved for math.
+  - For Matrices, always wrap the entire block in dollar signs.
+    Example: $\\\\begin{bmatrix} 1 & 2 \\\\\\\\ 3 & 4 \\\\end{bmatrix}$
+  - Use \\\\\\\\ (four backslashes) for new lines inside a matrix to ensure they survive JSON parsing.
 2. PERCENTAGES: Use \\\\% for percentages (e.g., $37.5\\\\%$). Every percentage must be wrapped in dollar signs.
 3. BOLD: Use **bold** for key math terms.
 
@@ -251,7 +254,7 @@ createApp({
         const formula = mathPlaceholders[index];
         try {
           // Surgical Healer (Halve backslashes)
-          let clean = formula.replace(/\\\\/g, "\\");
+          let clean = formula.replace(/\\+/g, "\\");
 
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
@@ -339,7 +342,8 @@ createApp({
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
-          let clean = formula.replace(/\\\\/g, "\\");
+          let clean = formula.replace(/\\+/g, "\\");
+
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
