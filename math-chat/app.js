@@ -215,6 +215,15 @@ createApp({
       if (!text) return "";
 
       // 0. PRE-HEAL
+      //
+      // text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+      text = text.replace(/\r\s*ightarrow/g, " \\rightarrow "); // New
+      text = text.replace(/\n\s*abla/g, " \\nabla "); // New (Calculus gradient)
+
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
       text = text.replace(/\n\s*egin/g, " \\begin ");
@@ -278,11 +287,15 @@ createApp({
               return `${divisor}\\overline{\\smash{)} ${dividend}}`;
             },
           );
-
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(pi|theta|alpha|beta|gamma|delta|sigma|mu|omega)([^a-zA-Z]|$)/g,
+            "$1\\$2 $3",
+          );
+
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
@@ -321,6 +334,14 @@ createApp({
 
     const renderInlineMath = (text) => {
       if (!text) return "";
+
+      text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+      text = text.replace(/\r\s*ightarrow/g, " \\rightarrow "); // New
+      text = text.replace(/\n\s*abla/g, " \\nabla "); // New (Calculus gradient)
 
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
@@ -370,11 +391,15 @@ createApp({
               return `${divisor}\\overline{\\smash{)} ${dividend}}`;
             },
           );
-
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
             "$1\\longdiv",
           );
+          clean = clean.replace(
+            /(^|[^a-zA-Z])\\*(pi|theta|alpha|beta|gamma|delta|sigma|mu|omega)([^a-zA-Z]|$)/g,
+            "$1\\$2 $3",
+          );
+
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
