@@ -214,7 +214,7 @@ createApp({
       // 0. PRE-HEAL: Fix the broken \neq before we even look for math
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-      text = text.replace(/mathbb/g, "\\mathbb");
+      //text = text.replace(/mathbb/g, "\\mathbb");
 
       // 1. AUTO-WRAPPER: Find raw LaTeX environments and wrap them in $
       // This fixes the error in your screenshot (missing delimiters)
@@ -309,7 +309,7 @@ createApp({
 
       text = text.replace(/\n\s*eq/g, " \\neq ");
       text = text.replace(/\n\s*otin/g, " \\notin ");
-      text = text.replace(/mathbb/g, "\\mathbb");
+      //text = text.replace(/mathbb/g, "\\mathbb");
 
       // Added auto-wrapper here too for safety
       let content = text.replace(
