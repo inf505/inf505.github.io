@@ -873,7 +873,7 @@ createApp({
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
         let data;
         let attempt = 0;
-        const retryDelays = [5000, 10000, 15000];
+        const retryDelays = [5000, 10000, 15000, 20000, 20000];
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
@@ -892,7 +892,10 @@ createApp({
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-              if (response.status === 500 && attempt < retryDelays.length) {
+              if (
+                (response.status === 500 || response.status === 503) &&
+                attempt < retryDelays.length
+              ) {
                 await new Promise((res) =>
                   setTimeout(res, retryDelays[attempt]),
                 );
