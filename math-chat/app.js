@@ -70,7 +70,7 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-    const randomizerModel = ref("gemma-4-31b-it");
+    const randomizerModel = ref("gemini-3-flash-preview");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
     const isSummarizing = ref(false);
@@ -84,7 +84,7 @@ createApp({
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
     const selectedVoice = ref("Aoede");
     const ttsProsodyNudge = ref(
-      "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
+      "Read the following text like a teacher. Tone: Match tone to content.",
     );
     const newFactText = ref("");
     const newFactCategory = ref("Concept");
