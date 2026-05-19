@@ -205,7 +205,7 @@ createApp({
       if (!text) return "";
 
       // Character cleanup
-      content = content
+      content = text
         .replace(/\x0c/g, "\\f")
         .replace(/\t/g, "\\t")
         .replace(/\x08/g, "\\b")
@@ -253,6 +253,8 @@ createApp({
 
     const renderInlineMath = (text) => {
       if (!text) return "";
+
+      let content = text;
 
       const mathPlaceholders = [];
       const processedText = content.replace(
