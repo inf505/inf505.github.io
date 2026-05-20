@@ -762,7 +762,7 @@ createApp({
           };
         });
 
-        const isGemma = selectedModel.value.toLowerCase().includes("gemma");
+        const isGemma = 0; //selectedModel.value.toLowerCase().includes("gemma");
 
         const payload = {
           contents,
