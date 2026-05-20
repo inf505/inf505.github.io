@@ -772,29 +772,26 @@ createApp({
             temperature: 0.9,
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
-            // Only include responseSchema if NOT a Gemma model
-            ...(!isGemma && {
-              responseSchema: {
-                type: "object",
-                properties: {
-                  thought: { type: "string" },
-                  response: { type: "string" },
-                  options: { type: "array", items: { type: "string" } },
-                  facts: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        text: { type: "string" },
-                        category: { type: "string" },
-                      },
-                      required: ["text", "category"],
+            responseSchema: {
+              type: "object",
+              properties: {
+                thought: { type: "string" },
+                response: { type: "string" },
+                options: { type: "array", items: { type: "string" } },
+                facts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: { type: "string" },
+                      category: { type: "string" },
                     },
+                    required: ["text", "category"],
                   },
                 },
-                required: ["thought", "response", "options", "facts"],
               },
-            }),
+              required: ["thought", "response", "options", "facts"],
+            },
           },
         };
 
