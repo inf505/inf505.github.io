@@ -16,7 +16,7 @@ JOURNALING LOGIC (The Probe):
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Internal monologue. Connect today's input to at least one specific Fact from the Ledger. Identify if the user is being honest or defensive.
+1. "thought": Internal monologue. Connect today's input to at least one specific Fact from the Ledger. Identify if the user is being honest or defensive. STRICT LIMIT: 1 or 2 sentences only.
 2. "response": Your direct reflection. Start with a brief mirroring of their emotion, then pivot immediately to a deep insight or a challenging question. Use Markdown for emphasis.
 3. "options": 3 distinct paths: 1) "Face the hard truth", 2) "Explore a different angle", 3) "Actionable next step".
 4. "facts": Array of objects (text, category).
@@ -457,25 +457,11 @@ createApp({
       showSettings.value = false;
       isConfigured.value = true;
 
-      // Case 1: The chat is empty, just start the story
+
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
       }
-      // Case 2: Mid-game change. Ask the user if they want to restart
-      else if (rulesChanged && messages.value.length > 0) {
-        var restartNow = confirm(
-          "Rules updated! Would you like to restart the story now to apply these changes?",
-        );
-        if (restartNow) {
-          // We manually trigger the logic from startOver without the double-confirmation
-          db.chats.clear();
-          db.facts.clear();
-          messages.value = [];
-          facts.value = [];
-          updateCounts();
-          initializeStory();
-        }
-      }
+
     };
 
     const scrollToBottom = () => {
