@@ -435,23 +435,6 @@
                                     style="width: 100%; height: 36px"
                                 ></audio>
                             </div>
-
-                            <div
-                                v-if="msg.role === 'model' && index === messages.length - 1 && !isLoading && index > 1"
-                                    class="therapeutic-paths"
-                            >
-                                <div class="path-button-container">
-                                    <button class="path-btn ruminate" @click="sendOption('Ruminate', 'I want to ruminate on this further. Let\'s go deeper into the internal feelings and specific nuances of this moment.')">
-                                        <span>🔍</span> Ruminate
-                                    </button>
-                                    <button class="path-btn explore" @click="sendOption('Explore', 'Let\'s explore the connections. How does this pattern link to other areas of my life or past systems?')">
-                                        <span>🌐</span> Explore
-                                    </button>
-                                    <button class="path-btn move-forward" @click="sendOption('Move Forward', 'I\'m ready to move forward. What is a pragmatic leverage point or a concrete next step?')">
-                                        <span>🚀</span> Move Forward
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
