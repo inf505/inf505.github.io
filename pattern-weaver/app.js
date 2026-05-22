@@ -912,8 +912,7 @@ createApp({
       isSummarizing,
       summarizeStory,
       summaryBatchSize,
-
-
+      isHidden,
     };
   },
 }).mount("#app");
