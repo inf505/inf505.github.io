@@ -19,7 +19,7 @@ Return a single JSON object.
 1. "thought": Internal monologue. Connect today's input to at least one specific Fact from the Ledger. Identify if the user is being honest or defensive. STRICT LIMIT: 1 or 2 sentences only.
 2. "response": Your direct reflection. Start with a brief mirroring of their emotion, then pivot immediately to a deep insight or a challenging question. Use Markdown for emphasis.
 3. "facts": Array of objects (text, category).
-- TIME TRACKING: Always update "Time" (e.g., "Tuesday Morning").
+- TIME TRACKING: Update a "Time" fact ONLY if it represents a significant chronological milestone in the session. REALITY CHECK: Use the "Current Real-World Time" provided in the Ledger to ground your responses.
 - CATEGORIES: "Self" (Identity/Traits), "Context" (People/Events), "Habits" (Patterns), "Insights" (Lessons).
 - FOCUS: Only record *significant* shifts or recurring themes.
 required: ["thought", "response", "facts"]
@@ -114,7 +114,7 @@ createApp({
         // 1. EXTRACTION: Find the single most recent "Time" fact and save it
         // This ensures it NEVER gets lost in the AI shuffle.
         const timeFacts = facts.value
-          .filter((f) => f.text.toLowerCase().startsWith("time:"))
+          .filter((f) => f.category === "Time") // Changed from text-based check to category check
           .sort((a, b) => b.timestamp - a.timestamp);
 
         const latestTimeFact = timeFacts[0];
@@ -628,11 +628,24 @@ createApp({
 
       try {
         const allFacts = await db.facts.toArray();
+
+        // Get the actual real-world time
+        const now = new Date();
+        const realTimeStr = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+
         const factsSummary = allFacts
           .map((f) => `- [${f.category}] ${f.text}`)
-          .join("\n");
+          .join("\n") + `\n- [Current Real-World Time] ${realTimeStr}`; // INJECT REAL TIME HERE
 
-        // 1. GEMMA TRICK: Inject context directly into the first User message
+
+
+
         const contents = messages.value.map((msg, index) => {
           // Send summaries as 'user' role so the AI accepts the format
           let role =
