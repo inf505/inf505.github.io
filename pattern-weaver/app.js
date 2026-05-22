@@ -55,7 +55,7 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-    const randomizerModel = ref("gemma-4-31b-it");
+    const summarizerModel = ref("gemma-4-31b-it");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
     const isSummarizing = ref(false);
@@ -66,7 +66,6 @@ createApp({
     const isLoading = ref(false);
     const messagesContainer = ref(null);
     const inputArea = ref(null);
-    const isGeneratingRules = ref(false);
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
     const selectedVoice = ref("Aoede");
     const ttsProsodyNudge = ref(
@@ -107,96 +106,6 @@ createApp({
         await loadFacts();
       } catch (err) {
         console.error("Error adding manual fact:", err);
-      }
-    };
-
-    const randomizeRules = async () => {
-      if (!apiKey.value) {
-        alert("Please enter your API Key first.");
-        return;
-      }
-
-      isGeneratingRules.value = true;
-
-      // 1. Create the controller
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-      try {
-        const p = `Act as a professional high-concept screenwriter.
-        In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
-        Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
-- Do not name the protagonist; describe them only by their current situation or role (e.g., 'You are a survivor', 'You are the last keeper').
-        STRICT LIMIT: One paragraph, maximum 80 words.`;
-
-        const payload = {
-          contents: [{ role: "user", parts: [{ text: p }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: {
-                  type: "string",
-                  description:
-                    "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
-                },
-                premise: { type: "string" },
-              },
-              required: ["thought", "premise"],
-            },
-          },
-        };
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal, // 2. Pass the signal to fetch
-        });
-
-        // 3. Clear the timeout since the request finished
-        clearTimeout(timeoutId);
-
-        const data = await res.json();
-
-        if (!res.ok)
-          throw new Error(data.error?.message || "API request failed");
-
-        if (data.candidates && data.candidates[0].content.parts) {
-          let rawText = data.candidates[0].content.parts[0].text;
-
-          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
-            rawText = rawText.substring(start, end + 1);
-          }
-
-          const parsedData = JSON.parse(rawText);
-          if (parsedData.premise) {
-            systemPrompt.value = parsedData.premise.trim();
-          }
-        }
-      } catch (err) {
-        // 4. Handle specifically the timeout/abort error
-        if (err.name === "AbortError") {
-          console.error("Randomizer timed out.");
-          alert(
-            "The request timed out. The AI is taking too long to think—try again!",
-          );
-        } else {
-          console.error("Error generating rules:", err);
-          alert("Randomizer failed: " + err.message);
-        }
-      } finally {
-        isGeneratingRules.value = false;
-        clearTimeout(timeoutId); // Final safety clear
       }
     };
 
@@ -354,7 +263,6 @@ createApp({
             STORY EXCERPT:
             ${transcript}`;
 
-        // Using randomizerModel (Gemini Flash) which supports strict responseSchema
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
@@ -371,8 +279,7 @@ createApp({
           },
         };
 
-        // TARGET: randomizerModel.value (Gemini Flash)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${summarizerModel.value}:generateContent`;
 
         const res = await fetch(url, {
           method: "POST",
@@ -462,18 +369,18 @@ createApp({
     });
 
     onMounted(async () => {
-      const storedKey = localStorage.getItem("story_api_key");
-      const storedModel = localStorage.getItem("story_model");
+      const storedKey = localStorage.getItem("journal_api_key");
+      const storedModel = localStorage.getItem("journal_model");
 
-      if (localStorage.getItem("story_tts_model"))
-        selectedTTSModel.value = localStorage.getItem("story_tts_model");
-      if (localStorage.getItem("story_randomizer_model")) {
-        randomizerModel.value = localStorage.getItem("story_randomizer_model");
+      if (localStorage.getItem("journal_tts_model"))
+        selectedTTSModel.value = localStorage.getItem("journal_tts_model");
+      if (localStorage.getItem("journal_randomizer_model")) {
+        summarizerModel.value = localStorage.getItem("journal_randomizer_model");
       }
-      if (localStorage.getItem("story_tts_voice"))
-        selectedVoice.value = localStorage.getItem("story_tts_voice");
-      if (localStorage.getItem("story_tts_prosody"))
-        ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
+      if (localStorage.getItem("journal_tts_voice"))
+        selectedVoice.value = localStorage.getItem("journal_tts_voice");
+      if (localStorage.getItem("journal_tts_prosody"))
+        ttsProsodyNudge.value = localStorage.getItem("journal_tts_prosody");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -481,12 +388,12 @@ createApp({
         isConfigured.value = true;
       }
 
-      const storedSystemPrompt = localStorage.getItem("story_system_prompt");
+      const storedSystemPrompt = localStorage.getItem("journal_system_prompt");
       if (storedSystemPrompt !== null) systemPrompt.value = storedSystemPrompt;
 
-      if (localStorage.getItem("story_summary_batch")) {
+      if (localStorage.getItem("journal_summary_batch")) {
         summaryBatchSize.value = parseInt(
-          localStorage.getItem("story_summary_batch"),
+          localStorage.getItem("journal_summary_batch"),
         );
       }
 
@@ -537,18 +444,18 @@ createApp({
 
     const saveAllSettings = () => {
       // Check if the rules actually changed compared to what's in storage
-      var oldRules = localStorage.getItem("story_system_prompt") || "";
+      var oldRules = localStorage.getItem("journal_system_prompt") || "";
       var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
       // Save everything to localStorage
-      localStorage.setItem("story_api_key", apiKey.value);
-      localStorage.setItem("story_model", selectedModel.value);
-      localStorage.setItem("story_randomizer_model", randomizerModel.value);
-      localStorage.setItem("story_system_prompt", systemPrompt.value);
-      localStorage.setItem("story_tts_model", selectedTTSModel.value);
-      localStorage.setItem("story_tts_voice", selectedVoice.value);
-      localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
-      localStorage.setItem("story_summary_batch", summaryBatchSize.value);
+      localStorage.setItem("journal_api_key", apiKey.value);
+      localStorage.setItem("journal_model", selectedModel.value);
+      localStorage.setItem("journal_randomizer_model", summarizerModel.value);
+      localStorage.setItem("journal_system_prompt", systemPrompt.value);
+      localStorage.setItem("journal_tts_model", selectedTTSModel.value);
+      localStorage.setItem("journal_tts_voice", selectedVoice.value);
+      localStorage.setItem("journal_tts_prosody", ttsProsodyNudge.value);
+      localStorage.setItem("journal_summary_batch", summaryBatchSize.value);
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -623,11 +530,7 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      // Use the Premise as the first message.
-      // If it's empty, use a default fallback.
-      const firstMessage =
-        systemPrompt.value.trim() ||
-        "The story begins in a mysterious world...";
+      const firstMessage = "Welcome to your reflection space. How are you feeling today?";
 
       const userId = await saveToDb("user", firstMessage);
 
@@ -635,7 +538,7 @@ createApp({
         id: userId,
         role: "user",
         text: firstMessage,
-        isHidden: false,
+        isHidden: true,
       });
 
       await triggerAIResponse();
@@ -972,7 +875,7 @@ createApp({
     return {
       apiKey,
       selectedModel,
-      randomizerModel,
+      summarizerModel,
       isConfigured,
       renderMarkdown,
       formatRelativeTime,
@@ -1009,7 +912,7 @@ createApp({
       summarizeStory,
       summaryBatchSize,
       isGeneratingRules,
-      randomizeRules,
+
     };
   },
 }).mount("#app");

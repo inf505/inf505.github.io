@@ -102,16 +102,6 @@
                                 >gemma-4-31b-it , gemini-2.5-flash ,
                                 gemini-3-flash-preview</small
                             >
-
-                            <button
-                                class="small-btn"
-                                @click="randomizeRules"
-                                :disabled="isGeneratingRules"
-                                style="margin-bottom: 8px; width: 100%"
-                            >
-                                {{ isGeneratingRules ? "🎲 Rolling the dice..."
-                                : "🎲 Randomize Story Idea" }}
-                            </button>
                             <textarea
                                 v-model="systemPrompt"
                                 rows="4"
