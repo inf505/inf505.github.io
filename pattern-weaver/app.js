@@ -490,13 +490,12 @@ createApp({
       }, 300);
     };
 
-    const saveToDb = async (role, text, thought = "", options = null, isHidden = false) => {
+    const saveToDb = async (role, text, thought = "", options = null) => {
       const id = await db.chats.add({
         role,
         text,
         thought,
         options,
-        isHidden, // Save it here
         timestamp: Date.now(),
       });
       return id;
@@ -533,7 +532,7 @@ createApp({
 
       const firstMessage = "Welcome to your reflection space. How are you feeling today?";
 
-      const userId = await saveToDb("user", firstMessage, "", null, true);
+      const userId = await saveToDb("user", firstMessage);
 
       messages.value.push({
         id: userId,
@@ -912,6 +911,7 @@ createApp({
       isSummarizing,
       summarizeStory,
       summaryBatchSize,
+
 
     };
   },
