@@ -213,7 +213,19 @@ createApp({
       }
     };
 
-    const renderMarkdown = (text) => marked.parse(text);
+    const renderMarkdown = (text) => {
+      if (!text) return "";
+
+      // Clean up common LaTeX symbols used in systems thinking
+      const cleanText = text
+        .replace(/\$\\rightarrow\$/g, "→")
+        .replace(/\$\\leftarrow\$/g, "←")
+        .replace(/\$\\leftrightarrow\$/g, "↔")
+        .replace(/\$\\implies\$/g, "⇒")
+        .replace(/\$\\Delta\$/g, "Δ"); // Common for 'change'
+
+      return marked.parse(cleanText);
+    };
 
     const summarizeStory = async () => {
       if (!apiKey.value) {
