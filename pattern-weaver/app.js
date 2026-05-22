@@ -12,11 +12,11 @@ PERSPECTIVE & TONE:
 JOURNALING LOGIC:
 - If the user provides a brief update, ask a follow-up "Level 2" question (probing the 'why' or the feeling).
 - If the user provides a deep reflection, summarize the key emotional themes you heard and offer a "Level 3" insight or a challenge.
-- Track patterns over time using the Grimoire.
+- Track patterns over time using the Facts.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Review the Grimoire for recurring themes, previous moods, or mentioned people/goals. Plan a response that bridges past entries with today's context.
+1. "thought": Review the Facts for recurring themes, previous moods, or mentioned people/goals. Plan a response that bridges past entries with today's context.
 2. "response": Your empathetic response and follow-up question. Use Markdown for emphasis.
 3. "options": Array of 3 distinct "Reflective Paths" (e.g., "Explore this feeling further", "Pivot to a different topic", "Look for a silver lining").
 4. "facts": An array of objects (text, category).
@@ -29,7 +29,7 @@ Return a single JSON object.
 `;
 
 const db = new Dexie("ReflectionsDB");
-db.version(2).stores({
+db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
 });
@@ -490,12 +490,13 @@ createApp({
       }, 300);
     };
 
-    const saveToDb = async (role, text, thought = "", options = null) => {
+    const saveToDb = async (role, text, thought = "", options = null, isHidden = false) => {
       const id = await db.chats.add({
         role,
         text,
         thought,
         options,
+        isHidden, // Save it here
         timestamp: Date.now(),
       });
       return id;
@@ -532,7 +533,7 @@ createApp({
 
       const firstMessage = "Welcome to your reflection space. How are you feeling today?";
 
-      const userId = await saveToDb("user", firstMessage);
+      const userId = await saveToDb("user", firstMessage, "", null, true);
 
       messages.value.push({
         id: userId,
