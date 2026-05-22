@@ -437,8 +437,8 @@
                             </div>
 
                             <div
-                                v-if="msg.role === 'model' && index === messages.length - 1 && !isLoading"
-                                class="therapeutic-paths"
+                                v-if="msg.role === 'model' && index === messages.length - 1 && !isLoading && index > 1"
+                                    class="therapeutic-paths"
                             >
                                 <div class="path-button-container">
                                     <button class="path-btn ruminate" @click="sendOption('Ruminate', 'I want to ruminate on this further. Let\'s go deeper into the internal feelings and specific nuances of this moment.')">
