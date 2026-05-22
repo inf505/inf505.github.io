@@ -343,7 +343,6 @@
                     <div
                         v-for="(msg, index) in messages"
                         :key="msg.id || index"
-                        v-if="!msg.isHidden"
                         :class="['message', msg.role]"
                     >
                         <div class="bubble">
