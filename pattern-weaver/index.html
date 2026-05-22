@@ -436,19 +436,21 @@
                                 ></audio>
                             </div>
 
-                            <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
                             <div
                                 v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
-                                class="story-options"
+                                class="therapeutic-paths"
                             >
-                                <button
-                                    v-for="(opt, i) in msg.options"
-                                    :key="i"
-                                    class="option-btn"
-                                    @click="sendOption(opt)"
-                                >
-                                    {{ opt }}
-                                </button>
+                                <div class="path-button-container">
+                                    <button class="path-btn ruminate" @click="sendOption('Ruminate', 'I want to ruminate on this further. Let\'s go deeper into the internal feelings and specific nuances of this moment.')">
+                                        <span>🔍</span> Ruminate
+                                    </button>
+                                    <button class="path-btn explore" @click="sendOption('Explore', 'Let\'s explore the connections. How does this pattern link to other areas of my life or past systems?')">
+                                        <span>🌐</span> Explore
+                                    </button>
+                                    <button class="path-btn move-forward" @click="sendOption('Move Forward', 'I\'m ready to move forward. What is a pragmatic leverage point or a concrete next step?')">
+                                        <span>🚀</span> Move Forward
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

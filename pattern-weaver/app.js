@@ -18,11 +18,11 @@ OUTPUT REQUIREMENTS:
 Return a single JSON object.
 1. "thought": Internal monologue. Connect today's input to at least one specific Fact from the Ledger. Identify if the user is being honest or defensive. STRICT LIMIT: 1 or 2 sentences only.
 2. "response": Your direct reflection. Start with a brief mirroring of their emotion, then pivot immediately to a deep insight or a challenging question. Use Markdown for emphasis.
-3. "options": 3 distinct paths: 1) "Face the hard truth", 2) "Explore a different angle", 3) "Actionable next step".
-4. "facts": Array of objects (text, category).
+3. "facts": Array of objects (text, category).
 - TIME TRACKING: Always update "Time" (e.g., "Tuesday Morning").
 - CATEGORIES: "Self" (Identity/Traits), "Context" (People/Events), "Habits" (Patterns), "Insights" (Lessons).
 - FOCUS: Only record *significant* shifts or recurring themes.
+required: ["thought", "response", "facts"]
 `;
 
 const db = new Dexie("ReflectionsDB");
@@ -676,7 +676,6 @@ createApp({
               properties: {
                 thought: { type: "string" },
                 response: { type: "string" },
-                options: { type: "array", items: { type: "string" } },
                 facts: {
                   type: "array",
                   items: {
@@ -689,7 +688,7 @@ createApp({
                   },
                 },
               },
-              required: ["thought", "response", "options", "facts"],
+              required: ["thought", "response", "facts"],
             },
           },
         };
@@ -781,7 +780,6 @@ createApp({
 
             if (parsed.thought) thoughtText = parsed.thought;
             if (parsed.response) finalResponse = parsed.response.trim();
-            if (parsed.options) finalOptions = parsed.options;
 
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
@@ -844,8 +842,8 @@ createApp({
       await triggerAIResponse();
     };
 
-    const sendOption = async (optionText) => {
-      currentInput.value = optionText;
+    const sendOption = async (label, bridgeText) => {
+      currentInput.value = bridgeText;
       await sendMessage();
     };
 

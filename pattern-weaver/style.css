@@ -631,3 +631,44 @@ button.small-btn {
     overflow-y: auto;
     padding-right: 5px; /* Keeps the scrollbar from hiding text */
 }
+.therapeutic-paths {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.path-button-container {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.path-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #eee;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.path-btn span {
+    font-size: 1.2rem;
+}
+
+.path-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ff9d00;
+}
+
+.path-btn.ruminate:active { border-color: #4db8ff; }
+.path-btn.explore:active { border-color: #b84dff; }
+.path-btn.move-forward:active { border-color: #4dff88; }
