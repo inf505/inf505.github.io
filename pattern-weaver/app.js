@@ -75,6 +75,7 @@ createApp({
     const newFactCategory = ref("Lore");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
+    const isHidden = ref(false);
 
     const loadFacts = async () => {
       try {
