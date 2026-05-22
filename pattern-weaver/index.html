@@ -437,7 +437,7 @@
                             </div>
 
                             <div
-                                v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
+                                v-if="msg.role === 'model' && index === messages.length - 1 && !isLoading"
                                 class="therapeutic-paths"
                             >
                                 <div class="path-button-container">
