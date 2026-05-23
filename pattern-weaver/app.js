@@ -25,15 +25,6 @@ Return a single JSON object.
 required: ["thought", "response", "facts"]
 `;
 
-const modelTierList = [
-  "gemma-4-31b-it",
-  "gemma-4-26b-a4b-it",
-  "gemini-3-flash-preview",
-  "gemini-2.5-flash",
-  "gemini-3.1-flash-lite-preview",
-  "gemini-2.5-flash-lite"
-];
-
 const db = new Dexie("ReflectionsDB");
 db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
@@ -81,6 +72,15 @@ createApp({
     const newFactCategory = ref("Lore");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
+    const modelBlacklist = ref({});
+    const modelTierList = [
+      "gemma-4-31b-it",
+      "gemma-4-26b-a4b-it",
+      "gemini-3-flash-preview",
+      "gemini-2.5-flash",
+      "gemini-3.1-flash-lite-preview",
+      "gemini-2.5-flash-lite"
+    ];
 
     const loadFacts = async () => {
       try {
@@ -727,7 +727,7 @@ createApp({
           },
         };
 
-        // Priority: Try the user's selected model first, then follow the tier list
+        const nowMs = Date.now();
         const modelsToTry = [
           selectedModel.value,
           ...modelTierList.filter(m => m !== selectedModel.value)
@@ -738,8 +738,16 @@ createApp({
 
         // --- START FAILOVER LOOP ---
         for (const modelName of modelsToTry) {
+
+          if (modelBlacklist.value[modelName] && nowMs < modelBlacklist.value[modelName]) {
+            const remaining = Math.ceil((modelBlacklist.value[modelName] - nowMs) / 60000);
+            console.log(`⏩ Skipping blacklisted model ${modelName} (${remaining}m remaining)`);
+            continue;
+          }
+
           let attempt = 0;
-          const retryDelays = [3000, 7000]; // Delays between retries for a single model
+          const retryDelays = [3000, 6000];
+          let modelHadTerminalFailure = false;
 
           console.log(`Attempting connection with: ${modelName}`);
 
@@ -764,20 +772,20 @@ createApp({
               if (response.ok) {
                 data = await response.json();
                 successfulModel = modelName;
-                break; // Success! Exit the retry (while) loop
+
+                delete modelBlacklist.value[modelName];
+                break;
               }
 
-              // If busy or rate-limited, wait and retry this specific model
               if ([429, 500, 503].includes(response.status) && attempt < retryDelays.length) {
-                console.warn(`${modelName} busy (${response.status}). Retrying in ${retryDelays[attempt]}ms...`);
+                console.warn(`${modelName} busy. Retrying...`);
                 await new Promise(r => setTimeout(r, retryDelays[attempt]));
                 attempt++;
                 continue;
               }
 
-              // If it's a terminal error (like 400) or we're out of retries,
-              // break the while loop and move to the NEXT model in the for-loop
-              console.error(`${modelName} failed with status ${response.status}. Switching to fallback...`);
+              // If we reach here, it's a terminal failure for this model
+              modelHadTerminalFailure = true;
               break;
 
             } catch (err) {
@@ -787,11 +795,17 @@ createApp({
               } else {
                 console.error(`Fetch error with ${modelName}:`, err);
               }
+              modelHadTerminalFailure = true;
               break; // Move to next fallback model
             }
           }
 
           if (data) break; // If we have data, we don't need the other fallback models
+          // TRIP THE BREAKER: If the model failed completely, blacklist it for 10 minutes
+          if (modelHadTerminalFailure) {
+            console.warn(`🚨 Tripping circuit breaker for ${modelName}. Blacklisting for 10 mins.`);
+            modelBlacklist.value[modelName] = Date.now() + (10 * 60 * 1000);
+          }
         }
         // --- END FAILOVER LOOP ---
 
@@ -852,12 +866,16 @@ createApp({
           console.error("JSON Parse error", e);
         }
 
+        thoughtText = `[Responded via ${successfulModel}]\n\n${thoughtText}`;
+
         const modelId = await saveToDb(
           "model",
           finalResponse,
           thoughtText.trim(),
           finalOptions,
         );
+
+
 
         messages.value.push({
           id: modelId,
