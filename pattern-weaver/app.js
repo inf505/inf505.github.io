@@ -25,6 +25,15 @@ Return a single JSON object.
 required: ["thought", "response", "facts"]
 `;
 
+const modelTierList = [
+  "gemma-4-31b-it",
+  "gemma-4-26b-a4b-it",
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-2.5-flash-lite"
+];
+
 const db = new Dexie("ReflectionsDB");
 db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
@@ -52,7 +61,7 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-    const summarizerModel = ref("gemma-4-31b-it");
+    const summarizerModel = ref("gemini-3-flash-preview");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
     const isSummarizing = ref(false);
@@ -718,55 +727,75 @@ createApp({
           },
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        // Priority: Try the user's selected model first, then follow the tier list
+        const modelsToTry = [
+          selectedModel.value,
+          ...modelTierList.filter(m => m !== selectedModel.value)
+        ];
 
-        let data;
-        let attempt = 0;
-        const retryDelays = [5000, 10000, 15000, 15000, 15000];
+        let data = null;
+        let successfulModel = "";
 
-        while (attempt <= retryDelays.length) {
-          const controller = new AbortController();
-          // 3. FIXED TIMEOUT: 45000 ms = 45 seconds
-          const timeoutId = setTimeout(() => controller.abort(), 45000);
+        // --- START FAILOVER LOOP ---
+        for (const modelName of modelsToTry) {
+          let attempt = 0;
+          const retryDelays = [3000, 7000]; // Delays between retries for a single model
 
-          try {
-            const response = await fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": apiKey.value,
-              },
-              body: JSON.stringify(payload),
-              signal: controller.signal,
-            });
+          console.log(`Attempting connection with: ${modelName}`);
 
-            clearTimeout(timeoutId);
+          while (attempt <= retryDelays.length) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
 
-            if (!response.ok) {
-              if ((response.status === 500 || response.status === 503) && attempt < retryDelays.length) {
-                console.warn(
-                  `Retrying... (Attempt ${attempt + 1})`,
-                );
-                await new Promise((res) =>
-                  setTimeout(res, retryDelays[attempt]),
-                );
+            try {
+              const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": apiKey.value,
+                },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+
+              if (response.ok) {
+                data = await response.json();
+                successfulModel = modelName;
+                break; // Success! Exit the retry (while) loop
+              }
+
+              // If busy or rate-limited, wait and retry this specific model
+              if ([429, 500, 503].includes(response.status) && attempt < retryDelays.length) {
+                console.warn(`${modelName} busy (${response.status}). Retrying in ${retryDelays[attempt]}ms...`);
+                await new Promise(r => setTimeout(r, retryDelays[attempt]));
                 attempt++;
                 continue;
               }
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(
-                errorData.error?.message || `API Error: ${response.status}`,
-              );
+
+              // If it's a terminal error (like 400) or we're out of retries,
+              // break the while loop and move to the NEXT model in the for-loop
+              console.error(`${modelName} failed with status ${response.status}. Switching to fallback...`);
+              break;
+
+            } catch (err) {
+              clearTimeout(timeoutId);
+              if (err.name === 'AbortError') {
+                console.error(`${modelName} timed out.`);
+              } else {
+                console.error(`Fetch error with ${modelName}:`, err);
+              }
+              break; // Move to next fallback model
             }
-
-            data = await response.json();
-            break;
-          } catch (error) {
-            clearTimeout(timeoutId);
-            throw error;
           }
-        }
 
+          if (data) break; // If we have data, we don't need the other fallback models
+        }
+        // --- END FAILOVER LOOP ---
+
+        if (!data) throw new Error("All models in the tier list are currently unresponsive.");
         let responseText = "";
         let thoughtText = "";
         totalTokens.value =
