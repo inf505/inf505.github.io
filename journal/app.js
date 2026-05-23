@@ -736,7 +736,6 @@ createApp({
         let data = null;
         let successfulModel = "";
 
-        // --- START FAILOVER LOOP ---
         for (const modelName of modelsToTry) {
 
           if (modelBlacklist.value[modelName] && nowMs < modelBlacklist.value[modelName]) {
