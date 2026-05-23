@@ -525,7 +525,7 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      const firstMessage = "Welcome to your reflection space. How are you feeling today?";
+      const firstMessage = "Welcome my Journal Guide. What would you like to be called?";
 
       const userId = await saveToDb("user", firstMessage);
 
