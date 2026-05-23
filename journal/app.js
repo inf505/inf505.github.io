@@ -749,7 +749,7 @@ createApp({
           const retryDelays = [3000, 6000];
           let modelHadTerminalFailure = false;
 
-          console.log(`Attempting connection with: ${modelName}`);
+          //console.log(`Attempting connection with: ${modelName}`);
 
           while (attempt <= retryDelays.length) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
