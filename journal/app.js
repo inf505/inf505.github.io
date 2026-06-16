@@ -800,9 +800,9 @@ createApp({
           }
 
           if (data) break; // If we have data, we don't need the other fallback models
-          // TRIP THE BREAKER: If the model failed completely, blacklist it for 10 minutes
+          // TRIP THE BREAKER: If the model failed completely, blacklist it for a few minutes
           if (modelHadTerminalFailure) {
-            console.warn(`🚨 Tripping circuit breaker for ${modelName}. Blacklisting for 3 mins.`);
+            console.warn(`🚨 Blacklisting ${modelName} for 3 mins.`);
             modelBlacklist.value[modelName] = Date.now() + (3 * 60 * 1000);
           }
         }
