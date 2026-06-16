@@ -753,7 +753,7 @@ createApp({
           while (attempt <= retryDelays.length) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
             try {
               const response = await fetch(url, {
