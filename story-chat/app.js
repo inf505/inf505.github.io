@@ -9,7 +9,7 @@ PERSPECTIVE:
 - Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
 
 WRITING STYLE:
-- Avoid the "not X, but Y" rhetorical reframe (e.g., "not lazy, but efficient") where X is a strawman set up only to be knocked down by a more flattering Y. Genuine factual contrasts are fine ("the door wasn't locked, but stuck"); rhetorical self-congratulatory ones aren't.
+- Avoid the "not X, but Y" rhetorical reframe (e.g., "not lazy, but efficient")
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
