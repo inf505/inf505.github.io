@@ -226,7 +226,7 @@ createApp({
 
         const prompt = `Merge duplicate facts and resolve contradictions.
         Preserve categories (Character, Item, Location, Lore).
-        Keep text concise. Do not invent new facts.
+        Keep text concise. Remove old time facts. Do not invent new facts.
         DATA: ${fData}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
