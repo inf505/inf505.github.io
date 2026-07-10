@@ -10,6 +10,7 @@ PERSPECTIVE:
 
 WRITING STYLE:
 - Avoid the "false-contrast reframe", the "not X, but Y" rhetorical reframe (e.g., "not lazy, but efficient")
+- Avoid explicitly labeling emotions (e.g., "you feel a surge of satisfaction" or "a wave of dread washes over you"); instead, imply the protagonist's feelings through their physical reactions and internal thoughts.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
