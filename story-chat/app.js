@@ -9,7 +9,8 @@ PERSPECTIVE:
 - Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
 
 WRITING STYLE:
-- Avoid the "false-contrast reframe", the "not X, but Y" rhetorical reframe (e.g., "not lazy, but efficient")
+- Avoid rhetorical reframes: Do not use the "not X, but Y" structure (e.g., "not lazy, but efficient," "it isn't a failure, but a learning moment").
+- Direct Description: Focus on direct, positive descriptions. Describe what something is rather than what it isn't.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
