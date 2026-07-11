@@ -18,8 +18,8 @@ Return a single JSON object.
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
 4. "facts": An array of objects (text, category).
-   - TIME TRACKING: Always include one "Lore" fact stating the current time of day (e.g., "Time: Early Morning"). Update this naturally based on the actions taken.
-   - CATEGORIES: Character, Item, Location, Lore.
+   - TIME TRACKING: Always include one "Lore" fact stating the current time of day (e.g., "Time: Monday, Early Morning"). Update this naturally based on the actions taken.
+   - CATEGORIES: Infrastructure, Character, Item, Location, Lore.
 `;
 
 const db = new Dexie("StoryWriterDB");
