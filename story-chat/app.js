@@ -214,8 +214,8 @@ createApp({
 
         // NEW: Map to clean objects to create beautiful JSON
         const cleanFactsForAI = otherFacts.map((f) => ({
-            category: f.category,
-            text: f.text
+          category: f.category,
+          text: f.text
         }));
 
         // If there's nothing else to merge but time, just skip the AI part
@@ -230,15 +230,15 @@ createApp({
 
         const prompt = `You are an AI database manager for a story. Your task is to optimize an array of story facts.
 
-        RULES:
-        1. Merge duplicate facts and resolve contradictions. Combine all known details about a specific entity into a single, comprehensive fact.
-        2. Overwrite outdated transient states. If a character moves, or an item is consumed/broken, keep only the latest state. Discard temporary actions.
-        3. Preserve permanent world lore, character traits, and current inventory. Do not delete unique entities.
-        4. Categorize strictly as: Character, Item, Location, Lore, Infrastructure.
-        5. Clean up time: If any old time-of-day or day-of-week facts slipped through, discard them. Keep facts objective and in the third-person.
+          RULES:
+          1. Merge duplicate facts and resolve contradictions. Combine all known details about a specific entity into a single, comprehensive fact.
+          2. Overwrite outdated transient states. If a character moves, or an item is consumed/broken, keep only the latest state. Discard temporary actions.
+          3. Preserve permanent world lore, character traits, and current inventory. Do not delete unique entities.
+          4. Categorize strictly as: Character, Item, Location, Lore, Infrastructure.
+          5. Clean up time: If any old time-of-day or day-of-week facts slipped through, discard them. Keep facts objective and in the third-person.
 
-        INPUT DATA:
-        ${JSON.stringify(cleanFactsForAI, null, 2)}`;
+          INPUT DATA:
+          ${JSON.stringify(cleanFactsForAI, null, 2)}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
 
