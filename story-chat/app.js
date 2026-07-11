@@ -228,7 +228,15 @@ createApp({
 
         const prompt = `Merge duplicate facts and resolve contradictions.
         Preserve categories (Character, Item, Location, Lore).
-        Keep text concise. Remove old time facts ('Lore' type starting with 'Time:'), keeping only the newest. Do not invent new facts.
+        Keep text concise.
+
+        TIME CLEANUP:
+        - Analyze all 'Lore' type facts where 'text' begins with 'Time:'.
+        - Determine the single most recent 'Time:' fact based on the day of the week and time of day progression (e.g., 'Thursday Night' is more recent than 'Thursday Afternoon', and 'Friday Early Morning' is more recent than 'Thursday Night').
+        - Remove all OTHER 'Lore' type facts starting with 'Time:'.
+        - Ensure the final array contains exactly ONE 'Time:' fact, and that fact is the most recent one identified above.
+
+        Do not invent new facts.
         DATA: ${fData}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
