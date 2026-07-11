@@ -6,12 +6,10 @@ TASK: Work with the user to write an engaging story.
 PERSPECTIVE:
 - Write exclusively in the SECOND-PERSON ("You").
 - The user is the protagonist.
-- Maintain a strict, linear progression of real-time. Never skip forward in time or collapse future events into the present moment. All actions must unfold sequentially. Atmospheric, sensory, and lighting shifts should accurately reflect the precise time of day.
+- Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
 
 WRITING STYLE:
 - Avoid the "false-contrast reframe", the "not X, but Y" rhetorical reframe (e.g., "not lazy, but efficient")
-- Avoid explicitly labeling emotions (e.g., "you feel a surge of satisfaction" or "a wave of dread washes over you"); instead, imply the protagonist's feelings through their physical reactions and internal thoughts.
-- Avoid 'summary wrap-up' sentences or reflective statements that transition out of the scene.
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
@@ -228,15 +226,7 @@ createApp({
 
         const prompt = `Merge duplicate facts and resolve contradictions.
         Preserve categories (Character, Item, Location, Lore).
-        Keep text concise.
-
-        TIME CLEANUP:
-        - Analyze all 'Lore' type facts where 'text' begins with 'Time:'.
-        - Determine the single most recent 'Time:' fact based on the day of the week and time of day progression (e.g., 'Thursday Night' is more recent than 'Thursday Afternoon', and 'Friday Early Morning' is more recent than 'Thursday Night').
-        - Remove all OTHER 'Lore' type facts starting with 'Time:'.
-        - Ensure the final array contains exactly ONE 'Time:' fact, and that fact is the most recent one identified above.
-
-        Do not invent new facts.
+        Keep text concise. Remove old time facts ('Lore' type starting with 'Time:'), keeping only the newest. Do not invent new facts.
         DATA: ${fData}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
