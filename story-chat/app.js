@@ -9,8 +9,10 @@ PERSPECTIVE:
 - Maintain a natural progression of time; describe atmospheric, sensory, and lighting shifts as the day moves forward.
 
 WRITING STYLE:
-- Avoid rhetorical reframes: Do not use the "not X, but Y" structure (e.g., "not lazy, but efficient," "it isn't a failure, but a learning moment").
-- Direct Description: Focus on direct, positive descriptions. Describe what something is rather than what it isn't.
+- Direct Description: Focus on direct, positive descriptions of actions. Describe only what is currently happening, being felt, or being done.
+- STRICT CONTRAST BAN: Never use comparative rhetorical reframes to contrast the protagonist's actions or mindset.
+  * FORBIDDEN: "You aren't just [Action A]; you are [Action B]" or "It is not [A], but [B]."
+  * REWRITE EXAMPLE: Instead of writing "You aren't just waiting; you are preparing," write "You prepare for..."
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
