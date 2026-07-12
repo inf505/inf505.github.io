@@ -16,7 +16,10 @@ WRITING STYLE:
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought": Check the Grimoire for existing facts and the current time. Briefly plan how the next scene progresses the timeline and adheres to established lore.
+1. "thought":
+   - Check the Grimoire for existing facts, current inventory, and the current time.
+   - Briefly plan how the next scene progresses the timeline.
+   - Brainstorm 3 distinct, non-trivial paths the user could take next (Logical/Technical, Active/Bold, Cautious/Exploratory). For each path, briefly note how it would uniquely shift the story state or reveal different details.
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
 4. "facts": An array of objects (text, category).
