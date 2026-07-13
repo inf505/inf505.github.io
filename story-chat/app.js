@@ -905,6 +905,13 @@ createApp({
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
                 if (f.text && f.category) {
+                  // If saving a Time fact, safely delete any existing Time facts first
+                  if (f.text.toLowerCase().startsWith("time:")) {
+                    await db.facts
+                      .filter((existFact) => existFact.text && existFact.text.toLowerCase().startsWith("time:"))
+                      .delete();
+                  }
+
                   await db.facts.add({
                     text: f.text,
                     category: f.category,
