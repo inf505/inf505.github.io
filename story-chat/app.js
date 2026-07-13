@@ -23,7 +23,7 @@ Return a single JSON object.
 2. "response": The story text.
 3. "options": Array of 3 distinct action choices.
 4. "facts": An array of objects (text, category).
-   - TIME TRACKING: Always include one "Lore" fact stating the current time of day (e.g., "Time: Monday, Early Morning"). Update this naturally based on the actions taken.
+   - TIME TRACKING: Always include exactly one "Lore" fact starting with "Time:" that tracks the current day of the week, time of day, and the current season (e.g., "Time: Monday, Early Morning, Late Autumn"). Update the time, day, or season naturally based on actions taken (e.g., long tasks should advance the time; many actions can shift the day or season).
    - CATEGORIES: Infrastructure, Character, Item, Location, Lore.
 `;
 
