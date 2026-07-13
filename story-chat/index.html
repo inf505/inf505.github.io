@@ -255,6 +255,13 @@
 
                         <!-- Action Buttons Container -->
                         <div class="msg-actions">
+
+                            <!-- NEW: Edit Button (Only for Chapter Summaries) -->
+                            <button v-if="msg.role === 'summary'" class="action-msg-btn edit-btn"
+                                @click="startEditMessage(msg)" title="Edit Summary">
+                                ✏️
+                            </button>
+
                             <!-- Speaker / Read Aloud Button -->
                             <button v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
                                 class="action-msg-btn speaker-btn" @click="triggerTTS(index)" title="Synthesize Audio">
@@ -284,7 +291,30 @@
                         </div>
 
                         <!-- Content -->
-                        <div class="message-text" v-html="renderMarkdown(msg.text)"></div>
+                        <!-- EDIT MODE -->
+                        <div v-if="editingMsgId === msg.id" style="margin-top: 8px; width: 100%;">
+                            <textarea v-model="editingMsgText" rows="6" style="
+                                width: 100%;
+                                background: #1a1a1a;
+                                color: #eee;
+                                border: 1px solid #444;
+                                border-radius: 6px;
+                                padding: 8px;
+                                font-family: inherit;
+                                font-size: 0.95rem;
+                                line-height: 1.4;
+                                resize: vertical;
+                                box-sizing: border-box;
+                            "></textarea>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+                                <button class="small-btn" @click="cancelEditMessage"
+                                    style="background: #444; color: white;">Cancel</button>
+                                <button class="small-btn" @click="saveEditMessage(msg)">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- STANDARD READ MODE -->
+                        <div v-else class="message-text" v-html="renderMarkdown(msg.text)"></div>
 
                         <!-- AUDIO LOADING STATE -->
                         <div v-if="msg.isGeneratingAudio" class="audio-loading" style="

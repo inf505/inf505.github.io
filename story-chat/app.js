@@ -75,6 +75,32 @@ createApp({
     const newFactCategory = ref("Lore");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
+    const editingMsgId = ref(null);
+    const editingMsgText = ref("");
+
+    const startEditMessage = (msg) => {
+      editingMsgId.value = msg.id;
+      editingMsgText.value = msg.text;
+    };
+
+    const cancelEditMessage = () => {
+      editingMsgId.value = null;
+      editingMsgText.value = "";
+    };
+
+    const saveEditMessage = async (msg) => {
+      if (!editingMsgText.value.trim()) return;
+      try {
+        await db.chats.update(msg.id, { text: editingMsgText.value.trim() });
+        msg.text = editingMsgText.value.trim(); // Update UI in real-time
+        editingMsgId.value = null;
+        editingMsgText.value = "";
+        await updateCounts();
+      } catch (err) {
+        console.error("Error saving edited message:", err);
+        alert("Failed to save changes.");
+      }
+    };
 
     const loadFacts = async () => {
       try {
@@ -1022,6 +1048,11 @@ createApp({
       summaryBatchSize,
       isGeneratingRules,
       randomizeRules,
+      editingMsgId,
+      editingMsgText,
+      startEditMessage,
+      cancelEditMessage,
+      saveEditMessage,
     };
   },
 }).mount("#app");

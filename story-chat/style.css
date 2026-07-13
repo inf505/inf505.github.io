@@ -452,7 +452,8 @@ button.small-btn {
 }
 
 .action-msg-btn.retry-btn:hover,
-.action-msg-btn.speaker-btn:hover {
+.action-msg-btn.speaker-btn:hover,
+.action-msg-btn.edit-btn:hover {
     background: #42b883;
     color: #121212;
     transform: scale(1.1);
