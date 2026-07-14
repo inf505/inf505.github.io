@@ -974,20 +974,33 @@ createApp({
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-              if (response.status === 500 && attempt < retryDelays.length) {
-                console.warn(
-                  `API 500 Error. Retrying... (Attempt ${attempt + 1})`,
-                );
-                await new Promise((res) =>
-                  setTimeout(res, retryDelays[attempt]),
-                );
+              // 1. Read the error message first so we can parse it
+              const errorData = await response.json().catch(() => ({}));
+              const errMsg = errorData.error?.message || "";
+
+              if ((response.status === 500 || response.status === 429) && attempt < retryDelays.length) {
+
+                // Default to your hardcoded delay array
+                let delayMs = retryDelays[attempt];
+
+                // 2. Dynamic 429 Parsing: Look for "Please retry in X.XXXs"
+                if (response.status === 429) {
+                  const match = errMsg.match(/Please retry in ([\d.]+)s/);
+                  if (match && match[1]) {
+                    // Convert seconds to ms, and add a 500ms safety buffer
+                    delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 500;
+                  }
+                }
+
+                console.warn(`API ${response.status} Error. Waiting ${delayMs}ms... (Attempt ${attempt + 1})`);
+
+                await new Promise((res) => setTimeout(res, delayMs));
                 attempt++;
                 continue;
               }
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(
-                errorData.error?.message || `API Error: ${response.status}`,
-              );
+
+              // If we run out of retries, throw the actual error to the chat UI
+              throw new Error(errMsg || `API Error: ${response.status}`);
             }
 
             data = await response.json();
