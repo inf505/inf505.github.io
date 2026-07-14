@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
-    <title>Story Chat | AI Co-Author</title>
+    <title>Story Chat | Universal AI Co-Author</title>
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel="stylesheet" href="style.css" />
 
@@ -52,29 +52,24 @@
                 <!-- TAB CONTENT: SETTINGS -->
                 <div v-if="activeTab === 'settings'" class="tab-content">
                     <div class="settings-group">
-                        <label>Story Model:</label>
-                        <input type="text" v-model="selectedModel" placeholder="e.g., gemma-4-31b-it" />
-                        <small>gemma-4-26b-a4b-it , gemma-4-31b-it,
-                            gemini-2.5-flash-lite ,
-                            gemini-3.1-flash-lite-preview</small>
+                        <label>Universal API Base URL:</label>
+                        <input type="text" v-model="baseUrl" placeholder="e.g., https://api.openai.com/v1" />
+                        <small>Change for OpenRouter, Ollama, LM Studio, or local gateways.</small>
                     </div>
 
                     <div class="settings-group">
-                        <label>API Key:</label>
-                        <input type="password" v-model="apiKey" placeholder="AIzaSy..." />
+                        <label>Story Model Name:</label>
+                        <input type="text" v-model="selectedModel" placeholder="e.g., gpt-4o-mini" />
+                        <small>Any valid chat model string acceptable by the specified host endpoint.</small>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>API Key / Token:</label>
+                        <input type="password" v-model="apiKey" placeholder="Bearer Token..." />
                     </div>
 
                     <div class="settings-group">
                         <label>World / Character / Tone Rules</label>
-
-                        <!-- New Randomizer Model Input -->
-                        <div style="margin-bottom: 8px">
-                            <small>Randomizer Model:</small>
-                            <input type="text" v-model="randomizerModel" placeholder="gemma-4-31b-it"
-                                style="font-size: 0.8rem; padding: 4px" />
-                        </div>
-                        <small>gemma-4-31b-it , gemini-2.5-flash ,
-                            gemini-3-flash-preview</small>
 
                         <button class="small-btn" @click="randomizeRules" :disabled="isGeneratingRules"
                             style="margin-bottom: 8px; width: 100%">
@@ -105,7 +100,7 @@
                             totalTokens }} tokens
                         </div>
 
-                        <!-- NEW: Batch Size Input -->
+                        <!-- Batch Size Input -->
                         <div style="
                                     display: flex;
                                     align-items: center;
@@ -135,8 +130,7 @@
                                     text-align: center;
                                     color: #888;
                                 ">
-                            Compresses the oldest 10 unsummarized messages
-                            into a single Chapter Summary block.
+                            Compresses unsummarized chronological messages into a narrative Summary block.
                         </small>
                     </div>
 
@@ -218,13 +212,13 @@
                 <!-- TAB CONTENT: AUDIO / TTS -->
                 <div v-if="activeTab === 'audio'" class="tab-content">
                     <div class="settings-group">
-                        <label>Native TTS Model:</label>
-                        <input type="text" v-model="selectedTTSModel" placeholder="gemini-3.1-flash-tts-preview" />
+                        <label>TTS Model:</label>
+                        <input type="text" v-model="selectedTTSModel" placeholder="e.g., tts-1" />
                     </div>
 
                     <div class="settings-group">
                         <label>Voice Profile:</label>
-                        <input type="text" v-model="selectedVoice" placeholder="e.g., Aoede, Puck" />
+                        <input type="text" v-model="selectedVoice" placeholder="e.g., alloy, echo, nova" />
                     </div>
 
                     <div class="settings-group">
@@ -275,12 +269,12 @@
             <!-- SCROLLING MESSAGES -->
             <div class="chat-messages" ref="messagesContainer" aria-live="polite" aria-atomic="true">
                 <div v-if="messages.length === 0" class="empty-state">
-                    Configure your API Key and Rules in Settings to begin!
+                    Configure your API Settings and Rules to begin!
                 </div>
 
                 <div v-for="(msg, index) in messages" :key="msg.id || index" :class="['message', msg.role]">
                     <div class="bubble">
-                        <!-- NEW: Summary Badge -->
+                        <!-- Summary Badge -->
                         <div v-if="msg.role === 'summary'" style="
                                     font-size: 0.75rem;
                                     color: #ff9d00;
@@ -297,7 +291,7 @@
                         <!-- Action Buttons Container -->
                         <div class="msg-actions">
 
-                            <!-- NEW: Edit Button (Only for Chapter Summaries) -->
+                            <!-- Edit Button (Only for Chapter Summaries) -->
                             <button v-if="msg.role === 'summary'" class="action-msg-btn edit-btn"
                                 @click="startEditMessage(msg)" title="Edit Summary">
                                 ✏️

@@ -16,16 +16,17 @@ WRITING STYLE:
 
 OUTPUT REQUIREMENTS:
 Return a single JSON object.
-1. "thought":
+- "thought":
    - Check the Grimoire for existing facts, current inventory, and the current time.
    - Briefly plan how the next scene progresses the timeline.
    - Brainstorm 3 distinct, non-trivial paths the user could take next (Logical/Technical, Active/Bold, Cautious/Exploratory). For each path, briefly note how it would uniquely shift the story state or reveal different details.
-2. "response": The story text.
-3. "options": Array of 3 distinct action choices.
-4. "facts": An array of objects (text, category).
+- "response": The story text.
+- "options": Array of 3 distinct action choices.
+- "facts": An array of objects (text, category).
    - TIME TRACKING: Always include exactly one "Lore" fact starting with "Time:" that tracks the current day of the week, time of day, and the current season (e.g., "Time: Monday, Early Morning, Late Autumn"). Update the time, day, or season naturally based on actions taken (e.g., long tasks should advance the time; many actions can shift the day or season).
    - CATEGORIES: Infrastructure, Character, Item, Location, Lore.
-`;
+
+You MUST format your reply as a valid JSON object matching this specification. Do not include extra conversational text outside of the JSON payload.`;
 
 const db = new Dexie("StoryWriterDB");
 db.version(3).stores({
@@ -50,12 +51,12 @@ const formatRelativeTime = (timestamp) => {
 
 createApp({
   setup() {
+    const baseUrl = ref("https://api.openai.com/v1");
     const apiKey = ref("");
-    const selectedModel = ref("gemma-4-31b-it");
+    const selectedModel = ref("gpt-4o-mini");
     const isConfigured = ref(false);
     const systemPrompt = ref("");
     const showSettings = ref(false);
-    const randomizerModel = ref("gemma-4-31b-it");
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
     const isSummarizing = ref(false);
@@ -67,8 +68,8 @@ createApp({
     const messagesContainer = ref(null);
     const inputArea = ref(null);
     const isGeneratingRules = ref(false);
-    const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
-    const selectedVoice = ref("Aoede");
+    const selectedTTSModel = ref("tts-1");
+    const selectedVoice = ref("alloy");
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
@@ -96,7 +97,7 @@ createApp({
       if (!editingMsgText.value.trim()) return;
       try {
         await db.chats.update(msg.id, { text: editingMsgText.value.trim() });
-        msg.text = editingMsgText.value.trim(); // Update UI in real-time
+        msg.text = editingMsgText.value.trim();
         editingMsgId.value = null;
         editingMsgText.value = "";
         await updateCounts();
@@ -108,7 +109,6 @@ createApp({
 
     const loadFacts = async () => {
       try {
-        // Sort by timestamp so newest or oldest appear in order
         const data = await db.facts.orderBy("timestamp").toArray();
         facts.value = data;
       } catch (err) {
@@ -140,7 +140,6 @@ createApp({
           timestamp: Date.now(),
         });
 
-        // Reset inputs and refresh list
         newFactText.value = "";
         await loadFacts();
       } catch (err) {
@@ -156,49 +155,40 @@ createApp({
 
       isGeneratingRules.value = true;
 
-      // 1. Create the controller
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
         const p = `Act as a professional high-concept screenwriter.
-        In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
-        Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
+In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
+Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
 - Do not name the protagonist; describe them only by their current situation or role (e.g., 'You are a survivor', 'You are the last keeper').
-        STRICT LIMIT: One paragraph, maximum 80 words.`;
+STRICT LIMIT: One paragraph, maximum 80 words.
+
+You MUST return a valid JSON object matching this schema structure:
+{
+  "thought": "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
+  "premise": "the final story description"
+}`;
 
         const payload = {
-          contents: [{ role: "user", parts: [{ text: p }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: {
-                  type: "string",
-                  description:
-                    "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
-                },
-                premise: { type: "string" },
-              },
-              required: ["thought", "premise"],
-            },
-          },
+          model: selectedModel.value,
+          messages: [{ role: "user", content: p }],
+          response_format: { type: "json_object" }
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
+        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
+            "Authorization": `Bearer ${apiKey.value}`,
           },
           body: JSON.stringify(payload),
-          signal: controller.signal, // 2. Pass the signal to fetch
+          signal: controller.signal,
         });
 
-        // 3. Clear the timeout since the request finished
         clearTimeout(timeoutId);
 
         const data = await res.json();
@@ -206,10 +196,9 @@ createApp({
         if (!res.ok)
           throw new Error(data.error?.message || "API request failed");
 
-        if (data.candidates && data.candidates[0].content.parts) {
-          let rawText = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          let rawText = data.choices[0].message.content;
 
-          // Safety: Strip markdown backticks if the model ignores the MimeType instruction
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -222,7 +211,6 @@ createApp({
           }
         }
       } catch (err) {
-        // 4. Handle specifically the timeout/abort error
         if (err.name === "AbortError") {
           console.error("Randomizer timed out.");
           alert(
@@ -234,7 +222,7 @@ createApp({
         }
       } finally {
         isGeneratingRules.value = false;
-        clearTimeout(timeoutId); // Final safety clear
+        clearTimeout(timeoutId);
       }
     };
 
@@ -243,26 +231,21 @@ createApp({
       isOptimizingFacts.value = true;
 
       try {
-        // 1. EXTRACTION: Find the single most recent "Time" fact and save it
-        // This ensures it NEVER gets lost in the AI shuffle.
         const timeFacts = facts.value
           .filter((f) => f.text.toLowerCase().startsWith("time:"))
           .sort((a, b) => b.timestamp - a.timestamp);
 
         const latestTimeFact = timeFacts[0];
 
-        // 2. FILTERING: Send everything ELSE to the AI for merging
         const otherFacts = facts.value.filter(
           (f) => !f.text.toLowerCase().startsWith("time:"),
         );
 
-        // NEW: Map to clean objects to create beautiful JSON
         const cleanFactsForAI = otherFacts.map((f) => ({
           category: f.category,
           text: f.text
         }));
 
-        // If there's nothing else to merge but time, just skip the AI part
         if (otherFacts.length < 2 && timeFacts.length > 1) {
           await db.facts.clear();
           if (latestTimeFact) await db.facts.add(latestTimeFact);
@@ -282,36 +265,31 @@ createApp({
           5. Clean up time: If any old time-of-day or day-of-week facts slipped through, discard them. Keep facts objective and in the third-person.
 
           INPUT DATA:
-          ${JSON.stringify(cleanFactsForAI, null, 2)}`;
+          ${JSON.stringify(cleanFactsForAI, null, 2)}
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent?key=${apiKey.value}`;
+          You MUST return a valid JSON object matching this schema format:
+          {
+            "merged_facts": [
+              {
+                "text": "The details of the fact",
+                "category": "Character | Item | Location | Lore | Infrastructure"
+              }
+            ]
+          }`;
+
+        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey.value}`
+          },
           body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.1, // Keep it robotic
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "object",
-                properties: {
-                  merged_facts: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        text: { type: "string" },
-                        category: { type: "string" },
-                      },
-                      required: ["text", "category"],
-                    },
-                  },
-                },
-                required: ["merged_facts"],
-              },
-            },
+            model: selectedModel.value,
+            messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" },
+            temperature: 0.1,
           }),
         });
 
@@ -319,8 +297,8 @@ createApp({
         if (!res.ok)
           throw new Error(data.error?.message || "Optimization failed");
 
-        if (data.candidates && data.candidates[0].content.parts) {
-          let rawText = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          let rawText = data.choices[0].message.content;
           const start = rawText.indexOf("{"),
             end = rawText.lastIndexOf("}");
           const parsed = JSON.parse(rawText.substring(start, end + 1));
@@ -328,7 +306,6 @@ createApp({
           if (parsed.merged_facts) {
             await db.facts.clear();
 
-            // 3. RE-INSERTION: Add the "Time" fact back first
             if (latestTimeFact) {
               await db.facts.add({
                 text: latestTimeFact.text,
@@ -337,7 +314,6 @@ createApp({
               });
             }
 
-            // Then add the AI-merged facts
             for (const mf of parsed.merged_facts) {
               await db.facts.add({
                 text: mf.text,
@@ -359,13 +335,12 @@ createApp({
 
     const summarizeStory = async () => {
       if (!apiKey.value) {
-        alert("Please configure your API Key first.");
+        alert("Please configure your API settings first.");
         return;
       }
 
       const batchSize = parseInt(summaryBatchSize.value) || 10;
 
-      // 1. Identify candidates (Skip premise, skip existing summaries, skip last 2)
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
@@ -378,7 +353,7 @@ createApp({
         return;
       }
 
-      const warnMsg = `This will use the Randomizer Model to compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`;
+      const warnMsg = `This will use the Model to compress the oldest ${batchSize} messages into a Chapter Summary. Continue?`;
       if (!confirm(warnMsg)) return;
 
       isSummarizing.value = true;
@@ -400,33 +375,28 @@ createApp({
             Write the summary strictly in the SECOND-PERSON ("You").
 
             STORY EXCERPT:
-            ${transcript}`;
+            ${transcript}
 
-        // Using randomizerModel (Gemini Flash) which supports strict responseSchema
+            You MUST return a valid JSON object matching this schema:
+            {
+              "thought_process": "brief analysis of events",
+              "summary": "narrative flowing second person paragraph summary text"
+            }`;
+
         const payload = {
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2, // Lower temperature for more factual summaries
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought_process: { type: "string" },
-                summary: { type: "string" },
-              },
-              required: ["thought_process", "summary"],
-            },
-          },
+          model: selectedModel.value,
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
         };
 
-        // TARGET: randomizerModel.value (Gemini Flash)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
+        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
+            "Authorization": `Bearer ${apiKey.value}`,
           },
           body: JSON.stringify(payload),
         });
@@ -437,10 +407,9 @@ createApp({
 
         let summaryText = "";
 
-        if (data.candidates && data.candidates[0].content.parts) {
-          let rawText = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          let rawText = data.choices[0].message.content;
 
-          // Safety: Handle potential backticks
           const start = rawText.indexOf("{");
           const end = rawText.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
@@ -458,12 +427,10 @@ createApp({
         const lastMsgTimestamp =
           msgsToSummarize[msgsToSummarize.length - 1].timestamp;
 
-        // Delete the 10 original messages from DB
         for (const m of msgsToSummarize) {
           await db.chats.delete(m.id);
         }
 
-        // Add the new Summary message to DB
         await db.chats.add({
           role: "summary",
           text: summaryText,
@@ -472,13 +439,12 @@ createApp({
           timestamp: lastMsgTimestamp + 1,
         });
 
-        // Reload UI
         messages.value = await db.chats.orderBy("timestamp").toArray();
         await updateCounts();
         scrollToBottom();
       } catch (err) {
         console.error("Summarize Error:", err);
-        alert("Summarize failed with Flash model: " + err.message);
+        alert("Summarize failed: " + err.message);
       } finally {
         isSummarizing.value = false;
       }
@@ -489,7 +455,6 @@ createApp({
 
       const batchSize = parseInt(superSummaryBatchSize.value) || 5;
 
-      // Find all summary messages
       const candidates = messages.value.filter(m => m.role === "summary");
 
       if (candidates.length < batchSize) {
@@ -513,36 +478,36 @@ createApp({
                 Write the summary strictly in the SECOND-PERSON ("You").
 
                 PREVIOUS CHAPTERS:
-                ${transcript}`;
+                ${transcript}
+
+                You MUST return a valid JSON object matching this schema format:
+                {
+                  "thought_process": "Internal analysis of narrative arc",
+                  "epoch_summary": "narrative epoch summary block"
+                }`;
 
         const payload = {
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought_process: { type: "string" },
-                epoch_summary: { type: "string" },
-              },
-              required: ["thought_process", "epoch_summary"],
-            },
-          },
+          model: selectedModel.value,
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
+        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey.value },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey.value}`
+          },
           body: JSON.stringify(payload),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error?.message || "Super Summarize failed");
 
-        let rawText = data.candidates[0].content.parts[0].text;
+        let rawText = data.choices[0].message.content;
         const start = rawText.indexOf("{");
         const end = rawText.lastIndexOf("}");
         if (start !== -1 && end !== -1) rawText = rawText.substring(start, end + 1);
@@ -554,13 +519,11 @@ createApp({
 
         const lastMsgTimestamp = msgsToSummarize[msgsToSummarize.length - 1].timestamp;
 
-        // Move originals to Archive & delete from main chat
         for (const m of msgsToSummarize) {
           await db.archives.add({ text: m.text, timestamp: m.timestamp });
           await db.chats.delete(m.id);
         }
 
-        // Add the new Super-Summary to chat
         await db.chats.add({
           role: "summary",
           text: `**[THE STORY SO FAR]**\n\n${summaryText}`,
@@ -584,9 +547,9 @@ createApp({
     const updateCounts = async () => {
       try {
         const chats = await db.chats.toArray();
-        const facts = await db.facts.toArray(); // <-- Fetch facts too
+        const facts = await db.facts.toArray();
 
-        const fullDb = { chats, facts }; // <-- Combine them
+        const fullDb = { chats, facts };
 
         const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
@@ -607,14 +570,14 @@ createApp({
     });
 
     onMounted(async () => {
+      const storedBaseUrl = localStorage.getItem("story_base_url");
+      if (storedBaseUrl) baseUrl.value = storedBaseUrl;
+
       const storedKey = localStorage.getItem("story_api_key");
       const storedModel = localStorage.getItem("story_model");
 
       if (localStorage.getItem("story_tts_model"))
         selectedTTSModel.value = localStorage.getItem("story_tts_model");
-      if (localStorage.getItem("story_randomizer_model")) {
-        randomizerModel.value = localStorage.getItem("story_randomizer_model");
-      }
       if (localStorage.getItem("story_tts_voice"))
         selectedVoice.value = localStorage.getItem("story_tts_voice");
       if (localStorage.getItem("story_tts_prosody"))
@@ -639,7 +602,6 @@ createApp({
         messages.value = await db.chats.orderBy("timestamp").toArray();
         scrollToBottom();
 
-        // AUTOLOAD LOGIC: If no messages exist, automatically start the story
         if (messages.value.length === 0) {
           if (apiKey.value) {
             initializeStory();
@@ -678,17 +640,16 @@ createApp({
       }
 
       await loadFacts();
+      await loadArchives();
     });
 
     const saveAllSettings = () => {
-      // Check if the rules actually changed compared to what's in storage
       var oldRules = localStorage.getItem("story_system_prompt") || "";
       var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
 
-      // Save everything to localStorage
+      localStorage.setItem("story_base_url", baseUrl.value);
       localStorage.setItem("story_api_key", apiKey.value);
       localStorage.setItem("story_model", selectedModel.value);
-      localStorage.setItem("story_randomizer_model", randomizerModel.value);
       localStorage.setItem("story_system_prompt", systemPrompt.value);
       localStorage.setItem("story_tts_model", selectedTTSModel.value);
       localStorage.setItem("story_tts_voice", selectedVoice.value);
@@ -698,17 +659,13 @@ createApp({
       showSettings.value = false;
       isConfigured.value = true;
 
-      // Case 1: The chat is empty, just start the story
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
-      }
-      // Case 2: Mid-game change. Ask the user if they want to restart
-      else if (rulesChanged && messages.value.length > 0) {
+      } else if (rulesChanged && messages.value.length > 0) {
         var restartNow = confirm(
           "Rules updated! Would you like to restart the story now to apply these changes?",
         );
         if (restartNow) {
-          // We manually trigger the logic from startOver without the double-confirmation
           db.chats.clear();
           db.facts.clear();
           messages.value = [];
@@ -768,8 +725,6 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      // Use the Premise as the first message.
-      // If it's empty, use a default fallback.
       const firstMessage =
         systemPrompt.value.trim() ||
         "The story begins in a mysterious world...";
@@ -829,50 +784,40 @@ createApp({
 
       try {
         const payload = {
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}` },
-              ],
-            },
-          ],
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: selectedVoice.value,
-                },
-              },
-            },
-          },
+          model: selectedTTSModel.value,
+          input: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}`,
+          voice: selectedVoice.value,
+          response_format: "wav"
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedTTSModel.value}:generateContent`;
+        const url = `${baseUrl.value.replace(/\/$/, "")}/audio/speech`;
 
         const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": apiKey.value,
+            "Authorization": `Bearer ${apiKey.value}`,
           },
           body: JSON.stringify(payload),
         });
 
-        const data = await response.json();
-
-        if (!response.ok)
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
           throw new Error(data.error?.message || "TTS API Error");
-
-        const base64Audio =
-          data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-        if (base64Audio) {
-          const playableWavBase64 = addWavHeader(base64Audio);
-          msg.audioData = playableWavBase64;
-          scrollToBottom();
         }
+
+        const buffer = await response.arrayBuffer();
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        const chunkSize = 0xffff;
+        for (let i = 0; i < len; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        const base64Audio = btoa(binary);
+
+        msg.audioData = base64Audio;
+        scrollToBottom();
       } catch (err) {
         console.error("Audio Synthesis Pipeline Failed:", err);
         alert("Failed to synthesize audio: " + err.message);
@@ -891,14 +836,11 @@ createApp({
           .map((f) => `- [${f.category}] ${f.text}`)
           .join("\n");
 
-        // 1. GEMMA TRICK: Inject context directly into the first User message
         const contents = messages.value.map((msg, index) => {
-          // Send summaries as 'user' role so the AI accepts the format
           let role =
-            msg.role === "user" || msg.role === "summary" ? "user" : "model";
+            msg.role === "user" || msg.role === "summary" ? "user" : "assistant";
           let text = msg.text;
 
-          // Flag it explicitly so the AI understands this is past events
           if (msg.role === "summary") {
             text = `[PREVIOUS EVENTS SUMMARY]\n${text}`;
           }
@@ -912,44 +854,26 @@ createApp({
 
           return {
             role: role,
-            parts: [{ text: text }],
+            content: text,
           };
         });
 
-        const isGemma = 0; //selectedModel.value.toLowerCase().includes("gemma");
-
-        const payload = {
-          contents,
-          // Use the static core prompt
-          systemInstruction: { parts: [{ text: CORE_SYSTEM_PROMPT }] },
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 2048,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                thought: { type: "string" },
-                response: { type: "string" },
-                options: { type: "array", items: { type: "string" } },
-                facts: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      text: { type: "string" },
-                      category: { type: "string" },
-                    },
-                    required: ["text", "category"],
-                  },
-                },
-              },
-              required: ["thought", "response", "options", "facts"],
-            },
-          },
+        const systemMessage = {
+          role: "system",
+          content: CORE_SYSTEM_PROMPT
         };
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.value}:generateContent`;
+        const messagesPayload = [systemMessage, ...contents];
+
+        const payload = {
+          model: selectedModel.value,
+          messages: messagesPayload,
+          temperature: 0.9,
+          max_tokens: 2048,
+          response_format: { type: "json_object" }
+        };
+
+        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         let data;
         let attempt = 0;
@@ -957,7 +881,6 @@ createApp({
 
         while (attempt <= retryDelays.length) {
           const controller = new AbortController();
-          // 3. FIXED TIMEOUT: 45000 ms = 45 seconds
           const timeoutId = setTimeout(() => controller.abort(), 45000);
 
           try {
@@ -965,7 +888,7 @@ createApp({
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-goog-api-key": apiKey.value,
+                "Authorization": `Bearer ${apiKey.value}`,
               },
               body: JSON.stringify(payload),
               signal: controller.signal,
@@ -974,20 +897,21 @@ createApp({
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-              // 1. Read the error message first so we can parse it
               const errorData = await response.json().catch(() => ({}));
               const errMsg = errorData.error?.message || "";
 
               if ((response.status === 500 || response.status === 429) && attempt < retryDelays.length) {
-
-                // Default to your hardcoded delay array
                 let delayMs = retryDelays[attempt];
 
-                // 2. Dynamic 429 Parsing: Look for "Please retry in X.XXXs"
-                if (response.status === 429) {
+                const retryAfterHeader = response.headers.get("Retry-After");
+                if (retryAfterHeader) {
+                  const parsedSeconds = parseFloat(retryAfterHeader);
+                  if (!isNaN(parsedSeconds)) {
+                    delayMs = Math.ceil(parsedSeconds * 1000) + 500;
+                  }
+                } else if (response.status === 429) {
                   const match = errMsg.match(/Please retry in ([\d.]+)s/);
                   if (match && match[1]) {
-                    // Convert seconds to ms, and add a 500ms safety buffer
                     delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 500;
                   }
                 }
@@ -999,7 +923,6 @@ createApp({
                 continue;
               }
 
-              // If we run out of retries, throw the actual error to the chat UI
               throw new Error(errMsg || `API Error: ${response.status}`);
             }
 
@@ -1014,23 +937,12 @@ createApp({
         let responseText = "";
         let thoughtText = "";
         totalTokens.value =
-          data.usageMetadata?.totalTokenCount?.toLocaleString("en-US") || "0";
+          data.usage?.total_tokens?.toLocaleString("en-US") || "0";
 
-        if (data.candidates && data.candidates[0].content.parts) {
-          for (const part of data.candidates[0].content.parts) {
-            if (part.thought) {
-              thoughtText += (part.text || "") + "\n\n";
-            } else if (part.text) {
-              let text = part.text;
-              text = text.replace(
-                /<think>([\s\S]*?)<\/think>/gi,
-                (m, inner) => {
-                  thoughtText += inner.trim() + "\n\n";
-                  return "";
-                },
-              );
-              responseText += text + "\n";
-            }
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          const messageContent = data.choices[0].message.content;
+          if (messageContent) {
+            responseText = messageContent;
           }
         }
 
@@ -1054,7 +966,6 @@ createApp({
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
                 if (f.text && f.category) {
-                  // If saving a Time fact, safely delete any existing Time facts first
                   if (f.text.toLowerCase().startsWith("time:")) {
                     await db.facts
                       .filter((existFact) => existFact.text && existFact.text.toLowerCase().startsWith("time:"))
@@ -1131,9 +1042,9 @@ createApp({
     };
 
     return {
+      baseUrl,
       apiKey,
       selectedModel,
-      randomizerModel,
       isConfigured,
       renderMarkdown,
       formatRelativeTime,
@@ -1176,6 +1087,10 @@ createApp({
       startEditMessage,
       cancelEditMessage,
       saveEditMessage,
+      archivedSummaries,
+      superSummaryBatchSize,
+      isSuperSummarizing,
+      superSummarizeStory,
     };
   },
 }).mount("#app");
