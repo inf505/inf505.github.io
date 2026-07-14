@@ -28,9 +28,10 @@ Return a single JSON object.
 `;
 
 const db = new Dexie("StoryWriterDB");
-db.version(2).stores({
+db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
+  archives: "++id, text, timestamp"
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -77,6 +78,9 @@ createApp({
     const summaryBatchSize = ref(10);
     const editingMsgId = ref(null);
     const editingMsgText = ref("");
+    const archivedSummaries = ref([]);
+    const superSummaryBatchSize = ref(5);
+    const isSuperSummarizing = ref(false);
 
     const startEditMessage = (msg) => {
       editingMsgId.value = msg.id;
@@ -109,6 +113,15 @@ createApp({
         facts.value = data;
       } catch (err) {
         console.error("Error loading facts:", err);
+      }
+    };
+
+    const loadArchives = async () => {
+      try {
+        const data = await db.archives.orderBy("timestamp").reverse().toArray();
+        archivedSummaries.value = data;
+      } catch (err) {
+        console.error("Error loading archives:", err);
       }
     };
 
@@ -468,6 +481,103 @@ createApp({
         alert("Summarize failed with Flash model: " + err.message);
       } finally {
         isSummarizing.value = false;
+      }
+    };
+
+    const superSummarizeStory = async () => {
+      if (!apiKey.value) return;
+
+      const batchSize = parseInt(superSummaryBatchSize.value) || 5;
+
+      // Find all summary messages
+      const candidates = messages.value.filter(m => m.role === "summary");
+
+      if (candidates.length < batchSize) {
+        alert(`Not enough summaries. You requested ${batchSize}, but only have ${candidates.length} available.`);
+        return;
+      }
+
+      const warnMsg = `This will compress the oldest ${batchSize} Chapter Summaries into a single "Story So Far" entry, and move the originals to your Archive. Continue?`;
+      if (!confirm(warnMsg)) return;
+
+      isSuperSummarizing.value = true;
+
+      try {
+        const msgsToSummarize = candidates.slice(0, batchSize);
+        const transcript = msgsToSummarize
+          .map((m, i) => `CHAPTER ${i + 1}:\n${m.text}`)
+          .join("\n\n");
+
+        const prompt = `You are a master storyteller. Summarize the following sequential chapter summaries into a single, cohesive "The Story So Far" narrative arc.
+                Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
+                Write the summary strictly in the SECOND-PERSON ("You").
+
+                PREVIOUS CHAPTERS:
+                ${transcript}`;
+
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                thought_process: { type: "string" },
+                epoch_summary: { type: "string" },
+              },
+              required: ["thought_process", "epoch_summary"],
+            },
+          },
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${randomizerModel.value}:generateContent`;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey.value },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || "Super Summarize failed");
+
+        let rawText = data.candidates[0].content.parts[0].text;
+        const start = rawText.indexOf("{");
+        const end = rawText.lastIndexOf("}");
+        if (start !== -1 && end !== -1) rawText = rawText.substring(start, end + 1);
+
+        const parsed = JSON.parse(rawText);
+        let summaryText = parsed.epoch_summary?.trim();
+
+        if (!summaryText) throw new Error("Received empty summary.");
+
+        const lastMsgTimestamp = msgsToSummarize[msgsToSummarize.length - 1].timestamp;
+
+        // Move originals to Archive & delete from main chat
+        for (const m of msgsToSummarize) {
+          await db.archives.add({ text: m.text, timestamp: m.timestamp });
+          await db.chats.delete(m.id);
+        }
+
+        // Add the new Super-Summary to chat
+        await db.chats.add({
+          role: "summary",
+          text: `**[THE STORY SO FAR]**\n\n${summaryText}`,
+          thought: "",
+          options: null,
+          timestamp: lastMsgTimestamp + 1,
+        });
+
+        messages.value = await db.chats.orderBy("timestamp").toArray();
+        await loadArchives();
+        await updateCounts();
+        scrollToBottom();
+      } catch (err) {
+        console.error("Super Summarize Error:", err);
+        alert("Super Summarize failed: " + err.message);
+      } finally {
+        isSuperSummarizing.value = false;
       }
     };
 
