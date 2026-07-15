@@ -1016,8 +1016,16 @@ You MUST return a valid JSON object matching this schema structure:
           data.usage?.total_tokens?.toLocaleString("en-US") || "0";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          const messageContent = data.choices[0].message.content;
+          let messageContent = data.choices[0].message.content;
           if (messageContent) {
+            // Safely capture and strip native <think> reasoning blocks
+            messageContent = messageContent.replace(
+              /<think>([\s\S]*?)<\/think>/gi,
+              (m, inner) => {
+                thoughtText += inner.trim() + "\n\n";
+                return "";
+              }
+            );
             responseText = messageContent;
           }
         }
