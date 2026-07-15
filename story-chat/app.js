@@ -1035,25 +1035,8 @@ You MUST return a valid JSON object matching this schema structure:
             );
             const parsed = JSON.parse(jsonString);
 
-            // Defensive parser to safely clean nested JSON and markdown leaks
-            const cleanTextField = (val) => {
-              if (typeof val !== "string") return val;
-              let s = val.trim();
-              if (s.startsWith("```")) {
-                s = s.replace(/^```[a-zA-Z]*\n?|```$/g, "").trim();
-              }
-              if (s.startsWith("{") || s.startsWith("[")) {
-                try {
-                  const nested = JSON.parse(s);
-                  if (nested.response) return nested.response.trim();
-                  if (nested.text) return nested.text.trim();
-                } catch (e) { }
-              }
-              return s;
-            };
-
-            if (parsed.thought) thoughtText = cleanTextField(parsed.thought);
-            if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
+            if (parsed.thought) thoughtText = parsed.thought;
+            if (parsed.response) finalResponse = parsed.response.trim();
             if (parsed.options) finalOptions = parsed.options;
 
             if (parsed.facts && Array.isArray(parsed.facts)) {
