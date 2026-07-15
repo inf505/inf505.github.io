@@ -1052,7 +1052,12 @@ You MUST return a valid JSON object matching this schema structure:
               return s;
             };
 
-            if (parsed.thought) thoughtText = cleanTextField(parsed.thought);
+            if (parsed.thought) {
+              thoughtText = typeof parsed.thought === 'string'
+                ? parsed.thought
+                : JSON.stringify(parsed.thought);
+            }
+
             if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
             if (parsed.options) finalOptions = parsed.options;
 
@@ -1079,10 +1084,12 @@ You MUST return a valid JSON object matching this schema structure:
           console.error("JSON Parse error", e);
         }
 
+        const finalThoughtString = typeof thoughtText === "string" ? thoughtText.trim() : "";
+
         const modelId = await saveToDb(
           "model",
           finalResponse,
-          thoughtText.trim(),
+          finalThoughtString,
           finalOptions,
         );
 
@@ -1090,11 +1097,13 @@ You MUST return a valid JSON object matching this schema structure:
           id: modelId,
           role: "model",
           text: finalResponse,
-          thought: thoughtText.trim(),
+          thought: finalThoughtString,
           options: finalOptions,
           audioData: null,
           isGeneratingAudio: false,
         });
+
+
       } catch (error) {
         let errorMsg = `❌ Error: ${error.message}`;
         if (error.name === "AbortError") {
