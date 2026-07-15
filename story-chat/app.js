@@ -19,7 +19,7 @@ Return a single JSON object.
 - "thought":
    - Check the Grimoire for existing facts, current inventory, and the current time.
    - Briefly plan how the next scene progresses the timeline.
-   - Brainstorm 3 distinct, non-trivial paths the user could take next (Logical/Technical, Active/Bold, Cautious/Exploratory). For each path, briefly note how it would uniquely shift the story state or reveal different details.
+   - Briefly brainstorm 3 distinct, non-trivial paths the user could take next (Logical/Technical, Active/Bold, Cautious/Exploratory). Briefly note how it would uniquely shift the story state or reveal different details.
 - "response": The story text.
 - "options": Array of 3 distinct action choices. (Keep these option sentences 12 words or less)
 - "facts": An array of objects (text, category).
@@ -945,7 +945,7 @@ You MUST return a valid JSON object matching this schema structure:
           model: selectedModel.value,
           messages: messagesPayload,
           temperature: 0.9,
-          max_tokens: 2048,
+          max_tokens: 4096,
           response_format: { type: "json_object" }
         };
 
