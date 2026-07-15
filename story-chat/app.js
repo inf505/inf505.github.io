@@ -26,7 +26,12 @@ Return a single JSON object.
    - TIME TRACKING: Always include exactly one "Lore" fact starting with "Time:" that tracks the current day of the week, time of day, and the current season (e.g., "Time: Monday, Early Morning, Late Autumn"). Update the time, day, or season naturally based on actions taken (e.g., long tasks should advance the time; many actions can shift the day or season).
    - CATEGORIES: Infrastructure, Character, Item, Location, Lore.
 
-You MUST format your reply as a valid JSON object matching this specification. Do not include extra conversational text outside of the JSON payload.`;
+You MUST format your reply as a valid JSON object matching this specification. Do not include extra conversational text outside of the JSON payload.
+
+CRITICAL STRUCTURAL RULES:
+1. The "response" field must contain ONLY standard, natural narrative text or markdown prose.
+2. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
+3. Never use markdown code fences (like ``json ... ``) inside a JSON string property.`;
 
 const db = new Dexie("StoryWriterDB");
 db.version(3).stores({
