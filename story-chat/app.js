@@ -1067,7 +1067,15 @@ You MUST return a valid JSON object matching this schema structure:
             }
 
             if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
-            if (parsed.options) finalOptions = parsed.options;
+            // Ensure options exist and are actually an Array so Vue's .length doesn't fail
+            if (parsed.options && Array.isArray(parsed.options)) {
+              finalOptions = parsed.options;
+            } else if (parsed.choices && Array.isArray(parsed.choices)) {
+              // Fallback in case the AI renames the key to "choices"
+              finalOptions = parsed.choices;
+            } else {
+              finalOptions = null;
+            }
 
             if (parsed.facts && Array.isArray(parsed.facts)) {
               for (const f of parsed.facts) {
