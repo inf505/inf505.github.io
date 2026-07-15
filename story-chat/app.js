@@ -31,7 +31,7 @@ You MUST format your reply as a valid JSON object matching this specification. D
 CRITICAL STRUCTURAL RULES:
 1. The "response" field must contain ONLY standard, natural narrative text or markdown prose.
 2. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
-3. Never use markdown code fences (like ``json ... ``) inside a JSON string property.`;
+3. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
 
 const db = new Dexie("StoryWriterDB");
 db.version(3).stores({
@@ -1035,8 +1035,25 @@ You MUST return a valid JSON object matching this schema structure:
             );
             const parsed = JSON.parse(jsonString);
 
-            if (parsed.thought) thoughtText = parsed.thought;
-            if (parsed.response) finalResponse = parsed.response.trim();
+            // Defensive parser to safely clean nested JSON and markdown leaks
+            const cleanTextField = (val) => {
+              if (typeof val !== "string") return val;
+              let s = val.trim();
+              if (s.startsWith("```")) {
+                s = s.replace(/^```[a-zA-Z]*\n?|```$/g, "").trim();
+              }
+              if (s.startsWith("{") || s.startsWith("[")) {
+                try {
+                  const nested = JSON.parse(s);
+                  if (nested.response) return nested.response.trim();
+                  if (nested.text) return nested.text.trim();
+                } catch (e) { }
+              }
+              return s;
+            };
+
+            if (parsed.thought) thoughtText = cleanTextField(parsed.thought);
+            if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
             if (parsed.options) finalOptions = parsed.options;
 
             if (parsed.facts && Array.isArray(parsed.facts)) {
