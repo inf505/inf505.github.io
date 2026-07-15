@@ -944,7 +944,7 @@ You MUST return a valid JSON object matching this schema structure:
         const payload = {
           model: selectedModel.value,
           messages: messagesPayload,
-          temperature: 0.9,
+          temperature: 0.7,
           max_tokens: 4096,
           response_format: { type: "json_object" }
         };
