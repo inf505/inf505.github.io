@@ -68,8 +68,10 @@ createApp({
     const messagesContainer = ref(null);
     const inputArea = ref(null);
     const isGeneratingRules = ref(false);
-    const selectedTTSModel = ref("tts-1");
-    const selectedVoice = ref("alloy");
+    const ttsProvider = ref("gemini");
+    const geminiApiKey = ref("");
+    const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
+    const selectedVoice = ref("Aoede");
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
@@ -82,6 +84,16 @@ createApp({
     const archivedSummaries = ref([]);
     const superSummaryBatchSize = ref(5);
     const isSuperSummarizing = ref(false);
+
+    const onTTSProviderChange = () => {
+      if (ttsProvider.value === "gemini") {
+        selectedTTSModel.value = "gemini-3.1-flash-tts-preview";
+        selectedVoice.value = "Aoede";
+      } else {
+        selectedTTSModel.value = "tts-1";
+        selectedVoice.value = "alloy";
+      }
+    };
 
     const startEditMessage = (msg) => {
       editingMsgId.value = msg.id;
@@ -576,6 +588,10 @@ You MUST return a valid JSON object matching this schema structure:
       const storedKey = localStorage.getItem("story_api_key");
       const storedModel = localStorage.getItem("story_model");
 
+      if (localStorage.getItem("story_tts_provider"))
+        ttsProvider.value = localStorage.getItem("story_tts_provider");
+      if (localStorage.getItem("story_gemini_api_key"))
+        geminiApiKey.value = localStorage.getItem("story_gemini_api_key");
       if (localStorage.getItem("story_tts_model"))
         selectedTTSModel.value = localStorage.getItem("story_tts_model");
       if (localStorage.getItem("story_tts_voice"))
@@ -651,6 +667,8 @@ You MUST return a valid JSON object matching this schema structure:
       localStorage.setItem("story_api_key", apiKey.value);
       localStorage.setItem("story_model", selectedModel.value);
       localStorage.setItem("story_system_prompt", systemPrompt.value);
+      localStorage.setItem("story_tts_provider", ttsProvider.value);
+      localStorage.setItem("story_gemini_api_key", geminiApiKey.value);
       localStorage.setItem("story_tts_model", selectedTTSModel.value);
       localStorage.setItem("story_tts_voice", selectedVoice.value);
       localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
@@ -783,41 +801,94 @@ You MUST return a valid JSON object matching this schema structure:
       msg.isGeneratingAudio = true;
 
       try {
-        const payload = {
-          model: selectedTTSModel.value,
-          input: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}`,
-          voice: selectedVoice.value,
-          response_format: "wav"
-        };
+        if (ttsProvider.value === "gemini") {
+          const useKey = geminiApiKey.value.trim() || apiKey.value.trim();
+          if (!useKey) {
+            throw new Error("No API Key configured for Gemini TTS. Please add a key in the Audio tab or Settings.");
+          }
 
-        const url = `${baseUrl.value.replace(/\/$/, "")}/audio/speech`;
+          const payload = {
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}` },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: selectedVoice.value,
+                  },
+                },
+              },
+            },
+          };
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey.value}`,
-          },
-          body: JSON.stringify(payload),
-        });
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedTTSModel.value}:generateContent`;
 
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error?.message || "TTS API Error");
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": useKey,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok)
+            throw new Error(data.error?.message || "Gemini TTS API Error");
+
+          const base64Audio =
+            data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+          if (base64Audio) {
+            const playableWavBase64 = addWavHeader(base64Audio);
+            msg.audioData = playableWavBase64;
+            scrollToBottom();
+          }
+        } else {
+          const payload = {
+            model: selectedTTSModel.value,
+            input: `${ttsProsodyNudge.value}\n\nTEXT:\n${msg.text}`,
+            voice: selectedVoice.value,
+            response_format: "wav"
+          };
+
+          const url = `${baseUrl.value.replace(/\/$/, "")}/audio/speech`;
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey.value}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error?.message || "TTS API Error");
+          }
+
+          const buffer = await response.arrayBuffer();
+          let binary = "";
+          const bytes = new Uint8Array(buffer);
+          const len = bytes.byteLength;
+          const chunkSize = 0xffff;
+          for (let i = 0; i < len; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+          }
+          const base64Audio = btoa(binary);
+
+          msg.audioData = base64Audio;
+          scrollToBottom();
         }
-
-        const buffer = await response.arrayBuffer();
-        let binary = "";
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-        const chunkSize = 0xffff;
-        for (let i = 0; i < len; i += chunkSize) {
-          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-        }
-        const base64Audio = btoa(binary);
-
-        msg.audioData = base64Audio;
-        scrollToBottom();
       } catch (err) {
         console.error("Audio Synthesis Pipeline Failed:", err);
         alert("Failed to synthesize audio: " + err.message);
@@ -1065,10 +1136,13 @@ You MUST return a valid JSON object matching this schema structure:
       totalTokens,
       scrollToBottom,
       activeTab,
+      ttsProvider,
+      geminiApiKey,
       selectedTTSModel,
       selectedVoice,
       ttsProsodyNudge,
       triggerTTS,
+      onTTSProviderChange,
       facts,
       loadFacts,
       deleteFact,
