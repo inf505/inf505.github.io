@@ -21,7 +21,7 @@ Return a single JSON object.
    - Briefly plan how the next scene progresses the timeline.
    - Brainstorm 3 distinct, non-trivial paths the user could take next (Logical/Technical, Active/Bold, Cautious/Exploratory). For each path, briefly note how it would uniquely shift the story state or reveal different details.
 - "response": The story text.
-- "options": Array of 3 distinct action choices.
+- "options": Array of 3 distinct action choices. (Keep these option sentences 12 words or less)
 - "facts": An array of objects (text, category).
    - TIME TRACKING: Always include exactly one "Lore" fact starting with "Time:" that tracks the current day of the week, time of day, and the current season (e.g., "Time: Monday, Early Morning, Late Autumn"). Update the time, day, or season naturally based on actions taken (e.g., long tasks should advance the time; many actions can shift the day or season).
    - CATEGORIES: Infrastructure, Character, Item, Location, Lore.
