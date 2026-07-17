@@ -387,9 +387,8 @@ You MUST return a valid JSON object matching this schema structure:
           })
           .join("\n\n");
 
-        const prompt = `Summarize the following chronological excerpt of a story concisely into a flowing narrative paragraph.
+        const prompt = `Summarize the following chronological excerpt of a story concisely into a narrative paragraph.
             Focus entirely on the narrative progression and major actions.
-            Write the summary strictly in the SECOND-PERSON ("You").
 
             STORY EXCERPT:
             ${transcript}
@@ -397,7 +396,7 @@ You MUST return a valid JSON object matching this schema structure:
             You MUST return a valid JSON object matching this schema:
             {
               "thought_process": "brief analysis of events",
-              "summary": "narrative flowing second person paragraph summary text"
+              "summary": "narrative flowing paragraph summary text"
             }`;
 
         const payload = {
@@ -492,7 +491,6 @@ You MUST return a valid JSON object matching this schema structure:
 
         const prompt = `You are a master storyteller. Summarize the following sequential chapter summaries into a single, cohesive "The Story So Far" narrative arc.
                 Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
-                Write the summary strictly in the SECOND-PERSON ("You").
 
                 PREVIOUS CHAPTERS:
                 ${transcript}
@@ -507,7 +505,7 @@ You MUST return a valid JSON object matching this schema structure:
           model: selectedModel.value,
           messages: [{ role: "user", content: prompt }],
           response_format: { type: "json_object" },
-          temperature: 0.2,
+          temperature: 0.3,
         };
 
         const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
