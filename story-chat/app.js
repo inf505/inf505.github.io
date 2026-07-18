@@ -471,10 +471,13 @@ You MUST return a valid JSON object matching this schema structure:
 
       const batchSize = parseInt(superSummaryBatchSize.value) || 5;
 
-      const candidates = messages.value.filter(m => m.role === "summary");
+      // Updated filter: Ignore existing super-summaries
+      const candidates = messages.value.filter(m =>
+        m.role === "summary" && !m.text.includes("[THE STORY SO FAR]")
+      );
 
       if (candidates.length < batchSize) {
-        alert(`Not enough summaries. You requested ${batchSize}, but only have ${candidates.length} available.`);
+        alert(`Not enough chapter summaries. You requested ${batchSize}, but only have ${candidates.length} available.`);
         return;
       }
 
@@ -490,16 +493,16 @@ You MUST return a valid JSON object matching this schema structure:
           .join("\n\n");
 
         const prompt = `You are a master storyteller. Summarize the following sequential chapter summaries into a single, cohesive "The Story So Far" narrative arc.
-                Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
+                    Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
 
-                PREVIOUS CHAPTERS:
-                ${transcript}
+                    PREVIOUS CHAPTERS:
+                    ${transcript}
 
-                You MUST return a valid JSON object matching this schema format:
-                {
-                  "thought_process": "Internal analysis of narrative arc",
-                  "epoch_summary": "narrative epoch summary block"
-                }`;
+                    You MUST return a valid JSON object matching this schema format:
+                    {
+                      "thought_process": "Internal analysis of narrative arc",
+                      "epoch_summary": "narrative epoch summary block"
+                    }`;
 
         const payload = {
           model: selectedModel.value,
