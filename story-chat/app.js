@@ -387,17 +387,21 @@ You MUST return a valid JSON object matching this schema structure:
           })
           .join("\n\n");
 
-        const prompt = `Summarize the following chronological excerpt of a story concisely into a narrative paragraph.
-            Focus entirely on the narrative progression and major actions.
+        const prompt = `Summarize the following chronological excerpt of a story into a highly dense, information-packed paragraph.
+          Focus entirely on critical plot progression, major decisions, acquired items, and permanent changes.
 
-            STORY EXCERPT:
-            ${transcript}
+          CRITICAL RULES:
+          1. SHIFT POV: Do NOT use the word "you" or second-person perspective. Write purely in the third-person objective (e.g., "The protagonist", or BETTER is to use their specific character name if known).
+          2. MAXIMIZE DENSITY: Strip out trivial dialogue, minor movements, and atmospheric fluff. Condense the events into concise, factual narrative history.
 
-            You MUST return a valid JSON object matching this schema:
-            {
-              "thought_process": "brief analysis of events",
-              "summary": "narrative flowing paragraph summary text"
-            }`;
+          STORY EXCERPT:
+          ${transcript}
+
+          You MUST return a valid JSON object matching this schema:
+          {
+            "thought_process": "brief analysis of events and POV shift check",
+            "summary": "dense third-person paragraph summary text"
+          }`;
 
         const payload = {
           model: selectedModel.value,
