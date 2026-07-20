@@ -293,7 +293,8 @@
                     Configure your API Settings and Rules to begin!
                 </div>
 
-                <div v-for="(msg, index) in messages" :key="msg.id || index" :class="['message', msg.role]">
+                <div v-for="(msg, index) in messages" :key="msg.id || index"
+                    :class="['message', msg.role, { 'model': msg.role === 'summary' }]">
                     <div class="bubble">
                         <!-- Summary Badge -->
                         <div v-if="msg.role === 'summary'" style="

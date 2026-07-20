@@ -442,25 +442,32 @@ You MUST return a valid JSON object matching this schema structure:
           }
         }
 
-        if (!summaryText) throw new Error("Received empty summary from AI.");
+        // 1. Ensure we have fallback text if AI returns weird JSON
+        if (!summaryText) {
+          console.error("AI returned data but no summary field:", data);
+          throw new Error("The AI failed to generate a summary. Check the console.");
+        }
 
-        const lastMsgTimestamp =
-          msgsToSummarize[msgsToSummarize.length - 1].timestamp;
+        const lastMsgTimestamp = msgsToSummarize[msgsToSummarize.length - 1].timestamp;
 
+        // Delete the old ones
         for (const m of msgsToSummarize) {
           await db.chats.delete(m.id);
         }
 
+        // 2. Add the summary
         await db.chats.add({
           role: "summary",
           text: summaryText,
-          thought: "",
+          thought: parsed.thought_process || "", // Capture the thought process if available
           options: null,
-          timestamp: lastMsgTimestamp + 1,
+          timestamp: lastMsgTimestamp // This keeps it in the correct chronological order
         });
 
+        // Refresh the UI
         messages.value = await db.chats.orderBy("timestamp").toArray();
         await updateCounts();
+        alert("Chapter summarized successfully! Scroll up to see the entry."); // 3. Feedback to user
         scrollToBottom();
       } catch (err) {
         console.error("Summarize Error:", err);
