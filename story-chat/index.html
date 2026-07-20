@@ -312,9 +312,9 @@
                         <!-- Action Buttons Container -->
                         <div class="msg-actions">
 
-                            <!-- Edit Button (Only for Chapter Summaries) -->
-                            <button v-if="msg.role === 'summary'" class="action-msg-btn edit-btn"
-                                @click="startEditMessage(msg)" title="Edit Summary">
+                            <!-- Edit Button (For Summaries AND AI Messages) -->
+                            <button v-if="msg.role === 'summary' || msg.role === 'model'"
+                                class="action-msg-btn edit-btn" @click="startEditMessage(msg)" title="Edit Message">
                                 ✏️
                             </button>
 
