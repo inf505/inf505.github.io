@@ -388,20 +388,20 @@ You MUST return a valid JSON object matching this schema structure:
           .join("\n\n");
 
         const prompt = `Summarize the following chronological excerpt of a story into a highly dense, information-packed paragraph.
-          Focus entirely on critical plot progression, major decisions, acquired items, and permanent changes.
+              Focus entirely on critical plot progression, major decisions, acquired items, and permanent changes.
 
-          CRITICAL RULES:
-          1. SHIFT POV: Do NOT use the word "you" or second-person perspective. Write purely in the third-person objective (e.g., "The protagonist", or BETTER is to use their specific character name if known).
-          2. MAXIMIZE DENSITY: Strip out trivial dialogue, minor movements, and atmospheric fluff. Condense the events into concise, factual narrative history.
+              CRITICAL RULES:
+              1. SHIFT POV: Do NOT use the word "you" or second-person perspective. Write purely in the third-person objective (e.g., "The protagonist", or BETTER is to use their specific character name if known).
+              2. MAXIMIZE DENSITY: Strip out trivial dialogue, minor movements, and atmospheric fluff. Condense the events into concise, factual narrative history.
 
-          STORY EXCERPT:
-          ${transcript}
+              STORY EXCERPT:
+              ${transcript}
 
-          You MUST return a valid JSON object matching this schema:
-          {
-            "thought_process": "brief analysis of events and POV shift check",
-            "summary": "dense third-person paragraph summary text"
-          }`;
+              You MUST return a valid JSON object matching this schema:
+              {
+                "thought_process": "brief analysis of events and POV shift check",
+                "summary": "dense third-person paragraph summary text"
+              }`;
 
         const payload = {
           model: selectedModel.value,
@@ -442,33 +442,38 @@ You MUST return a valid JSON object matching this schema structure:
           }
         }
 
-        // 1. Ensure we have fallback text if AI returns weird JSON
-        if (!summaryText) {
-          console.error("AI returned data but no summary field:", data);
-          throw new Error("The AI failed to generate a summary. Check the console.");
+        if (!summaryText) throw new Error("Received empty summary from AI.");
+
+        // Safe Timestamp Extraction
+        const lastItem = msgsToSummarize[msgsToSummarize.length - 1];
+        let baseTimestamp = lastItem.timestamp;
+
+        if (!baseTimestamp || isNaN(baseTimestamp)) {
+          const dbItem = await db.chats.get(lastItem.id);
+          baseTimestamp = dbItem && !isNaN(dbItem.timestamp) ? dbItem.timestamp : Date.now();
         }
 
-        const lastMsgTimestamp = msgsToSummarize[msgsToSummarize.length - 1].timestamp;
+        // 🛡️ DEXIE TRANSACTION: Guarantees no partial deletes!
+        await db.transaction('rw', db.chats, async () => {
+          for (const m of msgsToSummarize) {
+            await db.chats.delete(m.id);
+          }
 
-        // Delete the old ones
-        for (const m of msgsToSummarize) {
-          await db.chats.delete(m.id);
-        }
-
-        // 2. Add the summary
-        await db.chats.add({
-          role: "summary",
-          text: summaryText,
-          thought: parsed.thought_process || "", // Capture the thought process if available
-          options: null,
-          timestamp: lastMsgTimestamp // This keeps it in the correct chronological order
+          await db.chats.add({
+            role: "summary",
+            text: summaryText,
+            thought: "",
+            options: null,
+            timestamp: baseTimestamp + 1,
+          });
         });
 
-        // Refresh the UI
         messages.value = await db.chats.orderBy("timestamp").toArray();
         await updateCounts();
-        alert("Chapter summarized successfully! Scroll up to see the entry."); // 3. Feedback to user
-        scrollToBottom();
+
+        // Let the user know it succeeded and where to look
+        alert("Summary created successfully! Scroll up your chat history to see it.");
+
       } catch (err) {
         console.error("Summarize Error:", err);
         alert("Summarize failed: " + err.message);
@@ -482,7 +487,6 @@ You MUST return a valid JSON object matching this schema structure:
 
       const batchSize = parseInt(superSummaryBatchSize.value) || 5;
 
-      // Updated filter: Ignore existing super-summaries
       const candidates = messages.value.filter(m =>
         m.role === "summary" && !m.text.includes("[THE STORY SO FAR]")
       );
@@ -504,16 +508,16 @@ You MUST return a valid JSON object matching this schema structure:
           .join("\n\n");
 
         const prompt = `You are a master storyteller. Summarize the following sequential chapter summaries into a single, cohesive "The Story So Far" narrative arc.
-                    Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
+                        Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
 
-                    PREVIOUS CHAPTERS:
-                    ${transcript}
+                        PREVIOUS CHAPTERS:
+                        ${transcript}
 
-                    You MUST return a valid JSON object matching this schema format:
-                    {
-                      "thought_process": "Internal analysis of narrative arc",
-                      "epoch_summary": "narrative epoch summary block"
-                    }`;
+                        You MUST return a valid JSON object matching this schema format:
+                        {
+                          "thought_process": "Internal analysis of narrative arc",
+                          "epoch_summary": "narrative epoch summary block"
+                        }`;
 
         const payload = {
           model: selectedModel.value,
@@ -546,25 +550,36 @@ You MUST return a valid JSON object matching this schema structure:
 
         if (!summaryText) throw new Error("Received empty summary.");
 
-        const lastMsgTimestamp = msgsToSummarize[msgsToSummarize.length - 1].timestamp;
+        // Safe Timestamp Extraction
+        const lastItem = msgsToSummarize[msgsToSummarize.length - 1];
+        let baseTimestamp = lastItem.timestamp;
 
-        for (const m of msgsToSummarize) {
-          await db.archives.add({ text: m.text, timestamp: m.timestamp });
-          await db.chats.delete(m.id);
+        if (!baseTimestamp || isNaN(baseTimestamp)) {
+          const dbItem = await db.chats.get(lastItem.id);
+          baseTimestamp = dbItem && !isNaN(dbItem.timestamp) ? dbItem.timestamp : Date.now();
         }
 
-        await db.chats.add({
-          role: "summary",
-          text: `**[THE STORY SO FAR]**\n\n${summaryText}`,
-          thought: "",
-          options: null,
-          timestamp: lastMsgTimestamp + 1,
+        // 🛡️ DEXIE TRANSACTION (Chats & Archives): Moves items safely!
+        await db.transaction('rw', db.chats, db.archives, async () => {
+          for (const m of msgsToSummarize) {
+            await db.archives.add({ text: m.text, timestamp: m.timestamp || baseTimestamp });
+            await db.chats.delete(m.id);
+          }
+
+          await db.chats.add({
+            role: "summary",
+            text: `**[THE STORY SO FAR]**\n\n${summaryText}`,
+            thought: "",
+            options: null,
+            timestamp: baseTimestamp + 1,
+          });
         });
 
         messages.value = await db.chats.orderBy("timestamp").toArray();
         await loadArchives();
         await updateCounts();
-        scrollToBottom();
+
+        alert("Epoch compression complete! Original chapters have been archived.");
       } catch (err) {
         console.error("Super Summarize Error:", err);
         alert("Super Summarize failed: " + err.message);
@@ -771,6 +786,7 @@ You MUST return a valid JSON object matching this schema structure:
         role: "user",
         text: firstMessage,
         isHidden: false,
+        timestamp: Date.now()
       });
 
       await triggerAIResponse();
@@ -1129,6 +1145,7 @@ You MUST return a valid JSON object matching this schema structure:
           options: finalOptions,
           audioData: null,
           isGeneratingAudio: false,
+          timestamp: Date.now()
         });
 
 
@@ -1154,7 +1171,7 @@ You MUST return a valid JSON object matching this schema structure:
       if (!userText || isLoading.value) return;
 
       const userId = await saveToDb("user", userText);
-      messages.value.push({ id: userId, role: "user", text: userText });
+      messages.value.push({ id: userId, role: "user", text: userText, timestamp: Date.now() });
 
       currentInput.value = "";
       await triggerAIResponse();

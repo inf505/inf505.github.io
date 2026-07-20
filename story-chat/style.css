@@ -632,13 +632,3 @@ button.small-btn {
     overflow-y: auto;
     padding-right: 5px; /* Keeps the scrollbar from hiding text */
 }
-.message.summary .bubble {
-    border: 1px solid #ff9d00;
-    background: rgba(255, 157, 0, 0.05);
-    border-left: 4px solid #ff9d00;
-}
-
-.message.summary .message-text {
-    font-style: italic;
-    color: #ddd;
-}
