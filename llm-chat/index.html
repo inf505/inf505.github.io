@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
+    <title>LLM Chat</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- CHAT INTERFACE -->
+        <div class="chat-container">
+            <!-- FLOATING CONTROLS -->
+            <div class="floating-header">
+                <button class="float-btn archive-btn" @click="startOver"
+                    :title="'Start Over - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'">
+                    <span>📜</span>
+                </button>
+
+                <button class="float-btn settings-btn" @click="showSettings = !showSettings">
+                    ⚙️
+                </button>
+            </div>
+
+            <!-- SETTINGS PANEL -->
+            <div v-if="showSettings" class="settings-panel">
+                <!-- TABS NAVIGATION -->
+                <div class="tabs-header">
+                    <button :class="['tab-btn', { active: activeTab === 'settings' }]" @click="activeTab = 'settings'">
+                        Settings
+                    </button>
+                    <button :class="['tab-btn', { active: activeTab === 'facts' }]" @click="activeTab = 'facts'">
+                        Facts
+                    </button>
+                    <button :class="['tab-btn', { active: activeTab === 'audio' }]" @click="activeTab = 'audio'">
+                        Audio
+                    </button>
+                    <button :class="['tab-btn', { active: activeTab === 'archive' }]" @click="activeTab = 'archive'">
+                        Archive
+                    </button>
+                </div>
+
+                <!-- TAB CONTENT: SETTINGS -->
+                <div v-if="activeTab === 'settings'" class="tab-content">
+                    <div class="settings-group">
+                        <label>Universal API Base URL:</label>
+                        <input type="text" v-model="baseUrl" placeholder="e.g., https://api.openai.com/v1" />
+                        <small>Change for OpenRouter, Ollama, LM Studio, or local gateways.</small>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>Model Name:</label>
+                        <input type="text" v-model="selectedModel" placeholder="e.g., gpt-4o-mini" />
+                        <small>Any valid chat model string acceptable by the specified host endpoint.</small>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>API Key / Token:</label>
+                        <input type="password" v-model="apiKey" placeholder="Bearer Token..." />
+                    </div>
+
+                    <div class="settings-group">
+                        <label>System Prompt / Discussion Topic</label>
+                        <textarea v-model="systemPrompt" rows="4"
+                            placeholder="Define the persona, topic, or rules for the discussion (e.g., 'Act as a Socratic philosopher debating ethics...')."></textarea>
+                    </div>
+
+                    <div class="settings-group" style="
+                                margin-top: 20px;
+                                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                                padding-top: 15px;
+                            ">
+                        <label style="color: #ff9d00">Memory & Data Management</label>
+
+                        <div style="
+                                    font-size: 0.85rem;
+                                    margin-bottom: 10px;
+                                    color: #aaa;
+                                    background: rgba(0, 0, 0, 0.2);
+                                    padding: 8px;
+                                    border-radius: 6px;
+                                ">
+                            <strong>Database Size:</strong> {{ totalSizeKb
+                            }} KB<br />
+                            <strong>Last Token Usage:</strong> {{
+                            totalTokens }} tokens
+                        </div>
+
+                        <!-- Batch Size Input -->
+                        <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    margin-bottom: 10px;
+                                ">
+                            <label style="font-size: 0.8rem; flex: 1">Messages to summarize:</label>
+                            <input type="number" v-model="summaryBatchSize" min="2" max="50" style="
+                                        width: 60px;
+                                        text-align: center;
+                                        padding: 4px;
+                                    " />
+                        </div>
+
+                        <button class="small-btn" @click="summarizeStory" :disabled="isSummarizing" style="
+                                    width: 100%;
+                                    border: 1px solid #ff9d00;
+                                    color: #ff9d00;
+                                    background: rgba(255, 157, 0, 0.1);
+                                ">
+                            {{ isSummarizing ? "🗜️ Compressing Batch..." :
+                            "🗜️ Summarize Oldest Messages" }}
+                        </button>
+                        <small style="
+                                    display: block;
+                                    margin-top: 6px;
+                                    text-align: center;
+                                    color: #888;
+                                ">
+                            Compresses unsummarized chronological messages into a narrative Summary block.
+                        </small>
+                    </div>
+
+                    <button class="small-btn apply-btn" @click="saveAllSettings">
+                        Apply Settings
+                    </button>
+                </div>
+
+                <!-- TAB CONTENT: FACTS  -->
+                <div v-if="activeTab === 'facts'" class="tab-content">
+                    <div class="settings-group">
+                        <label>Story Grimoire</label>
+                        <div class="manual-fact-entry" style="
+                                    margin-top: 15px;
+                                    background: rgba(255, 255, 255, 0.05);
+                                    padding: 10px;
+                                    border-radius: 8px;
+                                    border: 1px solid rgba(255, 255, 255, 0.1);
+                                ">
+                            <textarea v-model="newFactText" placeholder="Add a new fact manually..." rows="2" style="
+                                        width: 100%;
+                                        margin-bottom: 8px;
+                                        font-size: 0.9rem;
+                                    "></textarea>
+
+                            <div style="display: flex; gap: 8px">
+                                <select v-model="newFactCategory" style="
+                                            flex: 1;
+                                            font-size: 0.8rem;
+                                            height: 32px;
+                                        ">
+                                    <option>Character</option>
+                                    <option>Item</option>
+                                    <option>Location</option>
+                                    <option>Lore</option>
+                                </select>
+                                <button class="small-btn" @click="addManualFact" :disabled="!newFactText.trim()"
+                                    style="flex: 1; height: 32px">
+                                    Add Fact
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="small-btn apply-btn" @click="optimizeFacts"
+                            :disabled="isOptimizingFacts || facts.length < 2" style="
+                                    margin-top: 10px;
+                                    margin-bottom: 10px;
+                                    width: 100%;
+                                ">
+                            {{ isOptimizingFacts ? "✨ Merging Facts..." : `✨ Optimize & Merge Facts (${facts.length})`
+                            }}
+                        </button>
+                    </div>
+
+                    <div class="facts-container" style="
+                                max-height: 40vh;
+                                overflow-y: auto;
+                                padding-right: 5px;
+                            ">
+                        <div v-for="fact in facts" :key="fact.id" class="fact-row">
+                            <div class="fact-content">
+                                <!-- Badge for Category -->
+                                <span :class="['fact-badge', fact.category.toLowerCase()]">
+                                    {{ fact.category }}
+                                </span>
+                                <div class="fact-text">{{ fact.text }}</div>
+                            </div>
+                            <button class="delete-fact-btn" @click="deleteFact(fact.id)">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div v-if="facts.length === 0" class="empty-facts">
+                            No facts recorded yet.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: AUDIO / TTS -->
+                <div v-if="activeTab === 'audio'" class="tab-content">
+                    <div class="settings-group">
+                        <label>TTS Provider:</label>
+                        <select v-model="ttsProvider" @change="onTTSProviderChange"
+                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
+                            <option value="gemini">Direct Google Gemini (Free / Developer)</option>
+                            <option value="openai">OpenAI-Compatible (/audio/speech)</option>
+                        </select>
+                    </div>
+
+                    <div v-if="ttsProvider === 'gemini'" class="settings-group">
+                        <label>Gemini API Key (Optional fallback to main Key):</label>
+                        <input type="password" v-model="geminiApiKey" placeholder="AIzaSy..." />
+                        <small>Provide your Google AI Studio key specifically for TTS generation if your main key is
+                            OpenRouter/Ollama.</small>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>TTS Model:</label>
+                        <input type="text" v-model="selectedTTSModel"
+                            placeholder="e.g., gemini-3.1-flash-tts-preview or tts-1" />
+                    </div>
+
+                    <div class="settings-group">
+                        <label>Voice Profile:</label>
+                        <input type="text" v-model="selectedVoice" placeholder="e.g., Aoede, Puck, alloy" />
+                    </div>
+
+                    <div class="settings-group">
+                        <label>Prosody Nudge (Narration Tone):</label>
+                        <textarea v-model="ttsProsodyNudge" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: ARCHIVE -->
+                <div v-if="activeTab === 'archive'" class="tab-content">
+                    <div class="settings-group"
+                        style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                        <label style="color: #ff9d00">Super-Summarizer (Epoch Compression)</label>
+
+                        <div
+                            style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; margin-top: 5px;">
+                            <label style="font-size: 0.8rem; flex: 1">Summaries to merge:</label>
+                            <input type="number" v-model="superSummaryBatchSize" min="2" max="20"
+                                style="width: 60px; text-align: center; padding: 4px;" />
+                        </div>
+
+                        <button class="small-btn" @click="superSummarizeStory" :disabled="isSuperSummarizing"
+                            style="width: 100%; border: 1px solid #ff9d00; color: #ff9d00; background: rgba(255, 157, 0, 0.1);">
+                            {{ isSuperSummarizing ? "📚 Compressing..." : "📚 Compress Old Summaries" }}
+                        </button>
+                        <small style="display: block; margin-top: 6px; text-align: center; color: #888;">
+                            Combines older Chapter Summaries into a "Story So Far" block and moves originals to the
+                            Archive
+                            below.
+                        </small>
+                    </div>
+
+                    <!-- LIST OF ARCHIVES -->
+                    <div class="settings-group">
+                        <label>Archived Chapters</label>
+                        <div class="facts-container" style="max-height: 40vh; overflow-y: auto;">
+                            <div v-for="arc in archivedSummaries" :key="arc.id" class="fact-row"
+                                style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                                <span style="font-size: 0.7rem; color: #888;">{{ formatRelativeTime(arc.timestamp)
+                                    }}</span>
+                                <div class="fact-text" style="color: #bbb; font-style: italic;">{{ arc.text }}</div>
+                            </div>
+                            <div v-if="archivedSummaries.length === 0" class="empty-facts">
+                                No summaries archived yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- CLOSE OF SETTINGS PANEL (Corrected Position) -->
+
+            <!-- SCROLLING MESSAGES -->
+            <div class="chat-messages" ref="messagesContainer" aria-live="polite" aria-atomic="true">
+                <div v-if="messages.length === 0" class="empty-state">
+                    Configure your API Settings and Rules to begin!
+                </div>
+
+                <div v-for="(msg, index) in messages" :key="msg.id || index" :class="['message', msg.role]">
+                    <div class="bubble">
+                        <!-- Summary Badge -->
+                        <div v-if="msg.role === 'summary'" style="
+                                    font-size: 0.75rem;
+                                    color: #ff9d00;
+                                    text-transform: uppercase;
+                                    font-weight: bold;
+                                    margin-bottom: 8px;
+                                    border-bottom: 1px solid
+                                        rgba(255, 157, 0, 0.3);
+                                    padding-bottom: 4px;
+                                ">
+                            📜 Chapter Summary
+                        </div>
+
+                        <!-- Action Buttons Container -->
+                        <div class="msg-actions">
+
+                            <!-- Edit Button (For Summaries AND AI Messages) -->
+                            <button v-if="msg.role === 'summary' || msg.role === 'model'"
+                                class="action-msg-btn edit-btn" @click="startEditMessage(msg)" title="Edit Message">
+                                ✏️
+                            </button>
+
+                            <!-- Speaker / Read Aloud Button -->
+                            <button v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
+                                class="action-msg-btn speaker-btn" @click="triggerTTS(index)" title="Synthesize Audio">
+                                🔊
+                            </button>
+
+                            <!-- Retry Button (Only for the last model message) -->
+                            <button v-if="msg.role === 'model' && index === messages.length - 1"
+                                class="action-msg-btn retry-btn" @click="retryMessage(index)"
+                                title="Retry / Regenerate">
+                                ↻
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button class="action-msg-btn delete-btn" @click="deleteMessage(index)"
+                                title="Delete Message">
+                                &times;
+                            </button>
+                        </div>
+
+                        <!-- Thought Process -->
+                        <div v-if="msg.thought" class="thought-box">
+                            <details>
+                                <summary>AI Story Logic</summary>
+                                <pre>{{ msg.thought }}</pre>
+                            </details>
+                        </div>
+
+                        <!-- Content -->
+                        <!-- EDIT MODE -->
+                        <div v-if="editingMsgId === msg.id" style="margin-top: 8px; width: 100%;">
+                            <textarea v-model="editingMsgText" rows="6" style="
+                                width: 100%;
+                                background: #1a1a1a;
+                                color: #eee;
+                                border: 1px solid #444;
+                                border-radius: 6px;
+                                padding: 8px;
+                                font-family: inherit;
+                                font-size: 0.95rem;
+                                line-height: 1.4;
+                                resize: both;
+                                box-sizing: border-box;
+                            "></textarea>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+                                <button class="small-btn" @click="cancelEditMessage"
+                                    style="background: #444; color: white;">Cancel</button>
+                                <button class="small-btn" @click="saveEditMessage(msg)">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- STANDARD READ MODE -->
+                        <div v-else class="message-text" v-html="renderMarkdown(msg.text)"></div>
+
+                        <!-- AUDIO LOADING STATE -->
+                        <div v-if="msg.isGeneratingAudio" class="audio-loading" style="
+                                    font-size: 0.8em;
+                                    color: #888;
+                                    margin-top: 10px;
+                                ">
+                            <i>Synthesizing audio...</i>
+                        </div>
+
+                        <!-- AUDIO PLAYER -->
+                        <div v-if="msg.audioData" class="audio-player" style="margin-top: 10px">
+                            <audio controls autoplay :src="'data:audio/wav;base64,' + msg.audioData"
+                                style="width: 100%; height: 36px"></audio>
+                        </div>
+
+                        <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
+                        <div v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
+                            class="story-options">
+                            <p class="options-label">
+                                What do you do next?
+                            </p>
+                            <button v-for="(opt, i) in msg.options" :key="i" class="option-btn"
+                                @click="sendOption(opt)">
+                                {{ opt }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div v-if="isLoading" class="message model">
+                    <div class="bubble typing">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="chat-footer">
+                <div class="chat-input-area">
+                    <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
+                        placeholder="Write your own action..." @focus="scrollToBottom" :disabled="isLoading"></textarea>
+
+                    <button @click="sendMessage" :disabled="isLoading || !currentInput.trim()"
+                        aria-label="Send message">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
