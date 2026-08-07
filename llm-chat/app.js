@@ -2,7 +2,6 @@ const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
 const CORE_SYSTEM_PROMPT = `You are a deeply knowledgeable, analytical, and engaging intellectual discussion partner specializing in philosophy, theology, ethics, and high-level inquiry.
 
-
 TASK: Engage with the user in rigorous, nuanced, and illuminating discussions based on the provided system prompt and ongoing dialogue.
 
 WRITING STYLE:
@@ -16,7 +15,6 @@ Return a single JSON object.
    - Plan how to address the question logically and effectively.
 - "response": The direct, comprehensive, and insightful response formatted in standard markdown prose.
 - "options": An array of 3 concise follow-up directions, probing questions, or counter-perspectives the user might want to explore next (e.g., "How does Aquinas view this?", "What is the primary critique of this stance?", "How does this apply to modern ethics?").
-- "facts": An array of key factual premises, definitions, biblical/philosophical citations, or core stances established during this exchange to log in the knowledge base. Format each object as { "text": "...", "category": "Concept | Citation | Premise | Author" }.
 
 You MUST return a single JSON object matching that exact structure. Do not include extra conversational text outside of the JSON payload.
 
@@ -24,6 +22,7 @@ CRITICAL STRUCTURAL RULES:
 1. The "response" field must contain ONLY standard, natural narrative text or markdown prose.
 2. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
 3. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
+
 
 const db = new Dexie("StoryWriterDB");
 db.version(3).stores({
@@ -1034,18 +1033,6 @@ createApp({
                 finalOptions = null;
               }
 
-              if (parsed.facts && Array.isArray(parsed.facts)) {
-                for (const f of parsed.facts) {
-                  if (f.text && f.category) {
-                    await db.facts.add({
-                      text: f.text,
-                      category: f.category,
-                      timestamp: Date.now(),
-                    });
-                  }
-                }
-                await loadFacts();
-              }
             } else {
               // Regex fallback to extract the response if JSON parsing failed completely
               const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:options|facts|thought)"/);

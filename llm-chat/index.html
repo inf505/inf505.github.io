@@ -410,7 +410,7 @@
             <div class="chat-footer">
                 <div class="chat-input-area">
                     <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
-                        placeholder="Write your own action..." @focus="scrollToBottom" :disabled="isLoading"></textarea>
+                        placeholder="Write your response..." @focus="scrollToBottom" :disabled="isLoading"></textarea>
 
                     <button @click="sendMessage" :disabled="isLoading || !currentInput.trim()"
                         aria-label="Send message">
