@@ -72,7 +72,7 @@ createApp({
     const isLoading = ref(false);
     const messagesContainer = ref(null);
     const inputArea = ref(null);
-    const isGeneratingRules = ref(false);
+
     const ttsProvider = ref("gemini");
     const geminiApiKey = ref("");
     const selectedTTSModel = ref("gemini-3.1-flash-tts-preview");
@@ -161,85 +161,6 @@ createApp({
         await loadFacts();
       } catch (err) {
         console.error("Error adding manual fact:", err);
-      }
-    };
-
-    const randomizeRules = async () => {
-      if (!apiKey.value) {
-        alert("Please enter your API Key first.");
-        return;
-      }
-
-      isGeneratingRules.value = true;
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-      try {
-        const p = `Act as a professional high-concept screenwriter.
-In your 'thought' field, brainstorm three completely different, weird settings (e.g., biopunk, post-apocalyptic jazz age, sentient nebula).
-Pick the most unusual one and develop a mystery around it. Then, in 'premise', provide the final story description.
-- Do not name the protagonist; describe them only by their current situation or role (e.g., 'You are a survivor', 'You are the last keeper').
-STRICT LIMIT: One paragraph, maximum 80 words.
-
-You MUST return a valid JSON object matching this schema structure:
-{
-  "thought": "Internal brainstorming. Explore 3 wild, unrelated genres and combine them.",
-  "premise": "the final story description"
-}`;
-
-        const payload = {
-          model: selectedModel.value,
-          messages: [{ role: "user", content: p }],
-          response_format: { type: "json_object" }
-        };
-
-        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey.value}`,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const data = await res.json();
-
-        if (!res.ok)
-          throw new Error(data.error?.message || "API request failed");
-
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          let rawText = data.choices[0].message.content;
-
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
-            rawText = rawText.substring(start, end + 1);
-          }
-
-          const parsedData = JSON.parse(rawText);
-          if (parsedData.premise) {
-            systemPrompt.value = parsedData.premise.trim();
-          }
-        }
-      } catch (err) {
-        if (err.name === "AbortError") {
-          console.error("Randomizer timed out.");
-          alert(
-            "The request timed out. The AI is taking too long to think—try again!",
-          );
-        } else {
-          console.error("Error generating rules:", err);
-          alert("Randomizer failed: " + err.message);
-        }
-      } finally {
-        isGeneratingRules.value = false;
-        clearTimeout(timeoutId);
       }
     };
 
@@ -1230,8 +1151,6 @@ You MUST return a valid JSON object matching this schema structure:
       isSummarizing,
       summarizeStory,
       summaryBatchSize,
-      isGeneratingRules,
-      randomizeRules,
       editingMsgId,
       editingMsgText,
       startEditMessage,
