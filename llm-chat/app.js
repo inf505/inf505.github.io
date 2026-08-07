@@ -1035,7 +1035,8 @@ createApp({
 
             } else {
               // Regex fallback to extract the response if JSON parsing failed completely
-              const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:options|facts|thought)"/);
+              const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:options|thought)"/);
+
               if (responseMatch && responseMatch[1]) {
                 finalResponse = responseMatch[1]
                   .replace(/\\n/g, '\n')
