@@ -863,10 +863,10 @@ createApp({
           }
 
           if (index === 0) {
-            text = `[STORY GRIMOIRE]
-            ${factsSummary || "No facts established yet."}[END GRIMOIRE]
+            text = `[KNOWLEDGE BASE / ESTABLISHED FACTS]
+                ${factsSummary || "No facts established yet."}[END KNOWLEDGE BASE]
 
-            STORY PREMISE: ${text}`;
+                DISCUSSION PROMPT: ${text}`;
           }
 
           return {
@@ -982,9 +982,25 @@ createApp({
               jsonStartIndex,
               jsonEndIndex + 1,
             );
-            const parsed = JSON.parse(jsonString);
 
-            // Defensive parser to safely clean nested JSON and markdown leaks
+            let parsed = null;
+            try {
+              parsed = JSON.parse(jsonString);
+            } catch (parseErr) {
+              // Handle unescaped newline/control characters inside JSON strings
+              try {
+                const sanitized = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
+                  if (match === '\n') return '\\n';
+                  if (match === '\r') return '\\r';
+                  if (match === '\t') return '\\t';
+                  return '';
+                });
+                parsed = JSON.parse(sanitized);
+              } catch (sanitizedErr) {
+                console.warn("JSON parsing failed after sanitization. Attempting regex extraction.");
+              }
+            }
+
             const cleanTextField = (val) => {
               if (typeof val !== "string") return val;
               let s = val.trim();
@@ -1001,44 +1017,48 @@ createApp({
               return s;
             };
 
-            if (parsed.thought) {
-              thoughtText = typeof parsed.thought === 'string'
-                ? parsed.thought
-                : JSON.stringify(parsed.thought);
-            }
-
-            if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
-            // Ensure options exist and are actually an Array so Vue's .length doesn't fail
-            if (parsed.options && Array.isArray(parsed.options)) {
-              finalOptions = parsed.options;
-            } else if (parsed.choices && Array.isArray(parsed.choices)) {
-              // Fallback in case the AI renames the key to "choices"
-              finalOptions = parsed.choices;
-            } else {
-              finalOptions = null;
-            }
-
-            if (parsed.facts && Array.isArray(parsed.facts)) {
-              for (const f of parsed.facts) {
-                if (f.text && f.category) {
-                  if (f.text.toLowerCase().startsWith("time:")) {
-                    await db.facts
-                      .filter((existFact) => existFact.text && existFact.text.toLowerCase().startsWith("time:"))
-                      .delete();
-                  }
-
-                  await db.facts.add({
-                    text: f.text,
-                    category: f.category,
-                    timestamp: Date.now(),
-                  });
-                }
+            if (parsed) {
+              if (parsed.thought) {
+                thoughtText = typeof parsed.thought === 'string'
+                  ? parsed.thought
+                  : JSON.stringify(parsed.thought);
               }
-              await loadFacts();
+
+              if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
+
+              if (parsed.options && Array.isArray(parsed.options)) {
+                finalOptions = parsed.options;
+              } else if (parsed.choices && Array.isArray(parsed.choices)) {
+                finalOptions = parsed.choices;
+              } else {
+                finalOptions = null;
+              }
+
+              if (parsed.facts && Array.isArray(parsed.facts)) {
+                for (const f of parsed.facts) {
+                  if (f.text && f.category) {
+                    await db.facts.add({
+                      text: f.text,
+                      category: f.category,
+                      timestamp: Date.now(),
+                    });
+                  }
+                }
+                await loadFacts();
+              }
+            } else {
+              // Regex fallback to extract the response if JSON parsing failed completely
+              const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:options|facts|thought)"/);
+              if (responseMatch && responseMatch[1]) {
+                finalResponse = responseMatch[1]
+                  .replace(/\\n/g, '\n')
+                  .replace(/\\"/g, '"')
+                  .replace(/\\\\/g, '\\');
+              }
             }
           }
         } catch (e) {
-          console.error("JSON Parse error", e);
+          console.error("JSON processing error:", e);
         }
 
         const finalThoughtString = typeof thoughtText === "string" ? thoughtText.trim() : "";
@@ -1060,7 +1080,6 @@ createApp({
           isGeneratingAudio: false,
           timestamp: Date.now()
         });
-
 
       } catch (error) {
         let errorMsg = `❌ Error: ${error.message}`;
