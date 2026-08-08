@@ -1019,6 +1019,7 @@ createApp({
             }
 
             data = await response.json();
+            console.log("RAW API RESPONSE:", data);
             break; // Success! Exit retry loop.
           } catch (error) {
             clearTimeout(timeoutId);
