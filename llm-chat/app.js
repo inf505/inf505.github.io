@@ -1207,6 +1207,71 @@ createApp({
       await triggerAIResponse();
     };
 
+    const exportStudyGuide = async () => {
+      if (messages.value.length === 0) {
+        alert("No discussion to export yet!");
+        return;
+      }
+
+      let md = `# Intellectual Exploration & Study Guide\n\n`;
+      md += `**Date:** ${new Date().toLocaleString()}\n`;
+      md += `**Persona:** ${selectedPersona.value} | **Depth:** ${selectedDepth.value}\n\n`;
+
+      if (systemPrompt.value) {
+        md += `## Topic / Custom Instructions\n${systemPrompt.value}\n\n`;
+      }
+
+      // 1. Fetch and format Facts / Knowledge Base
+      const allFacts = await db.facts.toArray();
+      if (allFacts.length > 0) {
+        md += `## Knowledge Base / Established Facts\n\n`;
+
+        const categories = ["Concept", "Premise", "Citation", "Context"];
+        categories.forEach(cat => {
+          const catFacts = allFacts.filter(f => f.category === cat);
+          if (catFacts.length > 0) {
+            md += `### ${cat}s\n`;
+            catFacts.forEach(f => md += `- ${f.text}\n`);
+            md += `\n`;
+          }
+        });
+      }
+
+      md += `---\n\n## Discussion History\n\n`;
+
+      // 2. Format Chat History
+      messages.value.forEach(msg => {
+        if (msg.role === "user") {
+          md += `### 👤 User\n${msg.text}\n\n`;
+        } else if (msg.role === "summary") {
+          md += `### 📜 Summary\n> ${msg.text.replace(/\n/g, '\n> ')}\n\n`;
+        } else if (msg.role === "model") {
+          md += `### 🤖 AI\n`;
+
+          // Include AI Reasoning in an expandable markdown details block
+          if (msg.thought) {
+            md += `<details><summary><i>AI Reasoning / Option Brainstorming</i></summary>\n\n> ${msg.thought.replace(/\n/g, '\n> ')}\n\n</details>\n\n`;
+          }
+
+          md += `${msg.text}\n\n`;
+        }
+      });
+
+      md += `---\n*Exported from Universal Intellectual Exploration Engine*`;
+
+      // 3. Create a Blob and trigger the browser download
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Study_Guide_${new Date().toISOString().split('T')[0]}.md`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
     return {
       baseUrl,
       apiKey,
@@ -1261,6 +1326,7 @@ createApp({
       selectedPersona,
       selectedDepth,
       selectedOptionStrategy,
+      exportStudyGuide,
     };
   },
 }).mount("#app");
