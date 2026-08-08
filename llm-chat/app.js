@@ -1093,6 +1093,10 @@ createApp({
             const cleanTextField = (val) => {
               if (typeof val !== "string") return val;
               let s = val.trim();
+
+              // Unescape literal unicode sequences like \u201d or \u201c
+              s = s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
               if (s.startsWith("```")) {
                 s = s.replace(/^```[a-zA-Z]*\n?|```$/g, "").trim();
               }
@@ -1129,7 +1133,8 @@ createApp({
                 finalResponse = responseMatch[1]
                   .replace(/\\n/g, '\n')
                   .replace(/\\"/g, '"')
-                  .replace(/\\\\/g, '\\');
+                  .replace(/\\\\/g, '\\')
+                  .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
               }
             }
           }
