@@ -1120,7 +1120,12 @@ createApp({
       } finally {
         isLoading.value = false;
         scrollToBottom();
-        nextTick(() => inputArea.value?.focus());
+
+        // Only auto-focus on desktop devices (non-touch) to prevent mobile virtual keyboard popups
+        const isMobile = window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window);
+        if (!isMobile) {
+          nextTick(() => inputArea.value?.focus());
+        }
       }
       await updateCounts();
     };
