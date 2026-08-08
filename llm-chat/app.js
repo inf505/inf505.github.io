@@ -26,7 +26,7 @@ CRITICAL STRUCTURAL RULES:
 4. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
 
 
-const db = new Dexie("StoryWriterDB");
+const db = new Dexie("LLMChatDB");
 db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
