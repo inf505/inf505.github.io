@@ -75,7 +75,7 @@ createApp({
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
     const newFactText = ref("");
-    const newFactCategory = ref("Lore");
+    const newFactCategory = ref("Concept");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
     const editingMsgId = ref(null);
@@ -220,27 +220,25 @@ createApp({
           return;
         }
 
-        const prompt = `You are an AI database manager for a story. Your task is to optimize an array of story facts.
+        const prompt = `You are an AI knowledge base manager for an intellectual discussion. Your task is to optimize an array of established concepts, premises, and contextual notes.
 
-          RULES:
-          1. Merge duplicate facts and resolve contradictions. Combine all known details about a specific entity into a single, comprehensive fact.
-          2. Overwrite outdated transient states. If a character moves, or an item is consumed/broken, keep only the latest state. Discard temporary actions.
-          3. Preserve permanent world lore, character traits, and current inventory. Do not delete unique entities.
-          4. Categorize strictly as: Character, Item, Location, Lore, Infrastructure.
-          5. Clean up time: If any old time-of-day or day-of-week facts slipped through, discard them. Keep facts objective and in the third-person.
+        RULES:
+        1. Merge duplicate concepts and resolve contradictions. Combine all known details about a specific topic or premise into a single, comprehensive entry.
+        2. Preserve core definitions, philosophical stances, academic citations, and ongoing debate rules. Do not delete unique ideas.
+        3. Categorize strictly as: Concept, Premise, Citation, Context.
 
-          INPUT DATA:
-          ${JSON.stringify(cleanFactsForAI, null, 2)}
+        INPUT DATA:
+        ${JSON.stringify(cleanFactsForAI, null, 2)}
 
-          You MUST return a valid JSON object matching this schema format:
-          {
-            "merged_facts": [
-              {
-                "text": "The details of the fact",
-                "category": "Character | Item | Location | Lore | Infrastructure"
-              }
-            ]
-          }`;
+        You MUST return a valid JSON object matching this schema format:
+        {
+          "merged_facts": [
+            {
+              "text": "The details of the fact/concept",
+              "category": "Concept | Premise | Citation | Context"
+            }
+          ]
+        }`;
 
         const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
