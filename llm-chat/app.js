@@ -1,32 +1,5 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-const CORE_SYSTEM_PROMPT = `You are an expert in philosophical theology and Christian philosophy. You excel at examining core philosophical inquiries—such as existentialism, metaphysics, epistemology, and ethics—through the rich lens of the Christian intellectual tradition. You are well-versed in both classical Christian thinkers (like Augustine, Aquinas, and Kierkegaard) and secular philosophical movements, able to bridge the two with academic rigor, historical nuance, and clarity.
-
-TASK: Engage with the user in rigorous, nuanced, and illuminating discussions based on the provided system prompt and ongoing dialogue.
-
-WRITING STYLE:
-- Direct & Conversational: Speak directly as an articulate scholar, mentor, or dialogue partner. Avoid narrative fluff, second-person roleplaying, or setting descriptions unless explicitly requested.
-- Nuanced & Grounded: Present arguments clearly, reference historical/philosophical traditions where relevant, and use clean Markdown formatting (bullet points, bold text, etc.) to structure long explanations.
-
-OUTPUT REQUIREMENTS:
-Return a single JSON object with EXACTLY three fields in this SPECIFIC ORDER: "thought", "options", and "response".
-
-- "thought":
-   - Briefly analyze the user's inquiry, key nuances, potential counter-arguments, and relevant historical or conceptual context.
-   - BRAINSTORM OPTIONS: Explicitly draft 3 distinct, compelling follow-up directions or probing questions that the user could explore next.
-- "options": MANDATORY ARRAY of the 3 concise follow-up directions/questions brainstormed in your "thought" field (e.g., ["How does Aquinas view this?", "What is the primary critique of this stance?", "How does this apply to modern ethics?"]).
-- "response": The direct, comprehensive, and insightful main discussion text formatted in standard markdown prose.
-
-You MUST return a single JSON object matching that exact structure. Do not include extra conversational text outside of the JSON payload.
-
-CRITICAL STRUCTURAL RULES:
-1. The JSON keys MUST appear in exact order: "thought", then "options", then "response".
-2. The "options" array is STRICTLY MANDATORY. Never return an empty array or omit the "options" key.
-3. The "response" field must contain ONLY standard, natural discussion text or markdown prose.
-4. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
-5. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
-
-
 const db = new Dexie("LLMChatDB");
 db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
@@ -55,6 +28,11 @@ createApp({
     const selectedModel = ref("gpt-4o-mini");
     const isConfigured = ref(false);
     const systemPrompt = ref("");
+
+    const selectedPersona = ref("socratic");
+    const selectedDepth = ref("balanced");
+    const selectedOptionStrategy = ref("follow_up");
+
     const showSettings = ref(false);
     const activeTab = ref("settings");
     const isOptimizingFacts = ref(false);
@@ -577,6 +555,10 @@ createApp({
       if (localStorage.getItem("story_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
 
+      if (localStorage.getItem("story_persona")) selectedPersona.value = localStorage.getItem("story_persona");
+      if (localStorage.getItem("story_depth")) selectedDepth.value = localStorage.getItem("story_depth");
+      if (localStorage.getItem("story_option_strategy")) selectedOptionStrategy.value = localStorage.getItem("story_option_strategy");
+
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
         selectedModel.value = storedModel;
@@ -651,6 +633,10 @@ createApp({
       localStorage.setItem("story_tts_voice", selectedVoice.value);
       localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
       localStorage.setItem("story_summary_batch", summaryBatchSize.value);
+
+      localStorage.setItem("story_persona", selectedPersona.value);
+      localStorage.setItem("story_depth", selectedDepth.value);
+      localStorage.setItem("story_option_strategy", selectedOptionStrategy.value);
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -876,6 +862,69 @@ createApp({
       }
     };
 
+    const generateSystemPrompt = () => {
+      let personaText = "";
+      switch (selectedPersona.value) {
+        case "socratic": personaText = "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry."; break;
+        case "feynman": personaText = "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy."; break;
+        case "devil": personaText = "You are a Devil's Advocate. Your goal is to critique arguments, highlight logical fallacies, and present strong opposing stances to test the robustness of the user's ideas."; break;
+        case "scholar": personaText = "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time."; break;
+        case "reviewer": personaText = "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence."; break;
+        case "custom": personaText = "You are an expert dialogue partner."; break;
+      }
+
+      let depthText = "";
+      if (selectedDepth.value === "eli5") depthText = "DEPTH: Keep explanations extremely simple, accessible, and free of unnecessary jargon. Explain as if to an intelligent beginner (ELI5).";
+      else if (selectedDepth.value === "balanced") depthText = "DEPTH: Maintain a standard, balanced academic tone. Use appropriate terminology but ensure clarity for a general educated audience.";
+      else if (selectedDepth.value === "deep") depthText = "DEPTH: Use maximal academic and technical rigor. Do not shy away from complex jargon, deep theoretical nuances, or advanced conceptual frameworks.";
+
+      let optionsThoughtText = "";
+      let optionsExample = "";
+      switch (selectedOptionStrategy.value) {
+        case "follow_up":
+          optionsThoughtText = "3 distinct, compelling follow-up directions or probing questions that the user could explore next.";
+          optionsExample = '["How does Aquinas view this?", "What is the primary critique of this stance?", "Can we explore the historical context?"]';
+          break;
+        case "counter_arguments":
+          optionsThoughtText = "3 distinct counter-arguments, critiques, or weaknesses of the viewpoint just discussed.";
+          optionsExample = '["Critique: This ignores the problem of induction.", "Counter: Utilitarianism would argue otherwise.", "Fallacy: Is this a strawman?"]';
+          break;
+        case "applications":
+          optionsThoughtText = "3 distinct real-world applications, modern implications, or practical uses of these concepts.";
+          optionsExample = '["How does this apply to modern AI ethics?", "Example of this in modern politics?", "Practical use case in daily life?"]';
+          break;
+        case "definitions":
+          optionsThoughtText = "3 specific key concepts, philosophers, or jargon terms mentioned that need deeper definition.";
+          optionsExample = '["Define: Epistemology", "Who was Kierkegaard?", "Explain: The Categorical Imperative"]';
+          break;
+      }
+
+      return `TASK: Engage with the user in rigorous, nuanced discussions based on the provided topic.
+
+    PERSONA & TONE:
+    ${personaText}
+    ${depthText}
+
+    USER CUSTOM INSTRUCTIONS / TOPIC:
+    ${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
+
+    OUTPUT REQUIREMENTS:
+    Return a single JSON object with EXACTLY three fields in this SPECIFIC ORDER: "thought", "options", and "response".
+
+    - "thought":
+       - Briefly analyze the user's inquiry, key nuances, and potential context.
+       - BRAINSTORM OPTIONS: Explicitly draft ${optionsThoughtText}
+    - "options": MANDATORY ARRAY of the 3 concise items brainstormed in your "thought" field (e.g., ${optionsExample}).
+    - "response": The direct, comprehensive, and insightful main discussion text formatted in standard markdown prose.
+
+    CRITICAL STRUCTURAL RULES:
+    1. The JSON keys MUST appear in exact order: "thought", then "options", then "response".
+    2. The "options" array is STRICTLY MANDATORY. Never return an empty array or omit the "options" key.
+    3. The "response" field must contain ONLY standard, natural discussion text or markdown prose.
+    4. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
+    5. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
+    };
+
     const triggerAIResponse = async () => {
       isLoading.value = true;
       scrollToBottom();
@@ -910,7 +959,7 @@ createApp({
 
         const systemMessage = {
           role: "system",
-          content: CORE_SYSTEM_PROMPT
+          content: generateSystemPrompt()
         };
 
         const messagesPayload = [systemMessage, ...contents];
@@ -1203,6 +1252,9 @@ createApp({
       superSummaryBatchSize,
       isSuperSummarizing,
       superSummarizeStory,
+      selectedPersona,
+      selectedDepth,
+      selectedOptionStrategy,
     };
   },
 }).mount("#app");

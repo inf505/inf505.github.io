@@ -70,10 +70,53 @@
                         <input type="password" v-model="apiKey" placeholder="Bearer Token..." />
                     </div>
 
+                    <!-- NEW: Persona Presets -->
                     <div class="settings-group">
-                        <label>System Prompt / Discussion Topic</label>
-                        <textarea v-model="systemPrompt" rows="4"
-                            placeholder="Define the persona, topic, or rules for the discussion (e.g., 'Act as a Socratic philosopher debating ethics...')."></textarea>
+                        <label>Persona / Pedagogical Mode:</label>
+                        <select v-model="selectedPersona"
+                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
+                            <option value="socratic">🏛️ Socratic Dialogue Partner</option>
+                            <option value="feynman">⚛️ Feynman Educator</option>
+                            <option value="devil">⚖️ Devil's Advocate</option>
+                            <option value="scholar">📜 Historical & Patristic Scholar</option>
+                            <option value="reviewer">🔬 Academic / Technical Peer Reviewer</option>
+                            <option value="custom">📝 Custom / Freeform</option>
+                        </select>
+                    </div>
+
+                    <!-- NEW: Depth Toggle (Chips) -->
+                    <div class="settings-group">
+                        <label>Explanation Depth:</label>
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            <button
+                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'eli5' ? '#ff9d00' : '#222', color: selectedDepth === 'eli5' ? '#000' : '#fff', fontWeight: selectedDepth === 'eli5' ? 'bold' : 'normal', cursor: 'pointer' }"
+                                @click="selectedDepth = 'eli5'">ELI5</button>
+                            <button
+                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'balanced' ? '#ff9d00' : '#222', color: selectedDepth === 'balanced' ? '#000' : '#fff', fontWeight: selectedDepth === 'balanced' ? 'bold' : 'normal', cursor: 'pointer' }"
+                                @click="selectedDepth = 'balanced'">Balanced</button>
+                            <button
+                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'deep' ? '#ff9d00' : '#222', color: selectedDepth === 'deep' ? '#000' : '#fff', fontWeight: selectedDepth === 'deep' ? 'bold' : 'normal', cursor: 'pointer' }"
+                                @click="selectedDepth = 'deep'">Academic</button>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Option Strategy -->
+                    <div class="settings-group">
+                        <label>Option Buttons Strategy:</label>
+                        <select v-model="selectedOptionStrategy"
+                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
+                            <option value="follow_up">Follow-up Angles / Questions</option>
+                            <option value="counter_arguments">Counter-Arguments / Critiques</option>
+                            <option value="applications">Real-World / Practical Applications</option>
+                            <option value="definitions">Key Concepts / Definitions</option>
+                        </select>
+                    </div>
+
+                    <!-- MODIFIED: Custom Instructions -->
+                    <div class="settings-group">
+                        <label>Custom Instructions / Discussion Topic:</label>
+                        <textarea v-model="systemPrompt" rows="3"
+                            placeholder="Additional context, topic parameters, or specific instructions for this chat..."></textarea>
                     </div>
 
                     <div class="settings-group" style="
