@@ -20,20 +20,24 @@
         <!-- CHAT INTERFACE -->
         <div class="chat-container">
             <!-- FLOATING CONTROLS -->
-            <div class="floating-header">
+            <!-- FLOATING CONTROLS -->
+            <div class="floating-header" style="display: flex; justify-content: space-between; width: 100%;">
+                <!-- Left Side: Start Over -->
                 <button class="float-btn archive-btn" @click="startOver"
                     :title="'Start Over - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'">
                     <span>📜</span>
                 </button>
 
-                <!-- NEW: Export Notes Button -->
-                <button class="float-btn export-btn" @click="exportStudyGuide" title="Export Study Guide">
-                    💾
-                </button>
+                <!-- Right Side: Export & Settings Grouped -->
+                <div style="display: flex; gap: 10px;">
+                    <button class="float-btn export-btn" @click="exportStudyGuide" title="Export Study Guide">
+                        💾
+                    </button>
 
-                <button class="float-btn settings-btn" @click="showSettings = !showSettings">
-                    ⚙️
-                </button>
+                    <button class="float-btn settings-btn" @click="showSettings = !showSettings">
+                        ⚙️
+                    </button>
+                </div>
             </div>
 
             <!-- SETTINGS PANEL -->
