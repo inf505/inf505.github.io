@@ -9,19 +9,21 @@ WRITING STYLE:
 - Nuanced & Grounded: Present arguments clearly, reference historical/philosophical traditions where relevant, and use clean Markdown formatting (bullet points, bold text, etc.) to structure long explanations.
 
 OUTPUT REQUIREMENTS:
-Return a single JSON object.
+Return a single JSON object with EXACTLY three fields: "thought", "response", and "options".
+
 - "thought":
    - Briefly analyze the user's inquiry, key nuances, potential counter-arguments, and relevant historical or conceptual context.
    - Plan how to address the question logically and effectively.
 - "response": The direct, comprehensive, and insightful response formatted in standard markdown prose.
-- "options": An array of 3 concise follow-up directions, probing questions, or counter-perspectives the user might want to explore next (e.g., "How does Aquinas view this?", "What is the primary critique of this stance?", "How does this apply to modern ethics?").
+- "options": MANDATORY ARRAY of exactly 3 concise, distinct follow-up directions, probing questions, or counter-perspectives the user might want to explore next (e.g., ["How does Aquinas view this?", "What is the primary critique of this stance?", "How does this apply to modern ethics?"]).
 
 You MUST return a single JSON object matching that exact structure. Do not include extra conversational text outside of the JSON payload.
 
 CRITICAL STRUCTURAL RULES:
-1. The "response" field must contain ONLY standard, natural narrative text or markdown prose.
-2. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
-3. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
+1. The "options" array is STRICTLY MANDATORY. Never return an empty array or omit the "options" key.
+2. The "response" field must contain ONLY standard, natural discussion text or markdown prose.
+3. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
+4. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
 
 
 const db = new Dexie("StoryWriterDB");
@@ -936,7 +938,7 @@ createApp({
 
           const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 45000);
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
           try {
             const response = await fetch(url, {
