@@ -1038,6 +1038,7 @@ createApp({
                 parsed = JSON.parse(sanitized);
               } catch (sanitizedErr) {
                 console.warn("JSON parsing failed after sanitization. Attempting regex extraction.");
+                console.log("📄 Raw JSON string from model:\n", jsonString);
               }
             }
 
