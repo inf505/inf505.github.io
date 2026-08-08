@@ -81,6 +81,39 @@ createApp({
     const superSummaryBatchSize = ref(5);
     const isSuperSummarizing = ref(false);
 
+    const modelJail = ref({}); // { "model-name": expireTimestamp }
+
+    const putModelInJail = (modelName, minutes = 5) => {
+      const expireTime = Date.now() + minutes * 60 * 1000;
+      modelJail.value[modelName] = expireTime;
+      console.warn(`🚨 [MODEL JAIL] ${modelName} jailed for ${minutes}m until ${new Date(expireTime).toLocaleTimeString()}`);
+    };
+
+    const getModelList = () => {
+      if (!selectedModel.value.trim()) return ["google/gemma-4-26b-a4b-it:free"];
+      return selectedModel.value
+        .split(",")
+        .map((m) => m.trim())
+        .filter((m) => m.length > 0);
+    };
+
+    const getNextAvailableModel = (attemptedInThisTurn = []) => {
+      const models = getModelList();
+      const now = Date.now();
+
+      // Find first model not in jail and not already attempted in this turn
+      const available = models.find(
+        (m) => (!modelJail.value[m] || modelJail.value[m] <= now) && !attemptedInThisTurn.includes(m)
+      );
+      if (available) return available;
+
+      // Fallback: Pick any model from list not attempted in this turn
+      const unattempted = models.find((m) => !attemptedInThisTurn.includes(m));
+      if (unattempted) return unattempted;
+
+      return models[0];
+    };
+
     const onTTSProviderChange = () => {
       if (ttsProvider.value === "gemini") {
         selectedTTSModel.value = "gemini-3.1-flash-tts-preview";
@@ -881,21 +914,27 @@ createApp({
 
         const messagesPayload = [systemMessage, ...contents];
 
-        const payload = {
-          model: selectedModel.value,
-          messages: messagesPayload,
-          temperature: 0.7,
-          max_tokens: 4096,
-          response_format: { type: "json_object" }
-        };
+        const modelList = getModelList();
+        const attemptedInThisTurn = [];
+        let data = null;
+        let activeModel = "";
 
-        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
+        // Loop through available models if errors or rate limits occur
+        while (attemptedInThisTurn.length < modelList.length) {
+          activeModel = getNextAvailableModel(attemptedInThisTurn);
+          attemptedInThisTurn.push(activeModel);
 
-        let data;
-        let attempt = 0;
-        const retryDelays = [5000, 10000, 15000];
+          console.log(`🤖 Requesting response from: ${activeModel}`);
 
-        while (attempt <= retryDelays.length) {
+          const payload = {
+            model: activeModel,
+            messages: messagesPayload,
+            temperature: 0.7,
+            max_tokens: 4096,
+            response_format: { type: "json_object" }
+          };
+
+          const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 45000);
 
@@ -916,39 +955,39 @@ createApp({
               const errorData = await response.json().catch(() => ({}));
               const errMsg = errorData.error?.message || "";
 
-              if ((response.status === 500 || response.status === 429) && attempt < retryDelays.length) {
-                let delayMs = retryDelays[attempt];
+              // If rate limited (429) or server error (5xx), put model in jail and try next!
+              if (response.status === 429 || response.status >= 500) {
+                console.warn(`⚠️ Model ${activeModel} failed with status ${response.status}: ${errMsg}. Putting in jail...`);
+                putModelInJail(activeModel, 5);
 
-                const retryAfterHeader = response.headers.get("Retry-After");
-                if (retryAfterHeader) {
-                  const parsedSeconds = parseFloat(retryAfterHeader);
-                  if (!isNaN(parsedSeconds)) {
-                    delayMs = Math.ceil(parsedSeconds * 1000) + 500;
-                  }
-                } else if (response.status === 429) {
-                  const match = errMsg.match(/Please retry in ([\d.]+)s/);
-                  if (match && match[1]) {
-                    delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 500;
-                  }
+                if (attemptedInThisTurn.length < modelList.length) {
+                  continue;
                 }
-
-                console.warn(`API ${response.status} Error. Waiting ${delayMs}ms... (Attempt ${attempt + 1})`);
-
-                await new Promise((res) => setTimeout(res, delayMs));
-                attempt++;
-                continue;
               }
 
-              throw new Error(errMsg || `API Error: ${response.status}`);
+              throw new Error(`[${activeModel}] API Error (${response.status}): ${errMsg}`);
             }
 
             data = await response.json();
-            break;
+            break; // Success! Exit retry loop.
           } catch (error) {
             clearTimeout(timeoutId);
-            throw error;
+
+            // If timeout or network error on this model and we have backups, jail & try next
+            if ((error.name === "AbortError" || error.message.includes("Failed to fetch")) && attemptedInThisTurn.length < modelList.length) {
+              console.warn(`⏳ Model ${activeModel} timed out or network failed. Putting in jail...`);
+              putModelInJail(activeModel, 5);
+              continue;
+            }
+
+            // If no more backup models, rethrow error to outer handler
+            if (attemptedInThisTurn.length >= modelList.length) {
+              throw error;
+            }
           }
         }
+
+        if (!data) throw new Error("All configured models in fallback list failed or were rate-limited.");
 
         let responseText = "";
         let thoughtText = "";
@@ -1032,11 +1071,9 @@ createApp({
               } else {
                 finalOptions = null;
               }
-
             } else {
               // Regex fallback to extract the response if JSON parsing failed completely
               const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:options|thought)"/);
-
               if (responseMatch && responseMatch[1]) {
                 finalResponse = responseMatch[1]
                   .replace(/\\n/g, '\n')
