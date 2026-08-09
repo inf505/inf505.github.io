@@ -1,10 +1,31 @@
 const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
 const db = new Dexie("LLMChatDB");
+
 db.version(3).stores({
   chats: "++id, role, text, thought, timestamp",
   facts: "++id, text, category, timestamp",
   archives: "++id, text, timestamp"
+});
+
+// v4 Schema with Multi-Session (Topics) Drawer Support
+db.version(4).stores({
+  sessions: "++id, title, updated",
+  chats: "++id, sessionId, role, text, thought, timestamp",
+  facts: "++id, sessionId, text, category, timestamp",
+  archives: "++id, sessionId, text, timestamp"
+}).upgrade(async (trans) => {
+  const sessions = await trans.sessions.toArray();
+  let defaultSessionId;
+  if (sessions.length === 0) {
+    defaultSessionId = await trans.sessions.add({ title: "General Exploration", updated: Date.now() });
+  } else {
+    defaultSessionId = sessions[0].id;
+  }
+
+  await trans.chats.toCollection().modify(chat => { if (!chat.sessionId) chat.sessionId = defaultSessionId; });
+  await trans.facts.toCollection().modify(fact => { if (!fact.sessionId) fact.sessionId = defaultSessionId; });
+  await trans.archives.toCollection().modify(arc => { if (!arc.sessionId) arc.sessionId = defaultSessionId; });
 });
 
 const formatRelativeTime = (timestamp) => {
@@ -31,7 +52,10 @@ createApp({
 
     const selectedPersona = ref("socratic");
     const selectedDepth = ref("balanced");
-    const selectedOptionStrategy = ref("follow_up");
+
+    const sessions = ref([]);
+    const currentSessionId = ref(null);
+    const isDrawerOpen = ref(false);
 
     const showSettings = ref(false);
     const activeTab = ref("settings");
@@ -82,13 +106,11 @@ createApp({
       const models = getModelList();
       const now = Date.now();
 
-      // Find first model not in jail and not already attempted in this turn
       const available = models.find(
         (m) => (!modelJail.value[m] || modelJail.value[m] <= now) && !attemptedInThisTurn.includes(m)
       );
       if (available) return available;
 
-      // Fallback: Pick any model from list not attempted in this turn
       const unattempted = models.find((m) => !attemptedInThisTurn.includes(m));
       if (unattempted) return unattempted;
 
@@ -129,9 +151,64 @@ createApp({
       }
     };
 
+    const loadSessions = async () => {
+      sessions.value = await db.sessions.orderBy("updated").reverse().toArray();
+      if (sessions.value.length === 0) {
+        const id = await db.sessions.add({ title: "General Exploration", updated: Date.now() });
+        currentSessionId.value = id;
+        sessions.value = await db.sessions.orderBy("updated").reverse().toArray();
+      } else if (!currentSessionId.value) {
+        currentSessionId.value = sessions.value[0].id;
+      }
+    };
+
+    const loadCurrentSessionData = async () => {
+      if (!currentSessionId.value) return;
+      messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
+      await loadFacts();
+      await loadArchives();
+      await updateCounts();
+      scrollToBottom();
+    };
+
+    const switchSession = async (id) => {
+      currentSessionId.value = id;
+      isDrawerOpen.value = false;
+      await loadCurrentSessionData();
+    };
+
+    const createNewSession = async () => {
+      const title = prompt("Enter a title for the new topic:", "New Topic");
+      if (!title) return;
+      const id = await db.sessions.add({ title: title.trim(), updated: Date.now() });
+      await loadSessions();
+      await switchSession(id);
+    };
+
+    const deleteSession = async (id) => {
+      if (!confirm("Are you sure you want to delete this topic and all its data?")) return;
+      await db.transaction('rw', db.sessions, db.chats, db.facts, db.archives, async () => {
+        await db.sessions.delete(id);
+        await db.chats.where({ sessionId: id }).delete();
+        await db.facts.where({ sessionId: id }).delete();
+        await db.archives.where({ sessionId: id }).delete();
+      });
+      if (currentSessionId.value === id) {
+        currentSessionId.value = null;
+      }
+      await loadSessions();
+      if (sessions.value.length > 0 && !currentSessionId.value) {
+        await switchSession(sessions.value[0].id);
+      } else if (sessions.value.length === 0) {
+        await loadSessions();
+        await loadCurrentSessionData();
+      }
+    };
+
     const loadFacts = async () => {
+      if (!currentSessionId.value) return;
       try {
-        const data = await db.facts.orderBy("timestamp").toArray();
+        const data = await db.facts.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         facts.value = data;
       } catch (err) {
         console.error("Error loading facts:", err);
@@ -139,8 +216,9 @@ createApp({
     };
 
     const loadArchives = async () => {
+      if (!currentSessionId.value) return;
       try {
-        const data = await db.archives.orderBy("timestamp").reverse().toArray();
+        const data = await db.archives.where({ sessionId: currentSessionId.value }).reverse().sortBy("timestamp");
         archivedSummaries.value = data;
       } catch (err) {
         console.error("Error loading archives:", err);
@@ -153,10 +231,11 @@ createApp({
     };
 
     const addManualFact = async () => {
-      if (!newFactText.value.trim()) return;
+      if (!newFactText.value.trim() || !currentSessionId.value) return;
 
       try {
         await db.facts.add({
+          sessionId: currentSessionId.value,
           text: newFactText.value.trim(),
           category: newFactCategory.value,
           timestamp: Date.now(),
@@ -170,7 +249,7 @@ createApp({
     };
 
     const optimizeFacts = async () => {
-      if (!apiKey.value || facts.value.length < 2) return;
+      if (!apiKey.value || facts.value.length < 2 || !currentSessionId.value) return;
       isOptimizingFacts.value = true;
 
       try {
@@ -190,9 +269,15 @@ createApp({
         }));
 
         if (otherFacts.length < 2 && timeFacts.length > 1) {
-          await db.facts.clear();
-          if (latestTimeFact) await db.facts.add(latestTimeFact);
-          for (const f of otherFacts) await db.facts.add(f);
+          await db.facts.where({ sessionId: currentSessionId.value }).delete();
+          if (latestTimeFact) {
+            latestTimeFact.sessionId = currentSessionId.value;
+            await db.facts.add(latestTimeFact);
+          }
+          for (const f of otherFacts) {
+            f.sessionId = currentSessionId.value;
+            await db.facts.add(f);
+          }
           await loadFacts();
           isOptimizingFacts.value = false;
           return;
@@ -245,10 +330,11 @@ createApp({
           const parsed = JSON.parse(rawText.substring(start, end + 1));
 
           if (parsed.merged_facts) {
-            await db.facts.clear();
+            await db.facts.where({ sessionId: currentSessionId.value }).delete();
 
             if (latestTimeFact) {
               await db.facts.add({
+                sessionId: currentSessionId.value,
                 text: latestTimeFact.text,
                 category: latestTimeFact.category,
                 timestamp: Date.now(),
@@ -257,6 +343,7 @@ createApp({
 
             for (const mf of parsed.merged_facts) {
               await db.facts.add({
+                sessionId: currentSessionId.value,
                 text: mf.text,
                 category: mf.category,
                 timestamp: Date.now(),
@@ -307,30 +394,26 @@ createApp({
             if (m.role === "model" && m.options && m.options.length > 0) {
               text += `\n(Options chosen: ${m.options.join(", ")})`;
             }
-            return `${m.role === "user" ? "USER" : "STORYTELLER"}: ${text}`;
+            return `${m.role === "user" ? "USER" : "AI"}: ${text}`;
           })
           .join("\n\n");
 
-        const prompt = `Summarize the following chronological excerpt of a story into a highly dense, information-packed paragraph.
-              Focus entirely on critical plot progression, major decisions, acquired items, and permanent changes.
+        const prompt = `Summarize the following chronological excerpt of a discussion into a highly dense, information-packed paragraph.
+              Focus entirely on critical intellectual progression, major breakthroughs, and core concepts.
 
               CRITICAL RULES:
-              1. SHIFT POV: Do NOT use the word "you" or second-person perspective. Write purely in the third-person objective (e.g., "The protagonist", or BETTER is to use their specific character name if known).
-              2. MAXIMIZE DENSITY: Strip out trivial dialogue, minor movements, and atmospheric fluff. Condense the events into concise, factual narrative history.
+              1. SHIFT POV: Write objectively about the discussion in the third-person.
+              2. MAXIMIZE DENSITY: Strip out conversational fluff. Condense the events into concise, factual narrative history.
 
-              STORY EXCERPT:
+              DISCUSSION EXCERPT:
               ${transcript}
 
-              You MUST return a valid JSON object matching this schema:
-              {
-                "thought_process": "brief analysis of events and POV shift check",
-                "summary": "dense third-person paragraph summary text"
-              }`;
+              OUTPUT REQUIREMENTS:
+              Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
 
         const payload = {
           model: selectedModel.value,
           messages: [{ role: "user", content: prompt }],
-          response_format: { type: "json_object" },
           temperature: 0.2,
         };
 
@@ -350,25 +433,24 @@ createApp({
           throw new Error(data.error?.message || "Summarization API failed");
 
         let summaryText = "";
+        let thoughtText = "";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
           let rawText = data.choices[0].message.content;
 
-          const start = rawText.indexOf("{");
-          const end = rawText.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
-            rawText = rawText.substring(start, end + 1);
-          }
+          rawText = rawText.replace(
+            /<think>([\s\S]*?)<\/think>/gi,
+            (m, inner) => {
+              thoughtText += inner.trim() + "\n\n";
+              return "";
+            }
+          );
 
-          const parsed = JSON.parse(rawText);
-          if (parsed.summary) {
-            summaryText = parsed.summary.trim();
-          }
+          summaryText = rawText.trim();
         }
 
         if (!summaryText) throw new Error("Received empty summary from AI.");
 
-        // Safe Timestamp Extraction
         const lastItem = msgsToSummarize[msgsToSummarize.length - 1];
         let baseTimestamp = lastItem.timestamp;
 
@@ -377,13 +459,13 @@ createApp({
           baseTimestamp = dbItem && !isNaN(dbItem.timestamp) ? dbItem.timestamp : Date.now();
         }
 
-        // 🛡️ DEXIE TRANSACTION: Guarantees no partial deletes!
         await db.transaction('rw', db.chats, async () => {
           for (const m of msgsToSummarize) {
             await db.chats.delete(m.id);
           }
 
           await db.chats.add({
+            sessionId: currentSessionId.value,
             role: "summary",
             text: summaryText,
             thought: "",
@@ -392,10 +474,9 @@ createApp({
           });
         });
 
-        messages.value = await db.chats.orderBy("timestamp").toArray();
+        messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await updateCounts();
 
-        // Let the user know it succeeded and where to look
         alert("Summary created successfully! Scroll up your chat history to see it.");
 
       } catch (err) {
@@ -412,7 +493,7 @@ createApp({
       const batchSize = parseInt(superSummaryBatchSize.value) || 5;
 
       const candidates = messages.value.filter(m =>
-        m.role === "summary" && !m.text.includes("[THE STORY SO FAR]")
+        m.role === "summary" && !m.text.includes("[THE DISCUSSION SO FAR]")
       );
 
       if (candidates.length < batchSize) {
@@ -420,7 +501,7 @@ createApp({
         return;
       }
 
-      const warnMsg = `This will compress the oldest ${batchSize} Chapter Summaries into a single "Story So Far" entry, and move the originals to your Archive. Continue?`;
+      const warnMsg = `This will compress the oldest ${batchSize} Chapter Summaries into a single "Discussion So Far" entry, and move the originals to your Archive. Continue?`;
       if (!confirm(warnMsg)) return;
 
       isSuperSummarizing.value = true;
@@ -431,22 +512,18 @@ createApp({
           .map((m, i) => `CHAPTER ${i + 1}:\n${m.text}`)
           .join("\n\n");
 
-        const prompt = `You are a master storyteller. Summarize the following sequential chapter summaries into a single, cohesive "The Story So Far" narrative arc.
-                        Focus entirely on the overarching plot progression, major milestones, and critical locations/items. Do not lose the main thread.
+        const prompt = `You are an expert summarizer. Summarize the following sequential summaries into a single, cohesive "The Discussion So Far" narrative arc.
+                        Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
 
-                        PREVIOUS CHAPTERS:
+                        PREVIOUS SUMMARIES:
                         ${transcript}
 
-                        You MUST return a valid JSON object matching this schema format:
-                        {
-                          "thought_process": "Internal analysis of narrative arc",
-                          "epoch_summary": "narrative epoch summary block"
-                        }`;
+                        OUTPUT REQUIREMENTS:
+                        Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
 
         const payload = {
           model: selectedModel.value,
           messages: [{ role: "user", content: prompt }],
-          response_format: { type: "json_object" },
           temperature: 0.3,
         };
 
@@ -464,17 +541,24 @@ createApp({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error?.message || "Super Summarize failed");
 
-        let rawText = data.choices[0].message.content;
-        const start = rawText.indexOf("{");
-        const end = rawText.lastIndexOf("}");
-        if (start !== -1 && end !== -1) rawText = rawText.substring(start, end + 1);
+        let summaryText = "";
+        let thoughtText = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          let rawText = data.choices[0].message.content;
 
-        const parsed = JSON.parse(rawText);
-        let summaryText = parsed.epoch_summary?.trim();
+          rawText = rawText.replace(
+            /<think>([\s\S]*?)<\/think>/gi,
+            (m, inner) => {
+              thoughtText += inner.trim() + "\n\n";
+              return "";
+            }
+          );
+
+          summaryText = rawText.trim();
+        }
 
         if (!summaryText) throw new Error("Received empty summary.");
 
-        // Safe Timestamp Extraction
         const lastItem = msgsToSummarize[msgsToSummarize.length - 1];
         let baseTimestamp = lastItem.timestamp;
 
@@ -483,23 +567,27 @@ createApp({
           baseTimestamp = dbItem && !isNaN(dbItem.timestamp) ? dbItem.timestamp : Date.now();
         }
 
-        // 🛡️ DEXIE TRANSACTION (Chats & Archives): Moves items safely!
         await db.transaction('rw', db.chats, db.archives, async () => {
           for (const m of msgsToSummarize) {
-            await db.archives.add({ text: m.text, timestamp: m.timestamp || baseTimestamp });
+            await db.archives.add({
+              sessionId: currentSessionId.value,
+              text: m.text,
+              timestamp: m.timestamp || baseTimestamp
+            });
             await db.chats.delete(m.id);
           }
 
           await db.chats.add({
+            sessionId: currentSessionId.value,
             role: "summary",
-            text: `**[THE STORY SO FAR]**\n\n${summaryText}`,
+            text: `**[THE DISCUSSION SO FAR]**\n\n${summaryText}`,
             thought: "",
             options: null,
             timestamp: baseTimestamp + 1,
           });
         });
 
-        messages.value = await db.chats.orderBy("timestamp").toArray();
+        messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await loadArchives();
         await updateCounts();
 
@@ -514,8 +602,8 @@ createApp({
 
     const updateCounts = async () => {
       try {
-        const chats = await db.chats.toArray();
-        const facts = await db.facts.toArray();
+        const chats = await db.chats.where({ sessionId: currentSessionId.value }).toArray();
+        const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
 
         const fullDb = { chats, facts };
 
@@ -557,7 +645,6 @@ createApp({
 
       if (localStorage.getItem("story_persona")) selectedPersona.value = localStorage.getItem("story_persona");
       if (localStorage.getItem("story_depth")) selectedDepth.value = localStorage.getItem("story_depth");
-      if (localStorage.getItem("story_option_strategy")) selectedOptionStrategy.value = localStorage.getItem("story_option_strategy");
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -574,9 +661,10 @@ createApp({
         );
       }
 
+      await loadSessions();
+
       try {
-        messages.value = await db.chats.orderBy("timestamp").toArray();
-        scrollToBottom();
+        await loadCurrentSessionData();
 
         if (messages.value.length === 0) {
           if (apiKey.value) {
@@ -588,8 +676,6 @@ createApp({
       } catch (err) {
         console.error("Dexie Chats Load Error:", err);
       }
-
-      await updateCounts();
 
       if (window.visualViewport) {
         const handleResize = () => {
@@ -614,9 +700,6 @@ createApp({
         window.addEventListener("resize", handleFallbackResize);
         handleFallbackResize();
       }
-
-      await loadFacts();
-      await loadArchives();
     });
 
     const saveAllSettings = () => {
@@ -636,7 +719,6 @@ createApp({
 
       localStorage.setItem("story_persona", selectedPersona.value);
       localStorage.setItem("story_depth", selectedDepth.value);
-      localStorage.setItem("story_option_strategy", selectedOptionStrategy.value);
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -645,13 +727,15 @@ createApp({
         initializeStory();
       } else if (rulesChanged && messages.value.length > 0) {
         var restartNow = confirm(
-          "Rules updated! Would you like to restart the story now to apply these changes?",
+          "Rules updated! Would you like to restart the current topic now to apply these changes?",
         );
         if (restartNow) {
-          db.chats.clear();
-          db.facts.clear();
+          db.chats.where({ sessionId: currentSessionId.value }).delete();
+          db.facts.where({ sessionId: currentSessionId.value }).delete();
+          db.archives.where({ sessionId: currentSessionId.value }).delete();
           messages.value = [];
           facts.value = [];
+          archivedSummaries.value = [];
           updateCounts();
           initializeStory();
         }
@@ -667,14 +751,17 @@ createApp({
       }, 300);
     };
 
-    const saveToDb = async (role, text, thought = "", options = null) => {
+    const saveToDb = async (role, text, thought = "") => {
       const id = await db.chats.add({
+        sessionId: currentSessionId.value,
         role,
         text,
         thought,
-        options,
+        options: null,
         timestamp: Date.now(),
       });
+      await db.sessions.update(currentSessionId.value, { updated: Date.now() });
+      await loadSessions();
       return id;
     };
 
@@ -687,13 +774,16 @@ createApp({
 
     const startOver = async () => {
       var warnMsg =
-        "Are you sure? This will permanently delete the story AND all remembered facts in the Grimoire.";
+        "Are you sure? This will permanently delete the current topic discussion AND all remembered facts.";
       if (!confirm(warnMsg)) return;
 
-      await db.chats.clear();
-      await db.facts.clear();
+      await db.chats.where({ sessionId: currentSessionId.value }).delete();
+      await db.facts.where({ sessionId: currentSessionId.value }).delete();
+      await db.archives.where({ sessionId: currentSessionId.value }).delete();
+
       messages.value = [];
       facts.value = [];
+      archivedSummaries.value = [];
 
       await updateCounts();
 
@@ -709,7 +799,7 @@ createApp({
 
       const firstMessage =
         systemPrompt.value.trim() ||
-        "The story begins in a mysterious world...";
+        "The discussion begins...";
 
       const userId = await saveToDb("user", firstMessage);
 
@@ -878,51 +968,19 @@ createApp({
       else if (selectedDepth.value === "balanced") depthText = "DEPTH: Maintain a standard, balanced academic tone. Use appropriate terminology but ensure clarity for a general educated audience.";
       else if (selectedDepth.value === "deep") depthText = "DEPTH: Use maximal academic and technical rigor. Do not shy away from complex jargon, deep theoretical nuances, or advanced conceptual frameworks.";
 
-      let optionsThoughtText = "";
-      let optionsExample = "";
-      switch (selectedOptionStrategy.value) {
-        case "follow_up":
-          optionsThoughtText = "3 distinct, compelling follow-up directions or probing questions that the user could explore next.";
-          optionsExample = '["How does Aquinas view this?", "What is the primary critique of this stance?", "Can we explore the historical context?"]';
-          break;
-        case "counter_arguments":
-          optionsThoughtText = "3 distinct counter-arguments, critiques, or weaknesses of the viewpoint just discussed.";
-          optionsExample = '["Critique: This ignores the problem of induction.", "Counter: Utilitarianism would argue otherwise.", "Fallacy: Is this a strawman?"]';
-          break;
-        case "applications":
-          optionsThoughtText = "3 distinct real-world applications, modern implications, or practical uses of these concepts.";
-          optionsExample = '["How does this apply to modern AI ethics?", "Example of this in modern politics?", "Practical use case in daily life?"]';
-          break;
-        case "definitions":
-          optionsThoughtText = "3 specific key concepts, philosophers, or jargon terms mentioned that need deeper definition.";
-          optionsExample = '["Define: Epistemology", "Who was Kierkegaard?", "Explain: The Categorical Imperative"]';
-          break;
-      }
-
       return `TASK: Engage with the user in rigorous, nuanced discussions based on the provided topic.
 
-    PERSONA & TONE:
-    ${personaText}
-    ${depthText}
+PERSONA & TONE:
+${personaText}
+${depthText}
 
-    USER CUSTOM INSTRUCTIONS / TOPIC:
-    ${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
+USER CUSTOM INSTRUCTIONS / TOPIC:
+${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
 
-    OUTPUT REQUIREMENTS:
-    Return a single JSON object with EXACTLY three fields in this SPECIFIC ORDER: "thought", "options", and "response".
-
-    - "thought":
-       - Briefly analyze the user's inquiry, key nuances, and potential context.
-       - BRAINSTORM OPTIONS: Explicitly draft ${optionsThoughtText}
-    - "options": MANDATORY ARRAY of the 3 concise items brainstormed in your "thought" field (e.g., ${optionsExample}).
-    - "response": The direct, comprehensive, and insightful main discussion text formatted in standard markdown prose.
-
-    CRITICAL STRUCTURAL RULES:
-    1. The JSON keys MUST appear in exact order: "thought", then "options", then "response".
-    2. The "options" array is STRICTLY MANDATORY. Never return an empty array or omit the "options" key.
-    3. The "response" field must contain ONLY standard, natural discussion text or markdown prose.
-    4. DO NOT embed, escape, or serialize any JSON objects, JSON strings, or array representations inside the "response" or "thought" fields.
-    5. Never use markdown code fences (like \`json ... \`) inside a JSON string property.`;
+OUTPUT REQUIREMENTS:
+Please format your response in standard Markdown prose. Do not output JSON.
+If you need to reason, brainstorm, or plan your response before answering, you must use native <think>...</think> tags. Place the <think> block at the very beginning of your response.
+After the closing </think> tag, provide your direct, comprehensive, and insightful main discussion text formatted in standard markdown.`;
     };
 
     const triggerAIResponse = async () => {
@@ -930,7 +988,7 @@ createApp({
       scrollToBottom();
 
       try {
-        const allFacts = await db.facts.toArray();
+        const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
         const factsSummary = allFacts
           .map((f) => `- [${f.category}] ${f.text}`)
           .join("\n");
@@ -969,7 +1027,6 @@ createApp({
         let data = null;
         let activeModel = "";
 
-        // Loop through available models if errors or rate limits occur
         while (attemptedInThisTurn.length < modelList.length) {
           activeModel = getNextAvailableModel(attemptedInThisTurn);
           attemptedInThisTurn.push(activeModel);
@@ -981,7 +1038,6 @@ createApp({
             messages: messagesPayload,
             temperature: 0.7,
             max_tokens: 4096,
-            //response_format: { type: "json_object" }
           };
 
           const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
@@ -1005,7 +1061,6 @@ createApp({
               const errorData = await response.json().catch(() => ({}));
               const errMsg = errorData.error?.message || "";
 
-              // If rate limited (429) or server error (5xx), put model in jail and try next!
               if (response.status === 429 || response.status >= 500) {
                 console.warn(`⚠️ Model ${activeModel} failed with status ${response.status}: ${errMsg}. Putting in jail...`);
                 putModelInJail(activeModel, 5);
@@ -1020,18 +1075,16 @@ createApp({
 
             data = await response.json();
             console.log("RAW API RESPONSE:", data);
-            break; // Success! Exit retry loop.
+            break;
           } catch (error) {
             clearTimeout(timeoutId);
 
-            // If timeout or network error on this model and we have backups, jail & try next
             if ((error.name === "AbortError" || error.message.includes("Failed to fetch")) && attemptedInThisTurn.length < modelList.length) {
               console.warn(`⏳ Model ${activeModel} timed out or network failed. Putting in jail...`);
               putModelInJail(activeModel, 5);
               continue;
             }
 
-            // If no more backup models, rethrow error to outer handler
             if (attemptedInThisTurn.length >= modelList.length) {
               throw error;
             }
@@ -1048,7 +1101,7 @@ createApp({
         if (data.choices && data.choices[0] && data.choices[0].message) {
           let messageContent = data.choices[0].message.content;
           if (messageContent) {
-            // Safely capture and strip native <think> reasoning blocks
+
             messageContent = messageContent.replace(
               /<think>([\s\S]*?)<\/think>/gi,
               (m, inner) => {
@@ -1061,118 +1114,12 @@ createApp({
         }
 
         let finalResponse = responseText.trim() || "*(No response text)*";
-        let finalOptions = null;
-
-        try {
-          const jsonStartIndex = finalResponse.indexOf("{");
-          const jsonEndIndex = finalResponse.lastIndexOf("}");
-          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-            const jsonString = finalResponse.substring(
-              jsonStartIndex,
-              jsonEndIndex + 1,
-            );
-
-            let parsed = null;
-            try {
-              parsed = JSON.parse(jsonString);
-            } catch (parseErr) {
-              try {
-                // Bulletproof State-Machine: Only escapes newlines INSIDE string values
-                let sanitized = "";
-                let inString = false;
-                let isEscaped = false;
-                for (let i = 0; i < jsonString.length; i++) {
-                  const char = jsonString[i];
-                  if (inString) {
-                    if (char === '\n') sanitized += '\\n';
-                    else if (char === '\r') sanitized += '\\r';
-                    else if (char === '\t') sanitized += '\\t';
-                    else sanitized += char;
-
-                    if (char === '\\' && !isEscaped) isEscaped = true;
-                    else if (char !== '\\') isEscaped = false;
-
-                    if (char === '"' && !isEscaped) inString = false;
-                  } else {
-                    if (char === '"') inString = true;
-                    sanitized += char;
-                  }
-                }
-                parsed = JSON.parse(sanitized);
-              } catch (sanitizedErr) {
-                console.warn("JSON parsing failed after sanitization. Attempting regex extraction.");
-                console.log("📄 Raw JSON string from model:\n", jsonString);
-              }
-            }
-
-            const cleanTextField = (val) => {
-              if (typeof val !== "string") return val;
-              let s = val.trim();
-
-              // Unescape literal unicode sequences like \u201d or \u201c
-              s = s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-
-              if (s.startsWith("```")) {
-                s = s.replace(/^```[a-zA-Z]*\n?|```$/g, "").trim();
-              }
-              if (s.startsWith("{") || s.startsWith("[")) {
-                try {
-                  const nested = JSON.parse(s);
-                  if (nested.response) return nested.response.trim();
-                  if (nested.text) return nested.text.trim();
-                } catch (e) { }
-              }
-              return s;
-            };
-
-            if (parsed) {
-              if (parsed.thought) {
-                thoughtText = typeof parsed.thought === 'string'
-                  ? parsed.thought
-                  : JSON.stringify(parsed.thought);
-              }
-
-              if (parsed.response) finalResponse = cleanTextField(parsed.response).trim();
-
-              if (parsed.options && Array.isArray(parsed.options)) {
-                finalOptions = parsed.options;
-              } else if (parsed.choices && Array.isArray(parsed.choices)) {
-                finalOptions = parsed.choices;
-              } else {
-                finalOptions = null;
-              }
-            } else {
-              // Regex fallback to extract ALL THREE if parsing completely died
-              const extractString = (key) => {
-                const regex = new RegExp(`"${key}"\\s*:\\s*"([\\s\\S]*?)"(?:\\s*,\\s*"|\\s*\\}\\s*$)`);
-                const match = jsonString.match(regex);
-                return match && match[1] ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\') : "";
-              };
-
-              thoughtText = extractString("thought");
-              finalResponse = extractString("response");
-
-              // Extract options array using regex
-              const optionsMatch = jsonString.match(/"options"\s*:\s*\[([\s\S]*?)\]/);
-              if (optionsMatch && optionsMatch[1]) {
-                const rawOpts = optionsMatch[1].match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
-                if (rawOpts) {
-                  finalOptions = rawOpts.map(o => o.replace(/^"|"$/g, '').replace(/\\"/g, '"').trim());
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.error("JSON processing error:", e);
-        }
-
-        const finalThoughtString = typeof thoughtText === "string" ? thoughtText.trim() : "";
+        let finalThoughtString = thoughtText.trim();
 
         const modelId = await saveToDb(
           "model",
           finalResponse,
-          finalThoughtString,
-          finalOptions,
+          finalThoughtString
         );
 
         messages.value.push({
@@ -1180,7 +1127,7 @@ createApp({
           role: "model",
           text: finalResponse,
           thought: finalThoughtString,
-          options: finalOptions,
+          options: null,
           audioData: null,
           isGeneratingAudio: false,
           timestamp: Date.now()
@@ -1199,7 +1146,6 @@ createApp({
         isLoading.value = false;
         scrollToBottom();
 
-        // Only auto-focus on desktop devices (non-touch) to prevent mobile virtual keyboard popups
         const isMobile = window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window);
         if (!isMobile) {
           nextTick(() => inputArea.value?.focus());
@@ -1219,11 +1165,6 @@ createApp({
       await triggerAIResponse();
     };
 
-    const sendOption = async (optionText) => {
-      currentInput.value = optionText;
-      await sendMessage();
-    };
-
     const retryMessage = async (index) => {
       if (isLoading.value) return;
       await deleteMessage(index);
@@ -1236,7 +1177,10 @@ createApp({
         return;
       }
 
-      let md = `# Intellectual Exploration & Study Guide\n\n`;
+      let currentSession = sessions.value.find(s => s.id === currentSessionId.value);
+      let sessionTitle = currentSession ? currentSession.title : "Discussion";
+
+      let md = `# Intellectual Exploration: ${sessionTitle}\n\n`;
       md += `**Date:** ${new Date().toLocaleString()}\n`;
       md += `**Persona:** ${selectedPersona.value} | **Depth:** ${selectedDepth.value}\n\n`;
 
@@ -1245,7 +1189,7 @@ createApp({
       }
 
       // 1. Fetch and format Facts / Knowledge Base
-      const allFacts = await db.facts.toArray();
+      const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
       if (allFacts.length > 0) {
         md += `## Knowledge Base / Established Facts\n\n`;
 
@@ -1271,9 +1215,8 @@ createApp({
         } else if (msg.role === "model") {
           md += `### 🤖 AI\n`;
 
-          // Include AI Reasoning in an expandable markdown details block
           if (msg.thought) {
-            md += `<details><summary><i>AI Reasoning / Option Brainstorming</i></summary>\n\n> ${msg.thought.replace(/\n/g, '\n> ')}\n\n</details>\n\n`;
+            md += `<details><summary><i>AI Reasoning</i></summary>\n\n> ${msg.thought.replace(/\n/g, '\n> ')}\n\n</details>\n\n`;
           }
 
           md += `${msg.text}\n\n`;
@@ -1282,12 +1225,12 @@ createApp({
 
       md += `---\n*Exported from Universal Intellectual Exploration Engine*`;
 
-      // 3. Create a Blob and trigger the browser download
+      const safeTitle = sessionTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Study_Guide_${new Date().toISOString().split('T')[0]}.md`;
+      a.download = `${safeTitle}_Study_Guide_${new Date().toISOString().split('T')[0]}.md`;
 
       document.body.appendChild(a);
       a.click();
@@ -1307,7 +1250,6 @@ createApp({
       isLoading,
       messagesContainer,
       sendMessage,
-      sendOption,
       retryMessage,
       inputArea,
       deleteMessage,
@@ -1348,8 +1290,15 @@ createApp({
       superSummarizeStory,
       selectedPersona,
       selectedDepth,
-      selectedOptionStrategy,
       exportStudyGuide,
+
+      // Multi-Session Features
+      sessions,
+      currentSessionId,
+      isDrawerOpen,
+      createNewSession,
+      switchSession,
+      deleteSession
     };
   },
 }).mount("#app");

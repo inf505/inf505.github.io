@@ -9,6 +9,46 @@
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel="stylesheet" href="style.css" />
 
+    <style>
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+        }
+
+        .topics-drawer {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100%;
+            background: #111;
+            z-index: 1001;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.8);
+            border-right: 1px solid #333;
+        }
+
+        .topics-drawer.open {
+            left: 0;
+        }
+
+        .session-item:hover {
+            background: #2a2a2a !important;
+        }
+
+        .session-item.active {
+            border-color: #ff9d00 !important;
+            background: rgba(255, 157, 0, 0.1) !important;
+        }
+    </style>
+
     <!-- External Libraries -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
@@ -17,16 +57,49 @@
 
 <body>
     <div id="app">
+        <!-- TOPICS DRAWER -->
+        <div v-if="isDrawerOpen" class="drawer-overlay" @click="isDrawerOpen = false"></div>
+        <div :class="['topics-drawer', { open: isDrawerOpen }]">
+            <div class="drawer-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333;">
+                <h3 style="margin: 0; color: #eee;">📁 Topics</h3>
+                <button @click="isDrawerOpen = false"
+                    style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+            </div>
+            <div class="drawer-content" style="padding: 10px; overflow-y: auto; flex: 1;">
+                <button class="small-btn apply-btn" @click="createNewSession"
+                    style="width: 100%; margin-bottom: 15px;">➕ New Topic</button>
+
+                <div v-for="session in sessions" :key="session.id"
+                    :class="['session-item', { active: currentSessionId === session.id }]"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; background: #222; border-radius: 6px; border: 1px solid #333; cursor: pointer;"
+                    @click="switchSession(session.id)">
+                    <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <div style="font-size: 0.95rem; color: #eee; text-overflow: ellipsis; overflow: hidden;">{{
+                            session.title }}</div>
+                        <div style="font-size: 0.75rem; color: #888;">{{ formatRelativeTime(session.updated) }}</div>
+                    </div>
+                    <button class="action-msg-btn delete-btn" @click.stop="deleteSession(session.id)"
+                        style="margin-left: 10px; background: none; border: none; color: #ff5555; cursor: pointer; font-size: 1.2rem;"
+                        title="Delete Topic">&times;</button>
+                </div>
+            </div>
+        </div>
+
         <!-- CHAT INTERFACE -->
         <div class="chat-container">
             <!-- FLOATING CONTROLS -->
-            <!-- FLOATING CONTROLS -->
             <div class="floating-header" style="display: flex; justify-content: space-between; width: 100%;">
-                <!-- Left Side: Start Over -->
-                <button class="float-btn archive-btn" @click="startOver"
-                    :title="'Start Over - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'">
-                    <span>📜</span>
-                </button>
+                <!-- Left Side: Drawer & Start Over -->
+                <div style="display: flex; gap: 10px;">
+                    <button class="float-btn drawer-btn" @click="isDrawerOpen = true" title="Topics / Sessions">
+                        📁
+                    </button>
+                    <button class="float-btn archive-btn" @click="startOver"
+                        :title="'Clear Topic - ' + totalSizeKb + ' KB / ' + totalTokens + ' tokens'">
+                        <span>📜</span>
+                    </button>
+                </div>
 
                 <!-- Right Side: Export & Settings Grouped -->
                 <div style="display: flex; gap: 10px;">
@@ -79,7 +152,6 @@
                         <input type="password" v-model="apiKey" placeholder="Bearer Token..." />
                     </div>
 
-                    <!-- NEW: Persona Presets -->
                     <div class="settings-group">
                         <label>Persona / Pedagogical Mode:</label>
                         <select v-model="selectedPersona"
@@ -93,7 +165,6 @@
                         </select>
                     </div>
 
-                    <!-- NEW: Depth Toggle (Chips) -->
                     <div class="settings-group">
                         <label>Explanation Depth:</label>
                         <div style="display: flex; gap: 8px; margin-top: 5px;">
@@ -109,19 +180,6 @@
                         </div>
                     </div>
 
-                    <!-- NEW: Option Strategy -->
-                    <div class="settings-group">
-                        <label>Option Buttons Strategy:</label>
-                        <select v-model="selectedOptionStrategy"
-                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
-                            <option value="follow_up">Follow-up Angles / Questions</option>
-                            <option value="counter_arguments">Counter-Arguments / Critiques</option>
-                            <option value="applications">Real-World / Practical Applications</option>
-                            <option value="definitions">Key Concepts / Definitions</option>
-                        </select>
-                    </div>
-
-                    <!-- MODIFIED: Custom Instructions -->
                     <div class="settings-group">
                         <label>Custom Instructions / Discussion Topic:</label>
                         <textarea v-model="systemPrompt" rows="3"
@@ -191,7 +249,7 @@
                 <!-- TAB CONTENT: FACTS  -->
                 <div v-if="activeTab === 'facts'" class="tab-content">
                     <div class="settings-group">
-                        <label>Story Grimoire</label>
+                        <label>Knowledge Base Grimoire</label>
                         <div class="manual-fact-entry" style="
                                     margin-top: 15px;
                                     background: rgba(255, 255, 255, 0.05);
@@ -334,7 +392,7 @@
                     </div>
                 </div>
 
-            </div> <!-- CLOSE OF SETTINGS PANEL (Corrected Position) -->
+            </div> <!-- CLOSE OF SETTINGS PANEL -->
 
             <!-- SCROLLING MESSAGES -->
             <div class="chat-messages" ref="messagesContainer" aria-live="polite" aria-atomic="true">
@@ -434,18 +492,6 @@
                         <div v-if="msg.audioData" class="audio-player" style="margin-top: 10px">
                             <audio controls autoplay :src="'data:audio/wav;base64,' + msg.audioData"
                                 style="width: 100%; height: 36px"></audio>
-                        </div>
-
-                        <!-- MULTIPLE CHOICE OPTIONS (Only show on latest message) -->
-                        <div v-if="msg.role === 'model' && msg.options && msg.options.length > 0 && index === messages.length - 1 && !isLoading"
-                            class="story-options">
-                            <p class="options-label">
-                                Explore a direction:
-                            </p>
-                            <button v-for="(opt, i) in msg.options" :key="i" class="option-btn"
-                                @click="sendOption(opt)">
-                                {{ opt }}
-                            </button>
                         </div>
                     </div>
                 </div>
