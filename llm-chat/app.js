@@ -979,8 +979,7 @@ ${systemPrompt.value || "(None provided. Drive the conversation based on the use
 
 OUTPUT REQUIREMENTS:
 Please format your response in standard Markdown prose. Do not output JSON.
-If you need to reason, brainstorm, or plan your response before answering, you must use native <think>...</think> tags. Place the <think> block at the very beginning of your response.
-After the closing </think> tag, provide your direct, comprehensive, and insightful main discussion text formatted in standard markdown.`;
+If you need to reason, brainstorm, or plan your response, do so natively before outputting the final markdown response.`;
     };
 
     const triggerAIResponse = async () => {
