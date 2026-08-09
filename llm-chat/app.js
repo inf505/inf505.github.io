@@ -1076,14 +1076,28 @@ createApp({
             try {
               parsed = JSON.parse(jsonString);
             } catch (parseErr) {
-              // Handle unescaped newline/control characters inside JSON strings
               try {
-                const sanitized = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
-                  if (match === '\n') return '\\n';
-                  if (match === '\r') return '\\r';
-                  if (match === '\t') return '\\t';
-                  return '';
-                });
+                // Bulletproof State-Machine: Only escapes newlines INSIDE string values
+                let sanitized = "";
+                let inString = false;
+                let isEscaped = false;
+                for (let i = 0; i < jsonString.length; i++) {
+                  const char = jsonString[i];
+                  if (inString) {
+                    if (char === '\n') sanitized += '\\n';
+                    else if (char === '\r') sanitized += '\\r';
+                    else if (char === '\t') sanitized += '\\t';
+                    else sanitized += char;
+
+                    if (char === '\\' && !isEscaped) isEscaped = true;
+                    else if (char !== '\\') isEscaped = false;
+
+                    if (char === '"' && !isEscaped) inString = false;
+                  } else {
+                    if (char === '"') inString = true;
+                    sanitized += char;
+                  }
+                }
                 parsed = JSON.parse(sanitized);
               } catch (sanitizedErr) {
                 console.warn("JSON parsing failed after sanitization. Attempting regex extraction.");
@@ -1128,14 +1142,23 @@ createApp({
                 finalOptions = null;
               }
             } else {
-              // Regex fallback to extract the response if JSON parsing failed completely
-              const responseMatch = jsonString.match(/"response"\s*:\s*"([\s\S]*?)"\s*\}\s*$/);
-              if (responseMatch && responseMatch[1]) {
-                finalResponse = responseMatch[1]
-                  .replace(/\\n/g, '\n')
-                  .replace(/\\"/g, '"')
-                  .replace(/\\\\/g, '\\')
-                  .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+              // Regex fallback to extract ALL THREE if parsing completely died
+              const extractString = (key) => {
+                const regex = new RegExp(`"${key}"\\s*:\\s*"([\\s\\S]*?)"(?:\\s*,\\s*"|\\s*\\}\\s*$)`);
+                const match = jsonString.match(regex);
+                return match && match[1] ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\') : "";
+              };
+
+              thoughtText = extractString("thought");
+              finalResponse = extractString("response");
+
+              // Extract options array using regex
+              const optionsMatch = jsonString.match(/"options"\s*:\s*\[([\s\S]*?)\]/);
+              if (optionsMatch && optionsMatch[1]) {
+                const rawOpts = optionsMatch[1].match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
+                if (rawOpts) {
+                  finalOptions = rawOpts.map(o => o.replace(/^"|"$/g, '').replace(/\\"/g, '"').trim());
+                }
               }
             }
           }
