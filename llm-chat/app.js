@@ -436,7 +436,14 @@ createApp({
         let thoughtText = "";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let rawText = data.choices[0].message.content;
+          let msgObj = data.choices[0].message;
+          let rawText = msgObj.content || "";
+
+          if (msgObj.reasoning) {
+            thoughtText += msgObj.reasoning.trim() + "\n\n";
+          } else if (msgObj.reasoning_content) {
+            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
+          }
 
           rawText = rawText.replace(
             /<think>([\s\S]*?)<\/think>/gi,
@@ -544,7 +551,14 @@ createApp({
         let summaryText = "";
         let thoughtText = "";
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let rawText = data.choices[0].message.content;
+          let msgObj = data.choices[0].message;
+          let rawText = msgObj.content || "";
+
+          if (msgObj.reasoning) {
+            thoughtText += msgObj.reasoning.trim() + "\n\n";
+          } else if (msgObj.reasoning_content) {
+            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
+          }
 
           rawText = rawText.replace(
             /<think>([\s\S]*?)<\/think>/gi,
@@ -1098,9 +1112,18 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
           data.usage?.total_tokens?.toLocaleString("en-US") || "0";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let messageContent = data.choices[0].message.content;
-          if (messageContent) {
+          let msgObj = data.choices[0].message;
+          let messageContent = msgObj.content || "";
 
+          // 1. Capture API reasoning field (OpenRouter, Nemotron, OpenAI, etc.)
+          if (msgObj.reasoning) {
+            thoughtText += msgObj.reasoning.trim() + "\n\n";
+          } else if (msgObj.reasoning_content) {
+            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
+          }
+
+          // 2. Capture inline <think> tags if present in message content
+          if (messageContent) {
             messageContent = messageContent.replace(
               /<think>([\s\S]*?)<\/think>/gi,
               (m, inner) => {
