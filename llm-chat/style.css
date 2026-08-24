@@ -105,7 +105,7 @@ body {
 .bubble {
     position: relative; /* Required for absolute action buttons */
     max-width: 95%;
-    padding: 0.8rem 1.2rem;
+    padding: 0.8rem;
     border-radius: 18px;
     line-height: 1.4;
 }
@@ -552,6 +552,6 @@ button.small-btn {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     }
     .bubble {
-        max-width: 85%; /* Slightly wider bubble max-width for desktop reading */
+        max-width: 95%; /* Slightly wider bubble max-width for desktop reading */
     }
 }
