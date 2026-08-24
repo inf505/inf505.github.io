@@ -222,33 +222,40 @@ createApp({
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 0. PRE-HEAL (Clean up newline/escape artifacts from JSON stringification)
-      let content = text
-        .replace(/\n\s*eq/g, " \\neq ")
-        .replace(/\n\s*otin/g, " \\notin ")
-        .replace(/\n\s*egin/g, " \\begin ")
-        .replace(/\n\s*vmatrix/g, " \\vmatrix ")
-        .replace(/\n\s*end/g, " \\end ")
-        .replace(/\r\s*ightarrow/g, " \\rightarrow ")
-        .replace(/\n\s*abla/g, " \\nabla ");
+      // 0. PRE-HEAL (Artifacts from JSON escaping)
+      text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+      text = text.replace(/\r\s*ightarrow/g, " \\rightarrow ");
+      text = text.replace(/\n\s*abla/g, " \\nabla ");
 
-      // 1. AUTO-WRAPPERS (Ensures missing $ signs around matrices & chemistry formulas are fixed)
-      // Matrices:
-      content = content.replace(
+      // 1. AUTO-WRAPPERS
+      // Matrices: Strips erratic $$ or missing $, ensuring exactly one pair of $ surrounds matrices.
+      let content = text.replace(
         /\$*\s*(\\+begin\{(\w+)\}[\s\S]*?\\+end\{\2\})\s*\$*/g,
-        (match, matrixCore) => ` $${matrixCore}$ `
+        (match, matrixCore) => {
+          return ` $${matrixCore}$ `;
+        },
       );
 
-      // Chemistry equations: \ce{...}
+      // Chemistry: Auto-wrap \ce{...} if missing $ signs
       content = content.replace(
         /(^|[^\$])(\\+ce\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
-        (match, p1, p2) => `${p1} $${p2}$ `
+        (match, p1, p2) => {
+          const cleanedP2 = p2.replace(/^\\+/, "\\");
+          return `${p1} $${cleanedP2}$ `;
+        },
       );
 
-      // Physical units: \pu{...}
+      // Physical Units: Auto-wrap \pu{...} if missing $ signs
       content = content.replace(
         /(^|[^\$])(\\+pu\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
-        (match, p1, p2) => `${p1} $${p2}$ `
+        (match, p1, p2) => {
+          const cleanedP2 = p2.replace(/^\\+/, "\\");
+          return `${p1} $${cleanedP2}$ `;
+        },
       );
 
       // 2. Character cleanup
@@ -260,58 +267,62 @@ createApp({
 
       const mathPlaceholders = [];
 
-      // 3. VAULTING (Protects math & chemistry from marked.js parser)
+      // 3. VAULTING (Fixed for newlines and $$ blocks)
       const processedText = content.replace(
         /\${1,2}([\s\S]*?)\${1,2}/g,
         (match, formula) => {
           const index = mathPlaceholders.length;
           mathPlaceholders.push(formula);
           return `@@MATH_${index}@@`;
-        }
+        },
       );
 
       let html = marked.parse(processedText);
 
-      // 4. UN-VAULTING & TARGETED HEALING
+      // 4. UN-VAULTING & HEALING
       html = html.replace(/@@MATH_(\d+)@@/g, (match, index) => {
         const formula = mathPlaceholders[index];
         try {
           let clean = formula;
 
-          // Normalize row breaks & commands
+          // --- ROW BREAK & COMMAND HEALER ---
+          // 1. Safely normalize excessive JSON backslashes down to 2 (for matrix row breaks)
           clean = clean.replace(/\\{3,}/g, "\\\\");
+
+          // 2. If multiple backslashes are DIRECTLY attached to letters, it's a command, not a row break.
           clean = clean.replace(/\\{2,}([a-zA-Z]+)/g, "\\$1");
 
-          // Chemistry Healers
+          // --- CHEMISTRY HEALERS ---
           clean = clean.replace(/(^|[^a-zA-Z])\\*ce\s*\{/g, "$1\\ce{");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pu\s*\{/g, "$1\\pu{");
           clean = clean.replace(/(^|[^a-zA-Z])\\*rightleftharpoons/g, "$1\\rightleftharpoons ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*Delta([^a-zA-Z]|$)/g, "$1\\Delta$2");
 
-          // Math Healers
+          // --- ORIGINAL TARGETED HEALER ---
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
-            "$1\\div "
+            "$1\\div ",
           );
           clean = clean.replace(
             /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
-            (match, dividend, divisor) => `${divisor}\\overline{\\smash{)} ${dividend}}`
+            (match, dividend, divisor) => {
+              return `${divisor}\\overline{\\smash{)} ${dividend}}`;
+            },
           );
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
-            "$1\\longdiv"
+            "$1\\longdiv",
           );
-
-          // Greek Letters
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(pi|theta|alpha|beta|gamma|delta|sigma|mu|omega)([^a-zA-Z]|$)/g,
-            "$1\\$2 $3"
+            "$1\\$2 $3",
           );
 
-          // Common Symbols
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
 
@@ -321,7 +332,11 @@ createApp({
           clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
 
-          // Percentages
+          // Greek (Common in Algebra/Trig)
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
+
           clean = clean.replace(/\\*%+/g, "\\%");
 
           return katex.renderToString(clean.trim(), {
@@ -342,29 +357,36 @@ createApp({
       if (!text) return "";
 
       // 0. PRE-HEAL
-      let content = text
-        .replace(/\n\s*eq/g, " \\neq ")
-        .replace(/\n\s*otin/g, " \\notin ")
-        .replace(/\n\s*egin/g, " \\begin ")
-        .replace(/\n\s*vmatrix/g, " \\vmatrix ")
-        .replace(/\n\s*end/g, " \\end ")
-        .replace(/\r\s*ightarrow/g, " \\rightarrow ")
-        .replace(/\n\s*abla/g, " \\nabla ");
+      text = text.replace(/\n\s*eq/g, " \\neq ");
+      text = text.replace(/\n\s*otin/g, " \\notin ");
+      text = text.replace(/\n\s*egin/g, " \\begin ");
+      text = text.replace(/\n\s*vmatrix/g, " \\vmatrix ");
+      text = text.replace(/\n\s*end/g, " \\end ");
+      text = text.replace(/\r\s*ightarrow/g, " \\rightarrow ");
+      text = text.replace(/\n\s*abla/g, " \\nabla ");
 
       // 1. AUTO-WRAPPERS
-      content = content.replace(
+      let content = text.replace(
         /\$*\s*(\\+begin\{(\w+)\}[\s\S]*?\\+end\{\2\})\s*\$*/g,
-        (match, matrixCore) => ` $${matrixCore}$ `
+        (match, matrixCore) => {
+          return ` $${matrixCore}$ `;
+        },
       );
 
       content = content.replace(
         /(^|[^\$])(\\+ce\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
-        (match, p1, p2) => `${p1} $${p2}$ `
+        (match, p1, p2) => {
+          const cleanedP2 = p2.replace(/^\\+/, "\\");
+          return `${p1} $${cleanedP2}$ `;
+        },
       );
 
       content = content.replace(
         /(^|[^\$])(\\+pu\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
-        (match, p1, p2) => `${p1} $${p2}$ `
+        (match, p1, p2) => {
+          const cleanedP2 = p2.replace(/^\\+/, "\\");
+          return `${p1} $${cleanedP2}$ `;
+        },
       );
 
       const mathPlaceholders = [];
@@ -374,7 +396,7 @@ createApp({
           const index = mathPlaceholders.length;
           mathPlaceholders.push(formula);
           return `@@MATH_${index}@@`;
-        }
+        },
       );
 
       let html = marked.parse(processedText);
@@ -385,55 +407,58 @@ createApp({
         try {
           let clean = formula;
 
-          // Normalize row breaks & commands
+          // --- ROW BREAK & COMMAND HEALER ---
           clean = clean.replace(/\\{3,}/g, "\\\\");
           clean = clean.replace(/\\{2,}([a-zA-Z]+)/g, "\\$1");
 
-          // Chemistry Healers
+          // --- CHEMISTRY HEALERS ---
           clean = clean.replace(/(^|[^a-zA-Z])\\*ce\s*\{/g, "$1\\ce{");
           clean = clean.replace(/(^|[^a-zA-Z])\\*pu\s*\{/g, "$1\\pu{");
           clean = clean.replace(/(^|[^a-zA-Z])\\*rightleftharpoons/g, "$1\\rightleftharpoons ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*Delta([^a-zA-Z]|$)/g, "$1\\Delta$2");
 
-          // Math Healers
+          // --- ORIGINAL TARGETED HEALER ---
           clean = clean.replace(/(^|[^a-zA-Z])\\*f?rac/g, "$1\\frac");
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(dividedby|divided|bdiv|div)/g,
-            "$1\\div "
+            "$1\\div ",
           );
           clean = clean.replace(
             /\\longdiv\s*\{?(\d+)\}?\s*\{?(\d+)\}?/g,
-            (match, dividend, divisor) => `${divisor}\\overline{\\smash{)} ${dividend}}`
+            (match, dividend, divisor) => {
+              return `${divisor}\\overline{\\smash{)} ${dividend}}`;
+            },
           );
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(longdivision|ldiv)/g,
-            "$1\\longdiv"
+            "$1\\longdiv",
           );
-
-          // Greek Letters
           clean = clean.replace(
             /(^|[^a-zA-Z])\\*(pi|theta|alpha|beta|gamma|delta|sigma|mu|omega)([^a-zA-Z]|$)/g,
-            "$1\\$2 $3"
+            "$1\\$2 $3",
           );
 
-          // Common Symbols
           clean = clean.replace(/(^|[^a-zA-Z])\\*times/g, "$1\\times");
           clean = clean.replace(/(^|[^a-zA-Z])\\*sqrt/g, "$1\\sqrt");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta");
           clean = clean.replace(/(^|[^a-zA-Z])\\*begin/g, "$1\\begin");
           clean = clean.replace(/(^|[^a-zA-Z])\\*end/g, "$1\\end");
 
-          // Geometry
           clean = clean.replace(/(^|[^a-zA-Z])\\*angle/g, "$1\\angle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*triangle/g, "$1\\triangle ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*parallel/g, "$1\\parallel ");
           clean = clean.replace(/(^|[^a-zA-Z])\\*perp/g, "$1\\perp ");
 
-          // Percentages
+          clean = clean.replace(/(^|[^a-zA-Z])\\*pi/g, "$1\\pi ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*theta/g, "$1\\theta ");
+          clean = clean.replace(/(^|[^a-zA-Z])\\*alpha/g, "$1\\alpha ");
+
           clean = clean.replace(/\\*%+/g, "\\%");
 
           clean = clean.replace(
             /\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g,
-            "\\frac{$1}{$2}"
+            "\\frac{$1}{$2}",
           );
 
           return katex.renderToString(clean.trim(), {
