@@ -240,18 +240,18 @@ createApp({
         },
       );
 
-      // Chemistry: Auto-wrap \ce{...} if missing $ signs
+      // Chemistry — note [^\$\\] instead of [^\$]
       content = content.replace(
-        /(^|[^\$])(\\+ce\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
+        /(^|[^\$\\])(\\+ce\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
         (match, p1, p2) => {
           const cleanedP2 = p2.replace(/^\\+/, "\\");
           return `${p1} $${cleanedP2}$ `;
         },
       );
 
-      // Physical Units: Auto-wrap \pu{...} if missing $ signs
+      // Physical units — same fix
       content = content.replace(
-        /(^|[^\$])(\\+pu\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
+        /(^|[^\$\\])(\\+pu\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
         (match, p1, p2) => {
           const cleanedP2 = p2.replace(/^\\+/, "\\");
           return `${p1} $${cleanedP2}$ `;
@@ -373,16 +373,18 @@ createApp({
         },
       );
 
+      // Chemistry — note [^\$\\] instead of [^\$]
       content = content.replace(
-        /(^|[^\$])(\\+ce\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
+        /(^|[^\$\\])(\\+ce\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
         (match, p1, p2) => {
           const cleanedP2 = p2.replace(/^\\+/, "\\");
           return `${p1} $${cleanedP2}$ `;
         },
       );
 
+      // Physical units — same fix
       content = content.replace(
-        /(^|[^\$])(\\+pu\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
+        /(^|[^\$\\])(\\+pu\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g,
         (match, p1, p2) => {
           const cleanedP2 = p2.replace(/^\\+/, "\\");
           return `${p1} $${cleanedP2}$ `;
