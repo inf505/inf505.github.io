@@ -1065,7 +1065,11 @@ createApp({
       } finally {
         isLoading.value = false;
         scrollToBottom();
-        nextTick(() => inputArea.value?.focus());
+
+        const isMobile = window.matchMedia("(pointer: coarse)").matches || ('ontouchstart' in window);
+        if (!isMobile) {
+          nextTick(() => inputArea.value?.focus());
+        }
       }
       await updateCounts();
     };
