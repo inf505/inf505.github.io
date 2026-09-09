@@ -473,8 +473,8 @@ createApp({
           }
 
           rawText = rawText.replace(
-            /<think>([\s\S]*?)<\/think>/gi,
-            (m, inner) => {
+            /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
+            (m, tag, inner) => {
               thoughtText += inner.trim() + "\n\n";
               return "";
             }
@@ -589,8 +589,8 @@ createApp({
           }
 
           rawText = rawText.replace(
-            /<think>([\s\S]*?)<\/think>/gi,
-            (m, inner) => {
+            /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
+            (m, tag, inner) => {
               thoughtText += inner.trim() + "\n\n";
               return "";
             }
