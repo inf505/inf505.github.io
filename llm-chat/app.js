@@ -102,6 +102,18 @@ createApp({
         .filter((m) => m.length > 0);
     };
 
+    const extractThoughts = (text) => {
+      let thoughts = "";
+      const cleaned = text.replace(
+        /<(think|thought|thinking|reason|reasoning|scratchpad)>([\s\S]*?)<\/\1>/gi,
+        (m, tag, inner) => {
+          thoughts += inner.trim() + "\n\n";
+          return "";
+        }
+      );
+      return { cleaned: cleaned.trim(), thoughts: thoughts.trim() };
+    };
+
     // Determines whether to route to Google Gemini's OpenAI endpoint or the Universal Base URL
     const getRequestConfig = (modelName) => {
       const trimmed = modelName.trim().toLowerCase();
