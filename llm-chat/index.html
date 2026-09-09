@@ -148,8 +148,15 @@
                     </div>
 
                     <div class="settings-group">
-                        <label>API Key / Token:</label>
-                        <input type="password" v-model="apiKey" placeholder="Bearer Token..." />
+                        <label>Universal API Key (OpenAI / OpenRouter / Ollama):</label>
+                        <input type="password" v-model="apiKey" placeholder="Bearer Token / sk-or-..." />
+                    </div>
+
+                    <div class="settings-group">
+                        <label>Google Gemini API Key (Free Tier):</label>
+                        <input type="password" v-model="geminiApiKey" placeholder="AIzaSy..." />
+                        <small>Used automatically whenever any <code>gemini-*</code> model is invoked or TTS is
+                            used.</small>
                     </div>
 
                     <div class="settings-group">

@@ -102,6 +102,26 @@ createApp({
         .filter((m) => m.length > 0);
     };
 
+    // Determines whether to route to Google Gemini's OpenAI endpoint or the Universal Base URL
+    const getRequestConfig = (modelName) => {
+      const isGemini = modelName.trim().toLowerCase().startsWith("gemini-");
+
+      if (isGemini) {
+        const key = geminiApiKey.value.trim() || apiKey.value.trim();
+        return {
+          url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+          key: key,
+          isGemini: true
+        };
+      }
+
+      return {
+        url: `${baseUrl.value.replace(/\/$/, "")}/chat/completions`,
+        key: apiKey.value.trim(),
+        isGemini: false
+      };
+    };
+
     const getNextAvailableModel = (attemptedInThisTurn = []) => {
       const models = getModelList();
       const now = Date.now();
@@ -303,16 +323,18 @@ createApp({
           ]
         }`;
 
-        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
+        // Replace: const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
+        const activeModel = getNextAvailableModel();
+        const { url, key } = getRequestConfig(activeModel);
 
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey.value}`
+            "Authorization": `Bearer ${key}`
           },
           body: JSON.stringify({
-            model: selectedModel.value,
+            model: activeModel,
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.1,
@@ -411,19 +433,20 @@ createApp({
               OUTPUT REQUIREMENTS:
               Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
 
+        const activeModel = getNextAvailableModel();
+        const { url, key } = getRequestConfig(activeModel);
+
         const payload = {
-          model: selectedModel.value,
+          model: activeModel,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.2,
         };
-
-        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey.value}`,
+            "Authorization": `Bearer ${key}`,
           },
           body: JSON.stringify(payload),
         });
@@ -520,27 +543,28 @@ createApp({
           .join("\n\n");
 
         const prompt = `You are an expert summarizer. Summarize the following sequential summaries into a single, cohesive "The Discussion So Far" narrative arc.
-                        Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
+          Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
 
-                        PREVIOUS SUMMARIES:
-                        ${transcript}
+          PREVIOUS SUMMARIES:
+          ${transcript}
 
-                        OUTPUT REQUIREMENTS:
-                        Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
+          OUTPUT REQUIREMENTS:
+          Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
+
+        const activeModel = getNextAvailableModel();
+        const { url, key } = getRequestConfig(activeModel);
 
         const payload = {
-          model: selectedModel.value,
+          model: activeModel,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3,
         };
-
-        const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
 
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey.value}`
+            "Authorization": `Bearer ${key}`
           },
           body: JSON.stringify(payload),
         });
@@ -1046,6 +1070,12 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
 
           console.log(`🤖 Requesting response from: ${activeModel}`);
 
+          const { url, key } = getRequestConfig(activeModel);
+
+          if (!key) {
+            throw new Error(`No API key configured for model: ${activeModel}`);
+          }
+
           const payload = {
             model: activeModel,
             messages: messagesPayload,
@@ -1053,7 +1083,6 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
             max_tokens: 4096,
           };
 
-          const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000);
 
@@ -1062,7 +1091,7 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey.value}`,
+                "Authorization": `Bearer ${key}`,
               },
               body: JSON.stringify(payload),
               signal: controller.signal,
