@@ -1157,8 +1157,8 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
           // 2. Capture inline <think> tags if present in message content
           if (messageContent) {
             messageContent = messageContent.replace(
-              /<think>([\s\S]*?)<\/think>/gi,
-              (m, inner) => {
+              /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
+              (m, tag, inner) => {
                 thoughtText += inner.trim() + "\n\n";
                 return "";
               }
