@@ -839,16 +839,13 @@ createApp({
     const initializeStory = async () => {
       if (isLoading.value) return;
 
-      const firstMessage =
-        systemPrompt.value.trim() ||
-        "The discussion begins...";
-
-      const userId = await saveToDb("user", firstMessage);
+      const starterMessage = "Let's begin our discussion.";
+      const userId = await saveToDb("user", starterMessage);
 
       messages.value.push({
         id: userId,
         role: "user",
-        text: firstMessage,
+        text: starterMessage,
         isHidden: false,
         timestamp: Date.now()
       });
