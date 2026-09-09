@@ -104,21 +104,25 @@ createApp({
 
     // Determines whether to route to Google Gemini's OpenAI endpoint or the Universal Base URL
     const getRequestConfig = (modelName) => {
-      const isGemini = modelName.trim().toLowerCase().startsWith("gemini-");
+      const trimmed = modelName.trim().toLowerCase();
 
-      if (isGemini) {
+      // Route any bare Google-hosted model (gemini-* or gemma-*) directly to Google
+      const isDirectGoogle = trimmed.startsWith("gemini-") || trimmed.startsWith("gemma-");
+
+      if (isDirectGoogle) {
         const key = geminiApiKey.value.trim() || apiKey.value.trim();
         return {
           url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
           key: key,
-          isGemini: true
+          isDirectGoogle: true
         };
       }
 
+      // Everything with a provider prefix (e.g., google/..., minimax/...) goes to OpenRouter / Universal Base URL
       return {
         url: `${baseUrl.value.replace(/\/$/, "")}/chat/completions`,
         key: apiKey.value.trim(),
-        isGemini: false
+        isDirectGoogle: false
       };
     };
 
