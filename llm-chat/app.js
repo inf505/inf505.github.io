@@ -767,21 +767,23 @@ createApp({
 
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
-      } else if (rulesChanged && messages.value.length > 0) {
-        var restartNow = confirm(
-          "Rules updated! Would you like to restart the current topic now to apply these changes?",
-        );
-        if (restartNow) {
-          db.chats.where({ sessionId: currentSessionId.value }).delete();
-          db.facts.where({ sessionId: currentSessionId.value }).delete();
-          db.archives.where({ sessionId: currentSessionId.value }).delete();
-          messages.value = [];
-          facts.value = [];
-          archivedSummaries.value = [];
-          updateCounts();
-          initializeStory();
-        }
       }
+
+      // else if (rulesChanged && messages.value.length > 0) {
+      //   var restartNow = confirm(
+      //     "Rules updated! Would you like to restart the current topic now to apply these changes?",
+      //   );
+      //   if (restartNow) {
+      //     db.chats.where({ sessionId: currentSessionId.value }).delete();
+      //     db.facts.where({ sessionId: currentSessionId.value }).delete();
+      //     db.archives.where({ sessionId: currentSessionId.value }).delete();
+      //     messages.value = [];
+      //     facts.value = [];
+      //     archivedSummaries.value = [];
+      //     updateCounts();
+      //     initializeStory();
+      //   }
+      // }
     };
 
     const scrollToBottom = () => {
