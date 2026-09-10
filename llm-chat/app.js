@@ -77,7 +77,7 @@ createApp({
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
     const newFactText = ref("");
-    const newFactCategory = ref("Concept");
+    const newFactCategory = ref("");
     const facts = ref([]);
     const summaryBatchSize = ref(10);
     const editingMsgId = ref(null);
@@ -267,15 +267,19 @@ createApp({
     const addManualFact = async () => {
       if (!newFactText.value.trim() || !currentSessionId.value) return;
 
+      const rawTag = newFactCategory.value.trim().replace(/^#/, "") || "Fact";
+      const category = rawTag.charAt(0).toUpperCase() + rawTag.slice(1);
+
       try {
         await db.facts.add({
           sessionId: currentSessionId.value,
           text: newFactText.value.trim(),
-          category: newFactCategory.value,
+          category: category,
           timestamp: Date.now(),
         });
 
         newFactText.value = "";
+        newFactCategory.value = ""; // resets back to blank
         await loadFacts();
         await updateCounts();
       } catch (err) {

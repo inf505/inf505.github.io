@@ -271,16 +271,17 @@
                                     "></textarea>
 
                             <div style="display: flex; gap: 8px">
-                                <select v-model="newFactCategory" style="
-                                            flex: 1;
-                                            font-size: 0.8rem;
-                                            height: 32px;
-                                        ">
-                                    <option>Concept</option>
-                                    <option>Premise</option>
-                                    <option>Citation</option>
-                                    <option>Context</option>
-                                </select>
+                                <input type="text" v-model="newFactCategory" placeholder="Tag (default: #Fact)" style="
+                                        flex: 1;
+                                        font-size: 0.85rem;
+                                        height: 32px;
+                                        background: #222;
+                                        color: #fff;
+                                        border: 1px solid #444;
+                                        border-radius: 4px;
+                                        padding: 0 8px;
+                                        box-sizing: border-box;
+                                    " />
                                 <button class="small-btn" @click="addManualFact" :disabled="!newFactText.trim()"
                                     style="flex: 1; height: 32px">
                                     Add Fact
