@@ -114,11 +114,10 @@ createApp({
       return { cleaned: cleaned.trim(), thoughts: thoughts.trim() };
     };
 
-    // Determines whether to route to Google Gemini's OpenAI endpoint or the Universal Base URL
+    // Determines whether to route to Google Gemini's OpenAI endpoint or Universal Base URL
     const getRequestConfig = (modelName) => {
       const trimmed = modelName.trim().toLowerCase();
 
-      // Route any bare Google-hosted model (gemini-* or gemma-*) directly to Google
       const isDirectGoogle = trimmed.startsWith("gemini-") || trimmed.startsWith("gemma-");
 
       if (isDirectGoogle) {
@@ -130,7 +129,6 @@ createApp({
         };
       }
 
-      // Everything with a provider prefix (e.g., google/..., minimax/...) goes to OpenRouter / Universal Base URL
       return {
         url: `${baseUrl.value.replace(/\/$/, "")}/chat/completions`,
         key: apiKey.value.trim(),
@@ -279,6 +277,7 @@ createApp({
 
         newFactText.value = "";
         await loadFacts();
+        await updateCounts();
       } catch (err) {
         console.error("Error adding manual fact:", err);
       }
@@ -324,7 +323,7 @@ createApp({
         RULES:
         1. Merge duplicate concepts and resolve contradictions. Combine all known details about a specific topic or premise into a single, comprehensive entry.
         2. Preserve core definitions, philosophical stances, academic citations, and ongoing debate rules. Do not delete unique ideas.
-        3. Categorize strictly as: Concept, Premise, Citation, Context.
+        3. Maintain appropriate, descriptive categories.
 
         INPUT DATA:
         ${JSON.stringify(cleanFactsForAI, null, 2)}
@@ -334,12 +333,11 @@ createApp({
           "merged_facts": [
             {
               "text": "The details of the fact/concept",
-              "category": "Concept | Premise | Citation | Context"
+              "category": "Category tag name"
             }
           ]
         }`;
 
-        // Replace: const url = `${baseUrl.value.replace(/\/$/, "")}/chat/completions`;
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
 
@@ -388,6 +386,7 @@ createApp({
               });
             }
             await loadFacts();
+            await updateCounts();
           }
         }
       } catch (err) {
@@ -757,9 +756,6 @@ createApp({
     });
 
     const saveAllSettings = () => {
-      var oldRules = localStorage.getItem("story_system_prompt") || "";
-      var rulesChanged = oldRules.trim() !== systemPrompt.value.trim();
-
       localStorage.setItem("story_base_url", baseUrl.value);
       localStorage.setItem("story_api_key", apiKey.value);
       localStorage.setItem("story_model", selectedModel.value);
@@ -780,22 +776,6 @@ createApp({
       if (messages.value.length === 0 && apiKey.value) {
         initializeStory();
       }
-
-      // else if (rulesChanged && messages.value.length > 0) {
-      //   var restartNow = confirm(
-      //     "Rules updated! Would you like to restart the current topic now to apply these changes?",
-      //   );
-      //   if (restartNow) {
-      //     db.chats.where({ sessionId: currentSessionId.value }).delete();
-      //     db.facts.where({ sessionId: currentSessionId.value }).delete();
-      //     db.archives.where({ sessionId: currentSessionId.value }).delete();
-      //     messages.value = [];
-      //     facts.value = [];
-      //     archivedSummaries.value = [];
-      //     updateCounts();
-      //     initializeStory();
-      //   }
-      // }
     };
 
     const scrollToBottom = () => {
@@ -1042,7 +1022,7 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
       try {
         const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
         const factsSummary = allFacts
-          .map((f) => `- [${f.category}] ${f.text}`)
+          .map((f) => `- [${f.category.toUpperCase()}] ${f.text}`)
           .join("\n");
 
         const contents = messages.value.map((msg, index) => {
@@ -1056,9 +1036,10 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
 
           if (index === 0) {
             text = `[KNOWLEDGE BASE / ESTABLISHED FACTS]
-                ${factsSummary || "No facts established yet."}[END KNOWLEDGE BASE]
+${factsSummary || "No facts established yet."}
+[END KNOWLEDGE BASE]
 
-                DISCUSSION PROMPT: ${text}`;
+DISCUSSION PROMPT: ${text}`;
           }
 
           return {
@@ -1159,14 +1140,12 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
           let msgObj = data.choices[0].message;
           let messageContent = msgObj.content || "";
 
-          // 1. Capture API reasoning field (OpenRouter, Nemotron, OpenAI, etc.)
           if (msgObj.reasoning) {
             thoughtText += msgObj.reasoning.trim() + "\n\n";
           } else if (msgObj.reasoning_content) {
             thoughtText += msgObj.reasoning_content.trim() + "\n\n";
           }
 
-          // 2. Capture inline <think> tags if present in message content
           if (messageContent) {
             messageContent = messageContent.replace(
               /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
@@ -1220,10 +1199,50 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
       await updateCounts();
     };
 
+    // --- UPDATED: SEND MESSAGE WITH /fact SLASH COMMAND INTERCEPTOR ---
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
 
+      // Intercept /fact [optional #tag] [text]
+      const factMatch = userText.match(/^\/fact(?:\s+#([a-zA-Z0-9_-]+))?\s+(.+)$/is);
+
+      if (factMatch) {
+        if (!currentSessionId.value) {
+          alert("No active session found.");
+          return;
+        }
+
+        const rawTag = factMatch[1] || "Fact";
+        const category = rawTag.charAt(0).toUpperCase() + rawTag.slice(1);
+        const factText = factMatch[2].trim();
+
+        try {
+          await db.facts.add({
+            sessionId: currentSessionId.value,
+            category: category,
+            text: factText,
+            timestamp: Date.now()
+          });
+
+          currentInput.value = "";
+          await loadFacts();
+          await updateCounts();
+
+          // Reset textarea expanding height back to 1 row
+          nextTick(() => {
+            if (inputArea.value) inputArea.value.style.height = "auto";
+          });
+
+          console.log(`📌 [FACT SAVED] [${category}] ${factText}`);
+        } catch (err) {
+          console.error("Failed to save fact via slash command:", err);
+          alert("Could not save fact: " + err.message);
+        }
+        return; // Halt: do not dispatch to LLM
+      }
+
+      // Standard chat submission continues below
       const userId = await saveToDb("user", userText);
       messages.value.push({ id: userId, role: "user", text: userText, timestamp: Date.now() });
 
@@ -1237,6 +1256,7 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
       await triggerAIResponse();
     };
 
+    // --- UPDATED: DYNAMIC EXPORT GROUPING ---
     const exportStudyGuide = async () => {
       if (messages.value.length === 0) {
         alert("No discussion to export yet!");
@@ -1254,16 +1274,18 @@ If you need to reason, brainstorm, or plan your response, do so natively before 
         md += `## Topic / Custom Instructions\n${systemPrompt.value}\n\n`;
       }
 
-      // 1. Fetch and format Facts / Knowledge Base
+      // 1. Fetch and format Facts / Knowledge Base dynamically
       const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
       if (allFacts.length > 0) {
-        md += `## Knowledge Base / Established Facts\n\n`;
+        md += `## Knowledge Base / Established State\n\n`;
 
-        const categories = ["Concept", "Premise", "Citation", "Context"];
-        categories.forEach(cat => {
+        // Dynamically extract all unique tags used in this session
+        const uniqueCategories = [...new Set(allFacts.map(f => f.category))];
+
+        uniqueCategories.forEach(cat => {
           const catFacts = allFacts.filter(f => f.category === cat);
           if (catFacts.length > 0) {
-            md += `### ${cat}s\n`;
+            md += `### #${cat.toUpperCase()}\n`;
             catFacts.forEach(f => md += `- ${f.text}\n`);
             md += `\n`;
           }

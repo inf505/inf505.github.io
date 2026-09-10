@@ -306,9 +306,20 @@
                             ">
                         <div v-for="fact in facts" :key="fact.id" class="fact-row">
                             <div class="fact-content">
-                                <!-- Badge for Category -->
-                                <span :class="['fact-badge', fact.category.toLowerCase()]">
-                                    {{ fact.category }}
+                                <!-- Dynamic Tag Badge -->
+                                <span class="fact-badge" style="
+                                    background: rgba(255, 157, 0, 0.15);
+                                    color: #ff9d00;
+                                    border: 1px solid rgba(255, 157, 0, 0.35);
+                                    font-weight: 600;
+                                    text-transform: uppercase;
+                                    font-size: 0.7rem;
+                                    padding: 2px 6px;
+                                    border-radius: 4px;
+                                    margin-right: 8px;
+                                    white-space: nowrap;
+                                ">
+                                    #{{ fact.category }}
                                 </span>
                                 <div class="fact-text">{{ fact.text }}</div>
                             </div>
@@ -517,7 +528,8 @@
             <div class="chat-footer">
                 <div class="chat-input-area">
                     <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
-                        placeholder="Write your response..." @focus="scrollToBottom" :disabled="isLoading"></textarea>
+                        placeholder="Write your response, or type /fact #tag to record state..." @focus="scrollToBottom"
+                        :disabled="isLoading"></textarea>
 
                     <button @click="sendMessage" :disabled="isLoading || !currentInput.trim()"
                         aria-label="Send message">
