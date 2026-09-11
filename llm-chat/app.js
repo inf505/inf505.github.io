@@ -1,4 +1,4 @@
-const { createApp, ref, onMounted, nextTick, watch } = Vue;
+const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
 const db = new Dexie("LLMChatDB");
 
@@ -42,6 +42,14 @@ const formatRelativeTime = (timestamp) => {
   return `${days} days ago`;
 };
 
+// Standardizes tag formatting across modal, commands, and AI emissions
+const normalizeCategory = (rawTag, fallback = "Fact") => {
+  if (!rawTag) return fallback;
+  const cleaned = rawTag.trim().replace(/^#+/, "");
+  if (!cleaned) return fallback;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+};
+
 createApp({
   setup() {
     const baseUrl = ref("https://api.openai.com/v1");
@@ -76,9 +84,16 @@ createApp({
     const ttsProsodyNudge = ref(
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
+
+    // Facts state & Iteration 8 enhancements
     const newFactText = ref("");
     const newFactCategory = ref("");
     const facts = ref([]);
+    const activeFactTagFilter = ref("ALL");
+    const editingFactId = ref(null);
+    const editingFactText = ref("");
+    const editingFactCategory = ref("");
+
     const summaryBatchSize = ref(10);
     const editingMsgId = ref(null);
     const editingMsgText = ref("");
@@ -117,7 +132,6 @@ createApp({
     // Determines whether to route to Google Gemini's OpenAI endpoint or Universal Base URL
     const getRequestConfig = (modelName) => {
       const trimmed = modelName.trim().toLowerCase();
-
       const isDirectGoogle = trimmed.startsWith("gemini-") || trimmed.startsWith("gemma-");
 
       if (isDirectGoogle) {
@@ -185,6 +199,58 @@ createApp({
       }
     };
 
+    // --- FACTS INLINE CRUD & FILTERING (ITERATION 8) ---
+    const uniqueFactTags = computed(() => {
+      const set = new Set();
+      facts.value.forEach((f) => {
+        if (f.category) set.add(f.category);
+      });
+      return Array.from(set);
+    });
+
+    const filteredFacts = computed(() => {
+      if (activeFactTagFilter.value === "ALL") {
+        return facts.value;
+      }
+      return facts.value.filter(
+        (f) => (f.category || "").toLowerCase() === activeFactTagFilter.value.toLowerCase()
+      );
+    });
+
+    const startEditFact = (fact) => {
+      editingFactId.value = fact.id;
+      editingFactText.value = fact.text;
+      editingFactCategory.value = fact.category;
+    };
+
+    const cancelEditFact = () => {
+      editingFactId.value = null;
+      editingFactText.value = "";
+      editingFactCategory.value = "";
+    };
+
+    const saveEditFact = async (factId) => {
+      if (!editingFactText.value.trim()) return;
+      const category = normalizeCategory(editingFactCategory.value, "Fact");
+      const text = editingFactText.value.trim();
+
+      try {
+        await db.facts.update(factId, {
+          category: category,
+          text: text,
+          timestamp: Date.now()
+        });
+        editingFactId.value = null;
+        editingFactText.value = "";
+        editingFactCategory.value = "";
+        await loadFacts();
+        await updateCounts();
+      } catch (err) {
+        console.error("Error updating fact:", err);
+        alert("Failed to update fact: " + err.message);
+      }
+    };
+
     const loadSessions = async () => {
       sessions.value = await db.sessions.orderBy("updated").reverse().toArray();
       if (sessions.value.length === 0) {
@@ -208,6 +274,8 @@ createApp({
     const switchSession = async (id) => {
       currentSessionId.value = id;
       isDrawerOpen.value = false;
+      activeFactTagFilter.value = "ALL";
+      cancelEditFact();
       await loadCurrentSessionData();
     };
 
@@ -261,14 +329,14 @@ createApp({
 
     const deleteFact = async (id) => {
       await db.facts.delete(id);
+      if (editingFactId.value === id) cancelEditFact();
       await loadFacts();
+      await updateCounts();
     };
 
     const addManualFact = async () => {
       if (!newFactText.value.trim() || !currentSessionId.value) return;
-
-      const rawTag = newFactCategory.value.trim().replace(/^#/, "") || "Fact";
-      const category = rawTag.charAt(0).toUpperCase() + rawTag.slice(1);
+      const category = normalizeCategory(newFactCategory.value, "Fact");
 
       try {
         await db.facts.add({
@@ -279,7 +347,7 @@ createApp({
         });
 
         newFactText.value = "";
-        newFactCategory.value = ""; // resets back to blank
+        newFactCategory.value = "";
         await loadFacts();
         await updateCounts();
       } catch (err) {
@@ -824,6 +892,8 @@ createApp({
       messages.value = [];
       facts.value = [];
       archivedSummaries.value = [];
+      activeFactTagFilter.value = "ALL";
+      cancelEditFact();
 
       await updateCounts();
 
@@ -989,6 +1059,7 @@ createApp({
       }
     };
 
+    // --- SYSTEM PROMPT WITH AUTONOMOUS FACT EMISSION SPEC (ITERATION 8) ---
     const generateSystemPrompt = () => {
       let personaText = "";
       switch (selectedPersona.value) {
@@ -1011,12 +1082,17 @@ PERSONA & TONE:
 ${personaText}
 ${depthText}
 
+PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
+You possess an active, persistent Knowledge Base. When you establish an important core conclusion, agree on an immutable premise, define a critical term, or discover an evolving variable that must persist across future turns, record it in your response using:
+<fact category="TagName">Fact details or state value</fact>
+The category tag will be indexed for future turns. Keep the text inside the fact concise, objective, and self-contained. You may emit multiple <fact> tags if necessary.
+
 USER CUSTOM INSTRUCTIONS / TOPIC:
 ${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
 
 OUTPUT REQUIREMENTS:
-Please format your response in standard Markdown prose. Do not output JSON.
-If you need to reason, brainstorm, or plan your response, do so natively before outputting the final markdown response.`;
+Please format your response in standard Markdown prose. Do not output raw JSON objects.
+If you need to reason, brainstorm, or plan your response, do so natively in a <think>...</think> block before outputting your response.`;
     };
 
     const triggerAIResponse = async () => {
@@ -1162,6 +1238,41 @@ DISCUSSION PROMPT: ${text}`;
           }
         }
 
+        // --- AUTONOMOUS MODEL-EMITTED FACT PARSER (ITERATION 8) ---
+        const factRegex = /<fact(?:\s+category=["']?([^"'>]+)["']?)?>([\s\S]*?)<\/fact>/gi;
+        let match;
+        const emittedFacts = [];
+
+        while ((match = factRegex.exec(responseText)) !== null) {
+          const rawCat = match[1];
+          const factBody = match[2] ? match[2].trim() : "";
+          if (factBody) {
+            emittedFacts.push({
+              category: normalizeCategory(rawCat, "Fact"),
+              text: factBody
+            });
+          }
+        }
+
+        if (emittedFacts.length > 0 && currentSessionId.value) {
+          for (const ef of emittedFacts) {
+            await db.facts.add({
+              sessionId: currentSessionId.value,
+              category: ef.category,
+              text: ef.text,
+              timestamp: Date.now()
+            });
+            console.log(`🧠 [AI MODEL EMITTED FACT] [${ef.category}] ${ef.text}`);
+          }
+          await loadFacts();
+          await updateCounts();
+        }
+
+        // Scrub <fact> tags cleanly from visible prose
+        responseText = responseText
+          .replace(/<fact(?:\s+category=["']?[^"'>]+["']?)?>[\s\S]*?<\/fact>/gi, "")
+          .replace(/\n{3,}/g, "\n\n");
+
         let finalResponse = responseText.trim() || "*(No response text)*";
         let finalThoughtString = thoughtText.trim();
 
@@ -1203,22 +1314,72 @@ DISCUSSION PROMPT: ${text}`;
       await updateCounts();
     };
 
-    // --- UPDATED: SEND MESSAGE WITH /fact SLASH COMMAND INTERCEPTOR ---
+    // --- SEND MESSAGE WITH /fact AND /set (STATE UPSERT) INTERCEPTORS ---
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
 
-      // Intercept /fact [optional #tag] [text]
-      const factMatch = userText.match(/^\/fact(?:\s+#([a-zA-Z0-9_-]+))?\s+(.+)$/is);
+      // 1. Intercept /set (State Upsert Engine - Iteration 8)
+      const setMatch = userText.match(/^\/set\s+(?:#([a-zA-Z0-9_-]+)\s+)?([\s\S]+)$/i);
+      if (setMatch) {
+        if (!currentSessionId.value) {
+          alert("No active session found.");
+          return;
+        }
 
+        const rawTag = setMatch[1];
+        const category = normalizeCategory(rawTag, "State");
+        const factText = setMatch[2].trim();
+
+        try {
+          // Case-insensitive search for an existing tag entry under the active session
+          const sessionFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
+          const existingEntry = sessionFacts.find(
+            (f) => (f.category || "").toLowerCase() === category.toLowerCase()
+          );
+
+          if (existingEntry) {
+            // In-place update
+            await db.facts.update(existingEntry.id, {
+              text: factText,
+              category: category,
+              timestamp: Date.now()
+            });
+            console.log(`🔄 [STATE UPSERT OVERWRITE] [${category}] ${factText}`);
+          } else {
+            // Insert new entry
+            await db.facts.add({
+              sessionId: currentSessionId.value,
+              category: category,
+              text: factText,
+              timestamp: Date.now()
+            });
+            console.log(`✨ [STATE UPSERT INSERT] [${category}] ${factText}`);
+          }
+
+          currentInput.value = "";
+          await loadFacts();
+          await updateCounts();
+
+          nextTick(() => {
+            if (inputArea.value) inputArea.value.style.height = "auto";
+          });
+        } catch (err) {
+          console.error("Failed to execute /set state upsert:", err);
+          alert("Could not upsert state: " + err.message);
+        }
+        return; // Halt AI turn
+      }
+
+      // 2. Intercept /fact [optional #tag] [text]
+      const factMatch = userText.match(/^\/fact(?:\s+#([a-zA-Z0-9_-]+))?\s+(.+)$/is);
       if (factMatch) {
         if (!currentSessionId.value) {
           alert("No active session found.");
           return;
         }
 
-        const rawTag = factMatch[1] || "Fact";
-        const category = rawTag.charAt(0).toUpperCase() + rawTag.slice(1);
+        const category = normalizeCategory(factMatch[1], "Fact");
         const factText = factMatch[2].trim();
 
         try {
@@ -1233,7 +1394,6 @@ DISCUSSION PROMPT: ${text}`;
           await loadFacts();
           await updateCounts();
 
-          // Reset textarea expanding height back to 1 row
           nextTick(() => {
             if (inputArea.value) inputArea.value.style.height = "auto";
           });
@@ -1243,10 +1403,10 @@ DISCUSSION PROMPT: ${text}`;
           console.error("Failed to save fact via slash command:", err);
           alert("Could not save fact: " + err.message);
         }
-        return; // Halt: do not dispatch to LLM
+        return; // Halt AI turn
       }
 
-      // Standard chat submission continues below
+      // Standard chat submission continues
       const userId = await saveToDb("user", userText);
       messages.value.push({ id: userId, role: "user", text: userText, timestamp: Date.now() });
 
@@ -1260,7 +1420,6 @@ DISCUSSION PROMPT: ${text}`;
       await triggerAIResponse();
     };
 
-    // --- UPDATED: DYNAMIC EXPORT GROUPING ---
     const exportStudyGuide = async () => {
       if (messages.value.length === 0) {
         alert("No discussion to export yet!");
@@ -1283,7 +1442,6 @@ DISCUSSION PROMPT: ${text}`;
       if (allFacts.length > 0) {
         md += `## Knowledge Base / Established State\n\n`;
 
-        // Dynamically extract all unique tags used in this session
         const uniqueCategories = [...new Set(allFacts.map(f => f.category))];
 
         uniqueCategories.forEach(cat => {
@@ -1360,12 +1518,24 @@ DISCUSSION PROMPT: ${text}`;
       ttsProsodyNudge,
       triggerTTS,
       onTTSProviderChange,
+
+      // Facts & Iteration 8 Features
       facts,
+      filteredFacts,
+      uniqueFactTags,
+      activeFactTagFilter,
       loadFacts,
       deleteFact,
       newFactText,
       newFactCategory,
       addManualFact,
+      editingFactId,
+      editingFactText,
+      editingFactCategory,
+      startEditFact,
+      cancelEditFact,
+      saveEditFact,
+
       isOptimizingFacts,
       optimizeFacts,
       isSummarizing,

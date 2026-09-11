@@ -47,6 +47,61 @@
             border-color: #ff9d00 !important;
             background: rgba(255, 157, 0, 0.1) !important;
         }
+
+        /* Tag Filter Pills Bar */
+        .fact-filter-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin-bottom: 8px;
+            scrollbar-width: thin;
+        }
+
+        .fact-filter-pill {
+            background: #222;
+            color: #aaa;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .fact-filter-pill:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        .fact-filter-pill.active {
+            background: #ff9d00;
+            color: #000;
+            border-color: #ff9d00;
+            font-weight: bold;
+        }
+
+        .fact-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .fact-edit-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 2px;
+            line-height: 1;
+        }
+
+        .fact-edit-btn:hover {
+            color: #ff9d00;
+        }
     </style>
 
     <!-- External Libraries -->
@@ -253,7 +308,7 @@
                     </button>
                 </div>
 
-                <!-- TAB CONTENT: FACTS  -->
+                <!-- TAB CONTENT: FACTS (ITERATION 8 CRUD & FILTERING) -->
                 <div v-if="activeTab === 'facts'" class="tab-content">
                     <div class="settings-group">
                         <label>Knowledge Base Grimoire</label>
@@ -264,7 +319,8 @@
                                     border-radius: 8px;
                                     border: 1px solid rgba(255, 255, 255, 0.1);
                                 ">
-                            <textarea v-model="newFactText" placeholder="Add a new fact manually..." rows="2" style="
+                            <textarea v-model="newFactText"
+                                placeholder="Add a new fact manually or use /set #tag <text>..." rows="2" style="
                                         width: 100%;
                                         margin-bottom: 8px;
                                         font-size: 0.9rem;
@@ -300,37 +356,77 @@
                         </button>
                     </div>
 
+                    <!-- Category Filter Pills Bar -->
+                    <div v-if="facts.length > 0" class="fact-filter-bar">
+                        <button :class="['fact-filter-pill', { active: activeFactTagFilter === 'ALL' }]"
+                            @click="activeFactTagFilter = 'ALL'">
+                            ALL ({{ facts.length }})
+                        </button>
+                        <button v-for="tag in uniqueFactTags" :key="tag"
+                            :class="['fact-filter-pill', { active: activeFactTagFilter.toLowerCase() === tag.toLowerCase() }]"
+                            @click="activeFactTagFilter = tag">
+                            #{{ tag }}
+                        </button>
+                    </div>
+
                     <div class="facts-container" style="
                                 max-height: 40vh;
                                 overflow-y: auto;
                                 padding-right: 5px;
                             ">
-                        <div v-for="fact in facts" :key="fact.id" class="fact-row">
-                            <div class="fact-content">
-                                <!-- Dynamic Tag Badge -->
-                                <span class="fact-badge" style="
-                                    background: rgba(255, 157, 0, 0.15);
-                                    color: #ff9d00;
-                                    border: 1px solid rgba(255, 157, 0, 0.35);
-                                    font-weight: 600;
-                                    text-transform: uppercase;
-                                    font-size: 0.7rem;
-                                    padding: 2px 6px;
-                                    border-radius: 4px;
-                                    margin-right: 8px;
-                                    white-space: nowrap;
-                                ">
-                                    #{{ fact.category }}
-                                </span>
-                                <div class="fact-text">{{ fact.text }}</div>
+                        <div v-for="fact in filteredFacts" :key="fact.id" class="fact-row"
+                            style="flex-direction: column; align-items: stretch; gap: 6px;">
+                            <!-- VIEW MODE -->
+                            <div v-if="editingFactId !== fact.id"
+                                style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                                <div class="fact-content" style="flex: 1;">
+                                    <span class="fact-badge" style="
+                                        background: rgba(255, 157, 0, 0.15);
+                                        color: #ff9d00;
+                                        border: 1px solid rgba(255, 157, 0, 0.35);
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        font-size: 0.7rem;
+                                        padding: 2px 6px;
+                                        border-radius: 4px;
+                                        margin-right: 8px;
+                                        white-space: nowrap;
+                                        display: inline-block;
+                                        margin-bottom: 4px;
+                                    ">
+                                        #{{ fact.category }}
+                                    </span>
+                                    <div class="fact-text" style="display: inline;">{{ fact.text }}</div>
+                                </div>
+                                <div class="fact-row-actions">
+                                    <button class="fact-edit-btn" @click="startEditFact(fact)"
+                                        title="Edit Fact">✏️</button>
+                                    <button class="delete-fact-btn" @click="deleteFact(fact.id)"
+                                        title="Delete Fact">&times;</button>
+                                </div>
                             </div>
-                            <button class="delete-fact-btn" @click="deleteFact(fact.id)">
-                                &times;
-                            </button>
+
+                            <!-- INLINE EDIT MODE -->
+                            <div v-else
+                                style="display: flex; flex-direction: column; gap: 8px; width: 100%; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid #444;">
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" v-model="editingFactCategory" placeholder="Tag"
+                                        style="width: 120px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem;" />
+                                    <span style="font-size: 0.75rem; color: #888; align-self: center;">Category
+                                        tag</span>
+                                </div>
+                                <textarea v-model="editingFactText" rows="3"
+                                    style="width: 100%; background: #1a1a1a; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 6px; font-size: 0.85rem; box-sizing: border-box; resize: vertical;"></textarea>
+                                <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                                    <button class="small-btn" @click="cancelEditFact"
+                                        style="background: #333; color: #ccc;">Cancel</button>
+                                    <button class="small-btn apply-btn" @click="saveEditFact(fact.id)">Save</button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div v-if="facts.length === 0" class="empty-facts">
-                            No facts recorded yet.
+                        <div v-if="filteredFacts.length === 0" class="empty-facts">
+                            {{ facts.length === 0 ? "No facts recorded yet." : "No facts match this filter." }}
                         </div>
                     </div>
                 </div>
@@ -529,7 +625,7 @@
             <div class="chat-footer">
                 <div class="chat-input-area">
                     <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
-                        placeholder="Write your response, or type /fact #tag to record state..." @focus="scrollToBottom"
+                        placeholder="Type a message, /fact #tag <text>, or /set #tag <text>..." @focus="scrollToBottom"
                         :disabled="isLoading"></textarea>
 
                     <button @click="sendMessage" :disabled="isLoading || !currentInput.trim()"
