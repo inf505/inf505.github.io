@@ -214,9 +214,10 @@
                             used.</small>
                     </div>
 
+                    <!-- ITERATION 9: FLEXIBLE PERSONA ARCHITECTURE -->
                     <div class="settings-group">
-                        <label>Persona / Pedagogical Mode:</label>
-                        <select v-model="selectedPersona"
+                        <label>Persona / Pedagogical Role Template:</label>
+                        <select v-model="selectedPersona" @change="onPersonaChange"
                             style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
                             <option value="socratic">🏛️ Socratic Dialogue Partner</option>
                             <option value="feynman">⚛️ Feynman Educator</option>
@@ -228,7 +229,16 @@
                     </div>
 
                     <div class="settings-group">
-                        <label>Explanation Depth:</label>
+                        <label>Persona Directive (Editable Instructions):</label>
+                        <textarea v-model="personaDirective" rows="3"
+                            placeholder="Detailed persona prompt instructions injected into the system prompt..."></textarea>
+                        <small>Tweak preset instructions or formulate your own custom persona. Selecting a preset
+                            updates this field with starter text.</small>
+                    </div>
+
+                    <!-- ITERATION 9: CUSTOM DEPTH ENGINE -->
+                    <div class="settings-group">
+                        <label>Explanation Depth & Granularity:</label>
                         <div style="display: flex; gap: 8px; margin-top: 5px;">
                             <button
                                 :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'eli5' ? '#ff9d00' : '#222', color: selectedDepth === 'eli5' ? '#000' : '#fff', fontWeight: selectedDepth === 'eli5' ? 'bold' : 'normal', cursor: 'pointer' }"
@@ -239,6 +249,25 @@
                             <button
                                 :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'deep' ? '#ff9d00' : '#222', color: selectedDepth === 'deep' ? '#000' : '#fff', fontWeight: selectedDepth === 'deep' ? 'bold' : 'normal', cursor: 'pointer' }"
                                 @click="selectedDepth = 'deep'">Academic</button>
+                            <button
+                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'custom' ? '#ff9d00' : '#222', color: selectedDepth === 'custom' ? '#000' : '#fff', fontWeight: selectedDepth === 'custom' ? 'bold' : 'normal', cursor: 'pointer' }"
+                                @click="selectedDepth = 'custom'">Custom</button>
+                        </div>
+
+                        <!-- Custom Depth Modifier Field & Quick Chips -->
+                        <div v-if="selectedDepth === 'custom'"
+                            style="margin-top: 10px; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; border: 1px solid #333;">
+                            <label style="font-size: 0.8rem; color: #ff9d00;">Custom Depth Directive / Modifier:</label>
+                            <input type="text" v-model="customDepthDirective"
+                                placeholder="e.g., Explain using only culinary analogies, Executive Summary, Code-heavy..."
+                                style="width: 100%; height: 32px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 0 8px; margin-top: 5px; box-sizing: border-box;" />
+
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+                                <button v-for="chip in quickDepthChips" :key="chip" class="fact-filter-pill"
+                                    @click="setQuickDepth(chip)" style="font-size: 0.7rem; padding: 2px 8px;">
+                                    + {{ chip }}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -625,8 +654,8 @@
             <div class="chat-footer">
                 <div class="chat-input-area">
                     <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
-                        placeholder="Type a message, /fact #tag <text>, or /set #tag <text>..." @focus="scrollToBottom"
-                        :disabled="isLoading"></textarea>
+                        placeholder="Type a message, /fact, /set, /persona <text>, or /depth <text>..."
+                        @focus="scrollToBottom" :disabled="isLoading"></textarea>
 
                     <button @click="sendMessage" :disabled="isLoading || !currentInput.trim()"
                         aria-label="Send message">

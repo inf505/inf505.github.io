@@ -50,6 +50,22 @@ const normalizeCategory = (rawTag, fallback = "Fact") => {
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
+// Iteration 9: Preset Directive Maps
+const PERSONA_PRESETS = {
+  socratic: "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry.",
+  feynman: "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy.",
+  devil: "You are a Devil's Advocate. Your goal is to critique arguments, highlight logical fallacies, and present strong opposing stances to test the robustness of the user's ideas.",
+  scholar: "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time.",
+  reviewer: "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence.",
+  custom: "You are an expert dialogue partner."
+};
+
+const DEPTH_PRESETS = {
+  eli5: "Keep explanations extremely simple, accessible, and free of unnecessary jargon. Explain as if to an intelligent beginner (ELI5).",
+  balanced: "Maintain a standard, balanced academic tone. Use appropriate terminology but ensure clarity for a general educated audience.",
+  deep: "Use maximal academic and technical rigor. Do not shy away from complex jargon, deep theoretical nuances, or advanced conceptual frameworks."
+};
+
 createApp({
   setup() {
     const baseUrl = ref("https://api.openai.com/v1");
@@ -58,8 +74,20 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
 
+    // Iteration 9: Persona & Depth Reactive State
     const selectedPersona = ref("socratic");
+    const personaDirective = ref(PERSONA_PRESETS.socratic);
+
     const selectedDepth = ref("balanced");
+    const customDepthDirective = ref("");
+    const quickDepthChips = ref([
+      "Executive Summary",
+      "Metaphor-only",
+      "Post-Doctoral Rigor",
+      "Code-heavy",
+      "Bullet Points Only",
+      "Culinary Analogies Only"
+    ]);
 
     const sessions = ref([]);
     const currentSessionId = ref(null);
@@ -117,16 +145,15 @@ createApp({
         .filter((m) => m.length > 0);
     };
 
-    const extractThoughts = (text) => {
-      let thoughts = "";
-      const cleaned = text.replace(
-        /<(think|thought|thinking|reason|reasoning|scratchpad)>([\s\S]*?)<\/\1>/gi,
-        (m, tag, inner) => {
-          thoughts += inner.trim() + "\n\n";
-          return "";
-        }
-      );
-      return { cleaned: cleaned.trim(), thoughts: thoughts.trim() };
+    const onPersonaChange = () => {
+      if (PERSONA_PRESETS[selectedPersona.value]) {
+        personaDirective.value = PERSONA_PRESETS[selectedPersona.value];
+      }
+    };
+
+    const setQuickDepth = (chip) => {
+      selectedDepth.value = "custom";
+      customDepthDirective.value = chip;
     };
 
     // Determines whether to route to Google Gemini's OpenAI endpoint or Universal Base URL
@@ -392,23 +419,23 @@ createApp({
 
         const prompt = `You are an AI knowledge base manager for an intellectual discussion. Your task is to optimize an array of established concepts, premises, and contextual notes.
 
-        RULES:
-        1. Merge duplicate concepts and resolve contradictions. Combine all known details about a specific topic or premise into a single, comprehensive entry.
-        2. Preserve core definitions, philosophical stances, academic citations, and ongoing debate rules. Do not delete unique ideas.
-        3. Maintain appropriate, descriptive categories.
+RULES:
+1. Merge duplicate concepts and resolve contradictions. Combine all known details about a specific topic or premise into a single, comprehensive entry.
+2. Preserve core definitions, philosophical stances, academic citations, and ongoing debate rules. Do not delete unique ideas.
+3. Maintain appropriate, descriptive categories.
 
-        INPUT DATA:
-        ${JSON.stringify(cleanFactsForAI, null, 2)}
+INPUT DATA:
+${JSON.stringify(cleanFactsForAI, null, 2)}
 
-        You MUST return a valid JSON object matching this schema format:
-        {
-          "merged_facts": [
-            {
-              "text": "The details of the fact/concept",
-              "category": "Category tag name"
-            }
-          ]
-        }`;
+You MUST return a valid JSON object matching this schema format:
+{
+  "merged_facts": [
+    {
+      "text": "The details of the fact/concept",
+      "category": "Category tag name"
+    }
+  ]
+}`;
 
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
@@ -508,17 +535,17 @@ createApp({
           .join("\n\n");
 
         const prompt = `Summarize the following chronological excerpt of a discussion into a highly dense, information-packed paragraph.
-              Focus entirely on critical intellectual progression, major breakthroughs, and core concepts.
+Focus entirely on critical intellectual progression, major breakthroughs, and core concepts.
 
-              CRITICAL RULES:
-              1. SHIFT POV: Write objectively about the discussion in the third-person.
-              2. MAXIMIZE DENSITY: Strip out conversational fluff. Condense the events into concise, factual narrative history.
+CRITICAL RULES:
+1. SHIFT POV: Write objectively about the discussion in the third-person.
+2. MAXIMIZE DENSITY: Strip out conversational fluff. Condense the events into concise, factual narrative history.
 
-              DISCUSSION EXCERPT:
-              ${transcript}
+DISCUSSION EXCERPT:
+${transcript}
 
-              OUTPUT REQUIREMENTS:
-              Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
+OUTPUT REQUIREMENTS:
+Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
 
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
@@ -630,13 +657,13 @@ createApp({
           .join("\n\n");
 
         const prompt = `You are an expert summarizer. Summarize the following sequential summaries into a single, cohesive "The Discussion So Far" narrative arc.
-          Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
+Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
 
-          PREVIOUS SUMMARIES:
-          ${transcript}
+PREVIOUS SUMMARIES:
+${transcript}
 
-          OUTPUT REQUIREMENTS:
-          Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
+OUTPUT REQUIREMENTS:
+Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
 
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
@@ -768,8 +795,24 @@ createApp({
       if (localStorage.getItem("story_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
 
-      if (localStorage.getItem("story_persona")) selectedPersona.value = localStorage.getItem("story_persona");
-      if (localStorage.getItem("story_depth")) selectedDepth.value = localStorage.getItem("story_depth");
+      // Iteration 9: Persona and Depth Restoration
+      const storedPersona = localStorage.getItem("story_persona");
+      if (storedPersona) selectedPersona.value = storedPersona;
+
+      const storedDirective = localStorage.getItem("story_persona_directive");
+      if (storedDirective !== null) {
+        personaDirective.value = storedDirective;
+      } else if (PERSONA_PRESETS[selectedPersona.value]) {
+        personaDirective.value = PERSONA_PRESETS[selectedPersona.value];
+      }
+
+      const storedDepth = localStorage.getItem("story_depth");
+      if (storedDepth) selectedDepth.value = storedDepth;
+
+      const storedDepthDirective = localStorage.getItem("story_depth_directive");
+      if (storedDepthDirective !== null) {
+        customDepthDirective.value = storedDepthDirective;
+      }
 
       if (storedKey && storedModel) {
         apiKey.value = storedKey;
@@ -839,8 +882,11 @@ createApp({
       localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
       localStorage.setItem("story_summary_batch", summaryBatchSize.value);
 
+      // Iteration 9 Persistence
       localStorage.setItem("story_persona", selectedPersona.value);
+      localStorage.setItem("story_persona_directive", personaDirective.value);
       localStorage.setItem("story_depth", selectedDepth.value);
+      localStorage.setItem("story_depth_directive", customDepthDirective.value);
 
       showSettings.value = false;
       isConfigured.value = true;
@@ -1059,27 +1105,30 @@ createApp({
       }
     };
 
-    // --- SYSTEM PROMPT WITH AUTONOMOUS FACT EMISSION SPEC (ITERATION 8) ---
+    // --- ITERATION 9: DYNAMIC PROMPT COMPOSITION (CUSTOM PERSONA & DEPTH) ---
     const generateSystemPrompt = () => {
-      let personaText = "";
-      switch (selectedPersona.value) {
-        case "socratic": personaText = "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry."; break;
-        case "feynman": personaText = "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy."; break;
-        case "devil": personaText = "You are a Devil's Advocate. Your goal is to critique arguments, highlight logical fallacies, and present strong opposing stances to test the robustness of the user's ideas."; break;
-        case "scholar": personaText = "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time."; break;
-        case "reviewer": personaText = "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence."; break;
-        case "custom": personaText = "You are an expert dialogue partner."; break;
-      }
+      // Persona: prioritizes user's custom / edited directive
+      const personaText = personaDirective.value.trim()
+        ? personaDirective.value.trim()
+        : (PERSONA_PRESETS[selectedPersona.value] || "You are an expert dialogue partner.");
 
+      // Depth: evaluates standard presets or custom instruction
       let depthText = "";
-      if (selectedDepth.value === "eli5") depthText = "DEPTH: Keep explanations extremely simple, accessible, and free of unnecessary jargon. Explain as if to an intelligent beginner (ELI5).";
-      else if (selectedDepth.value === "balanced") depthText = "DEPTH: Maintain a standard, balanced academic tone. Use appropriate terminology but ensure clarity for a general educated audience.";
-      else if (selectedDepth.value === "deep") depthText = "DEPTH: Use maximal academic and technical rigor. Do not shy away from complex jargon, deep theoretical nuances, or advanced conceptual frameworks.";
+      if (selectedDepth.value === "custom") {
+        depthText = customDepthDirective.value.trim()
+          ? `DEPTH & STYLE CONSTRAINT:\n${customDepthDirective.value.trim()}`
+          : "DEPTH: Tailor depth to the user's explicit level of understanding.";
+      } else if (DEPTH_PRESETS[selectedDepth.value]) {
+        depthText = `DEPTH:\n${DEPTH_PRESETS[selectedDepth.value]}`;
+      } else {
+        depthText = `DEPTH:\n${DEPTH_PRESETS.balanced}`;
+      }
 
       return `TASK: Engage with the user in rigorous, nuanced discussions based on the provided topic.
 
 PERSONA & TONE:
 ${personaText}
+
 ${depthText}
 
 PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
@@ -1238,7 +1287,7 @@ DISCUSSION PROMPT: ${text}`;
           }
         }
 
-        // --- AUTONOMOUS MODEL-EMITTED FACT PARSER (ITERATION 8) ---
+        // --- AUTONOMOUS MODEL-EMITTED FACT PARSER ---
         const factRegex = /<fact(?:\s+category=["']?([^"'>]+)["']?)?>([\s\S]*?)<\/fact>/gi;
         let match;
         const emittedFacts = [];
@@ -1314,12 +1363,70 @@ DISCUSSION PROMPT: ${text}`;
       await updateCounts();
     };
 
-    // --- SEND MESSAGE WITH /fact AND /set (STATE UPSERT) INTERCEPTORS ---
+    // --- SEND MESSAGE WITH COMMAND INTERCEPTORS (/persona, /depth, /set, /fact) ---
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
 
-      // 1. Intercept /set (State Upsert Engine - Iteration 8)
+      // 1. Intercept /persona <preset | custom instructions> (Iteration 9)
+      const personaMatch = userText.match(/^\/persona(?:\s+([\s\S]+))?$/i);
+      if (personaMatch) {
+        const directiveArg = (personaMatch[1] || "").trim();
+        const lowerArg = directiveArg.toLowerCase();
+
+        if (PERSONA_PRESETS[lowerArg]) {
+          selectedPersona.value = lowerArg;
+          personaDirective.value = PERSONA_PRESETS[lowerArg];
+        } else if (directiveArg) {
+          selectedPersona.value = "custom";
+          personaDirective.value = directiveArg;
+        } else {
+          selectedPersona.value = "socratic";
+          personaDirective.value = PERSONA_PRESETS.socratic;
+        }
+
+        localStorage.setItem("story_persona", selectedPersona.value);
+        localStorage.setItem("story_persona_directive", personaDirective.value);
+        console.log(`🎭 [PERSONA UPDATED] Mode: ${selectedPersona.value} | Directive: ${personaDirective.value}`);
+
+        currentInput.value = "";
+        nextTick(() => {
+          if (inputArea.value) inputArea.value.style.height = "auto";
+        });
+        return; // Halt AI turn
+      }
+
+      // 2. Intercept /depth <eli5 | balanced | deep/academic | custom text> (Iteration 9)
+      const depthMatch = userText.match(/^\/depth(?:\s+([\s\S]+))?$/i);
+      if (depthMatch) {
+        const depthArg = (depthMatch[1] || "").trim();
+        const lowerDepth = depthArg.toLowerCase();
+
+        if (lowerDepth === "eli5") {
+          selectedDepth.value = "eli5";
+        } else if (lowerDepth === "balanced") {
+          selectedDepth.value = "balanced";
+        } else if (lowerDepth === "academic" || lowerDepth === "deep") {
+          selectedDepth.value = "deep";
+        } else if (depthArg) {
+          selectedDepth.value = "custom";
+          customDepthDirective.value = depthArg;
+        } else {
+          selectedDepth.value = "balanced";
+        }
+
+        localStorage.setItem("story_depth", selectedDepth.value);
+        localStorage.setItem("story_depth_directive", customDepthDirective.value);
+        console.log(`📏 [DEPTH UPDATED] Mode: ${selectedDepth.value} | Custom: ${customDepthDirective.value}`);
+
+        currentInput.value = "";
+        nextTick(() => {
+          if (inputArea.value) inputArea.value.style.height = "auto";
+        });
+        return; // Halt AI turn
+      }
+
+      // 3. Intercept /set (State Upsert Engine - Iteration 8)
       const setMatch = userText.match(/^\/set\s+(?:#([a-zA-Z0-9_-]+)\s+)?([\s\S]+)$/i);
       if (setMatch) {
         if (!currentSessionId.value) {
@@ -1332,14 +1439,12 @@ DISCUSSION PROMPT: ${text}`;
         const factText = setMatch[2].trim();
 
         try {
-          // Case-insensitive search for an existing tag entry under the active session
           const sessionFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
           const existingEntry = sessionFacts.find(
             (f) => (f.category || "").toLowerCase() === category.toLowerCase()
           );
 
           if (existingEntry) {
-            // In-place update
             await db.facts.update(existingEntry.id, {
               text: factText,
               category: category,
@@ -1347,7 +1452,6 @@ DISCUSSION PROMPT: ${text}`;
             });
             console.log(`🔄 [STATE UPSERT OVERWRITE] [${category}] ${factText}`);
           } else {
-            // Insert new entry
             await db.facts.add({
               sessionId: currentSessionId.value,
               category: category,
@@ -1371,7 +1475,7 @@ DISCUSSION PROMPT: ${text}`;
         return; // Halt AI turn
       }
 
-      // 2. Intercept /fact [optional #tag] [text]
+      // 4. Intercept /fact [optional #tag] [text]
       const factMatch = userText.match(/^\/fact(?:\s+#([a-zA-Z0-9_-]+))?\s+(.+)$/is);
       if (factMatch) {
         if (!currentSessionId.value) {
@@ -1429,15 +1533,24 @@ DISCUSSION PROMPT: ${text}`;
       let currentSession = sessions.value.find(s => s.id === currentSessionId.value);
       let sessionTitle = currentSession ? currentSession.title : "Discussion";
 
+      let depthSummary = selectedDepth.value;
+      if (selectedDepth.value === "custom") {
+        depthSummary = `Custom (${customDepthDirective.value || "Dynamic"})`;
+      }
+
       let md = `# Intellectual Exploration: ${sessionTitle}\n\n`;
       md += `**Date:** ${new Date().toLocaleString()}\n`;
-      md += `**Persona:** ${selectedPersona.value} | **Depth:** ${selectedDepth.value}\n\n`;
+      md += `**Persona:** ${selectedPersona.value} | **Depth:** ${depthSummary}\n\n`;
+
+      if (personaDirective.value) {
+        md += `> **Persona Directive:** ${personaDirective.value}\n\n`;
+      }
 
       if (systemPrompt.value) {
         md += `## Topic / Custom Instructions\n${systemPrompt.value}\n\n`;
       }
 
-      // 1. Fetch and format Facts / Knowledge Base dynamically
+      // Fetch and format Facts / Knowledge Base dynamically
       const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
       if (allFacts.length > 0) {
         md += `## Knowledge Base / Established State\n\n`;
@@ -1456,7 +1569,7 @@ DISCUSSION PROMPT: ${text}`;
 
       md += `---\n\n## Discussion History\n\n`;
 
-      // 2. Format Chat History
+      // Format Chat History
       messages.value.forEach(msg => {
         if (msg.role === "user") {
           md += `### 👤 User\n${msg.text}\n\n`;
@@ -1550,8 +1663,15 @@ DISCUSSION PROMPT: ${text}`;
       superSummaryBatchSize,
       isSuperSummarizing,
       superSummarizeStory,
+
+      // Iteration 9: Flexible Persona & Custom Depth Engine
       selectedPersona,
+      personaDirective,
+      onPersonaChange,
       selectedDepth,
+      customDepthDirective,
+      quickDepthChips,
+      setQuickDepth,
       exportStudyGuide,
 
       // Multi-Session Features
