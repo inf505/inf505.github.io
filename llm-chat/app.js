@@ -1,5 +1,65 @@
 const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
+// --- DYNAMIC KATEX & MHCHEM ON-DEMAND LOADER ---
+let katexLoadingPromise = null;
+
+const hasMathSyntax = (text) => {
+  if (!text) return false;
+  // Detects $...$, $$...$$, \[...\], \(...\), or \ce{...}
+  return /(?:\$\$[\s\S]+?\$\$|\$[^\$\n]+?\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{)/.test(text);
+};
+
+const hasMhchemSyntax = (text) => {
+  if (!text) return false;
+  return /\\ce\{/.test(text);
+};
+
+const loadScript = (src) => {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) return resolve();
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.crossOrigin = "anonymous";
+    script.onload = () => resolve();
+    script.onerror = (e) => reject(e);
+    document.head.appendChild(script);
+  });
+};
+
+const loadStylesheet = (href) => {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+};
+
+const ensureKaTeXLoaded = async (includeMhchem = false) => {
+  if (!katexLoadingPromise) {
+    katexLoadingPromise = (async () => {
+      // 1. Inject KaTeX CSS
+      loadStylesheet("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css");
+      // 2. Inject KaTeX core JavaScript
+      if (!window.katex) {
+        await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js");
+      }
+    })();
+  }
+  await katexLoadingPromise;
+
+  // 3. Sequentially load mhchem if chemistry notation is present
+  if (includeMhchem && (!window.katex || !window.katex.__mhchemLoaded)) {
+    await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/mhchem.min.js");
+    if (window.katex) window.katex.__mhchemLoaded = true;
+  }
+
+  return window.katex;
+};
+
+// --- DATABASE SCHEMA ---
 const db = new Dexie("LLMChatDB");
 
 db.version(3).stores({
@@ -73,6 +133,9 @@ createApp({
     const selectedModel = ref("gpt-4o-mini");
     const isConfigured = ref(false);
     const systemPrompt = ref("");
+
+    // Reactive flag for KaTeX availability
+    const katexReady = ref(false);
 
     // Iteration 9: Persona & Depth Reactive State
     const selectedPersona = ref("socratic");
@@ -495,7 +558,57 @@ You MUST return a valid JSON object matching this schema format:
       }
     };
 
-    const renderMarkdown = (text) => marked.parse(text);
+    // --- KATEX PRE-PROCESSOR & MARKDOWN RENDERER ---
+    const renderMathInText = (text) => {
+      if (!window.katex) return text;
+
+      // 1. Display math: $$...$$ or \[...\]
+      text = text.replace(/(\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\])/g, (match, full, inner1, inner2) => {
+        const formula = (inner1 || inner2 || "").trim();
+        if (!formula) return match;
+        try {
+          return window.katex.renderToString(formula, { displayMode: true, throwOnError: false });
+        } catch (e) {
+          return match;
+        }
+      });
+
+      // 2. Inline math: $...$ or \(...\)
+      text = text.replace(/(\$([^\$\n]+?)\$|\\\(([\s\S]+?)\\\))/g, (match, full, inner1, inner2) => {
+        const formula = (inner1 || inner2 || "").trim();
+        if (!formula) return match;
+        try {
+          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false });
+        } catch (e) {
+          return match;
+        }
+      });
+
+      return text;
+    };
+
+    const renderMarkdown = (text) => {
+      if (!text) return "";
+
+      // Lazy load KaTeX and optional mhchem only when math syntax is detected
+      if (hasMathSyntax(text)) {
+        const needsMhchem = hasMhchemSyntax(text);
+        if (!window.katex || (needsMhchem && !window.katex.__mhchemLoaded)) {
+          ensureKaTeXLoaded(needsMhchem)
+            .then(() => {
+              katexReady.value = true;
+            })
+            .catch((err) => console.error("Failed to load KaTeX:", err));
+        }
+      }
+
+      // Reading katexReady registers Vue reactive dependency so it re-evaluates once KaTeX loads
+      const _ = katexReady.value;
+
+      // Pre-render KaTeX HTML spans before marked can interpret subscripts/asterisks
+      const mathRenderedText = window.katex ? renderMathInText(text) : text;
+      return marked.parse(mathRenderedText);
+    };
 
     const summarizeStory = async () => {
       if (!apiKey.value) {
@@ -1107,12 +1220,10 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
 
     // --- ITERATION 9: DYNAMIC PROMPT COMPOSITION (CUSTOM PERSONA & DEPTH) ---
     const generateSystemPrompt = () => {
-      // Persona: prioritizes user's custom / edited directive
       const personaText = personaDirective.value.trim()
         ? personaDirective.value.trim()
         : (PERSONA_PRESETS[selectedPersona.value] || "You are an expert dialogue partner.");
 
-      // Depth: evaluates standard presets or custom instruction
       let depthText = "";
       if (selectedDepth.value === "custom") {
         depthText = customDepthDirective.value.trim()
@@ -1393,7 +1504,7 @@ DISCUSSION PROMPT: ${text}`;
         nextTick(() => {
           if (inputArea.value) inputArea.value.style.height = "auto";
         });
-        return; // Halt AI turn
+        return;
       }
 
       // 2. Intercept /depth <eli5 | balanced | deep/academic | custom text> (Iteration 9)
@@ -1423,7 +1534,7 @@ DISCUSSION PROMPT: ${text}`;
         nextTick(() => {
           if (inputArea.value) inputArea.value.style.height = "auto";
         });
-        return; // Halt AI turn
+        return;
       }
 
       // 3. Intercept /set (State Upsert Engine - Iteration 8)
@@ -1472,7 +1583,7 @@ DISCUSSION PROMPT: ${text}`;
           console.error("Failed to execute /set state upsert:", err);
           alert("Could not upsert state: " + err.message);
         }
-        return; // Halt AI turn
+        return;
       }
 
       // 4. Intercept /fact [optional #tag] [text]
@@ -1507,7 +1618,7 @@ DISCUSSION PROMPT: ${text}`;
           console.error("Failed to save fact via slash command:", err);
           alert("Could not save fact: " + err.message);
         }
-        return; // Halt AI turn
+        return;
       }
 
       // Standard chat submission continues
@@ -1550,7 +1661,6 @@ DISCUSSION PROMPT: ${text}`;
         md += `## Topic / Custom Instructions\n${systemPrompt.value}\n\n`;
       }
 
-      // Fetch and format Facts / Knowledge Base dynamically
       const allFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
       if (allFacts.length > 0) {
         md += `## Knowledge Base / Established State\n\n`;
@@ -1569,7 +1679,6 @@ DISCUSSION PROMPT: ${text}`;
 
       md += `---\n\n## Discussion History\n\n`;
 
-      // Format Chat History
       messages.value.forEach(msg => {
         if (msg.role === "user") {
           md += `### 👤 User\n${msg.text}\n\n`;

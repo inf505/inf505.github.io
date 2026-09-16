@@ -555,3 +555,16 @@ button.small-btn {
         max-width: 95%; /* Slightly wider bubble max-width for desktop reading */
     }
 }
+/* Prevent long equations from breaking out of chat bubbles on mobile */
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0;
+    margin: 0.5em 0 !important;
+}
+
+/* Ensure inline math doesn't cause awkward line height distortion */
+.katex {
+    font-size: 1.05em;
+    text-rendering: auto;
+}
