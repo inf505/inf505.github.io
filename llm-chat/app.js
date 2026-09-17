@@ -3,10 +3,15 @@ const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 // --- DYNAMIC KATEX & MHCHEM ON-DEMAND LOADER ---
 let katexLoadingPromise = null;
 
+// --- HARDENED MATH DETECTION (CURRENCY-SAFE) ---
 const hasMathSyntax = (text) => {
   if (!text) return false;
-  // Detects $...$, $$...$$, \[...\], \(...\), or \ce{...}
-  return /(?:\$\$[\s\S]+?\$\$|\$[^\$\n]+?\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{)/.test(text);
+  // Matches:
+  // 1. Block math: $$...$$ or \[...\]
+  // 2. LaTeX inline: \(...\)
+  // 3. Chemistry: \ce{...}
+  // 4. Inline $: Must NOT be followed by a space or digit ($50, $0.50), and must not end with a space
+  return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{|(?<![\$\\])\$(?!\s|\d)(?:[^\$\n]|\\\$)+?(?<!\s)\$(?!\d))/.test(text);
 };
 
 const hasMhchemSyntax = (text) => {
@@ -558,7 +563,7 @@ You MUST return a valid JSON object matching this schema format:
       }
     };
 
-    // --- KATEX PRE-PROCESSOR & MARKDOWN RENDERER ---
+    // --- HARDENED KATEX PRE-PROCESSOR ---
     const renderMathInText = (text) => {
       if (!window.katex) return text;
 
@@ -573,9 +578,25 @@ You MUST return a valid JSON object matching this schema format:
         }
       });
 
-      // 2. Inline math: $...$ or \(...\)
-      text = text.replace(/(\$([^\$\n]+?)\$|\\\(([\s\S]+?)\\\))/g, (match, full, inner1, inner2) => {
-        const formula = (inner1 || inner2 || "").trim();
+      // 2. Explicit LaTeX inline: \(...\)
+      text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, inner) => {
+        const formula = (inner || "").trim();
+        if (!formula) return match;
+        try {
+          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false });
+        } catch (e) {
+          return match;
+        }
+      });
+
+      // 3. Currency-safe inline math: $...$
+      // - (?<![\$\\])\$  : Opening $ not preceded by $ or \
+      // - (?!\s|\d)      : Opening $ NOT followed by a space or digit ($0.50, $100)
+      // - ((?:[^\$\n]|\\\$)+?) : The math formula
+      // - (?<!\s)\$      : Closing $ NOT preceded by a space
+      // - (?!\d)         : Closing $ NOT immediately followed by a digit
+      text = text.replace(/(?<![\$\\])\$(?!\s|\d)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
+        const formula = (inner || "").trim();
         if (!formula) return match;
         try {
           return window.katex.renderToString(formula, { displayMode: false, throwOnError: false });
