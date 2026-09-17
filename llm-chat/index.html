@@ -102,12 +102,76 @@
         .fact-edit-btn:hover {
             color: #ff9d00;
         }
+
+        /* Code Highlighting Tweaks */
+        pre code.hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 12px;
+            border-radius: 6px;
+            background: #141414;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            border: 1px solid #2a2a2a;
+        }
+
+        /* Mermaid Diagram Container */
+        .mermaid-container {
+            background: #151515;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 12px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .mermaid-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Academic Footnotes (marked-footnote) */
+        .footnotes {
+            margin-top: 24px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .footnotes ol {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
+        .footnotes li {
+            margin-bottom: 6px;
+        }
+
+        .data-footnote-backref {
+            text-decoration: none;
+            margin-left: 6px;
+            color: #ff9d00;
+            font-weight: bold;
+        }
+
+        .data-footnote-ref a {
+            text-decoration: none;
+            color: #ff9d00;
+            font-weight: bold;
+            padding: 0 2px;
+        }
     </style>
 
-    <!-- External Libraries -->
+    <!-- Core External Libraries -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Footnote Extension & DOMPurify Sanitizer -->
+    <script src="https://cdn.jsdelivr.net/npm/marked-footnote/dist/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 </head>
 
 <body>

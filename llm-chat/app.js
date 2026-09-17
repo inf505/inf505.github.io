@@ -1,24 +1,6 @@
 const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
-// --- DYNAMIC KATEX & MHCHEM ON-DEMAND LOADER ---
-let katexLoadingPromise = null;
-
-// --- HARDENED MATH DETECTION (CURRENCY-SAFE) ---
-const hasMathSyntax = (text) => {
-  if (!text) return false;
-  // Matches:
-  // 1. Block math: $$...$$ or \[...\]
-  // 2. LaTeX inline: \(...\)
-  // 3. Chemistry: \ce{...}
-  // 4. Inline $: Must NOT be followed by a space or digit ($50, $0.50), and must not end with a space
-  return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{|(?<![\$\\])\$(?!\s|\d)(?:[^\$\n]|\\\$)+?(?<!\s)\$(?!\d))/.test(text);
-};
-
-const hasMhchemSyntax = (text) => {
-  if (!text) return false;
-  return /\\ce\{/.test(text);
-};
-
+// --- COMMON ASSET INJECTION HELPERS ---
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
@@ -42,12 +24,32 @@ const loadStylesheet = (href) => {
   document.head.appendChild(link);
 };
 
+const escapeHtml = (str) => {
+  return (str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+// --- DYNAMIC KATEX & MHCHEM ON-DEMAND LOADER ---
+let katexLoadingPromise = null;
+
+const hasMathSyntax = (text) => {
+  if (!text) return false;
+  return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{|(?<![\$\\])\$(?!\s|\d)(?:[^\$\n]|\\\$)+?(?<!\s)\$(?!\d))/.test(text);
+};
+
+const hasMhchemSyntax = (text) => {
+  if (!text) return false;
+  return /\\ce\{/.test(text);
+};
+
 const ensureKaTeXLoaded = async (includeMhchem = false) => {
   if (!katexLoadingPromise) {
     katexLoadingPromise = (async () => {
-      // 1. Inject KaTeX CSS
       loadStylesheet("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css");
-      // 2. Inject KaTeX core JavaScript
       if (!window.katex) {
         await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js");
       }
@@ -55,13 +57,130 @@ const ensureKaTeXLoaded = async (includeMhchem = false) => {
   }
   await katexLoadingPromise;
 
-  // 3. Sequentially load mhchem if chemistry notation is present
   if (includeMhchem && (!window.katex || !window.katex.__mhchemLoaded)) {
     await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/mhchem.min.js");
     if (window.katex) window.katex.__mhchemLoaded = true;
   }
 
   return window.katex;
+};
+
+// --- DYNAMIC CODE HIGHLIGHTING (HIGHLIGHT.JS) ON-DEMAND LOADER ---
+let hljsLoadingPromise = null;
+
+const hasCodeSyntax = (text) => {
+  if (!text) return false;
+  return /(?:```|~~~)/.test(text);
+};
+
+const ensureHighlightLoaded = async () => {
+  if (!hljsLoadingPromise) {
+    hljsLoadingPromise = (async () => {
+      loadStylesheet("https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css");
+      if (!window.hljs) {
+        await loadScript("https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js");
+      }
+    })();
+  }
+  await hljsLoadingPromise;
+  return window.hljs;
+};
+
+// --- DYNAMIC MERMAID.JS ON-DEMAND LOADER ---
+let mermaidLoadingPromise = null;
+
+const hasMermaidSyntax = (text) => {
+  if (!text) return false;
+  return /```\s*mermaid/i.test(text);
+};
+
+const ensureMermaidLoaded = async () => {
+  if (!mermaidLoadingPromise) {
+    mermaidLoadingPromise = (async () => {
+      if (!window.mermaid) {
+        await loadScript("https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js");
+      }
+      if (window.mermaid) {
+        window.mermaid.initialize({
+          startOnLoad: false,
+          theme: "dark",
+          securityLevel: "loose"
+        });
+      }
+    })();
+  }
+  await mermaidLoadingPromise;
+  return window.mermaid;
+};
+
+// --- MARKED PARSER EXTENSIONS (FOOTNOTES + CODE/MERMAID HOOKS) ---
+if (window.markedFootnote) {
+  marked.use(window.markedFootnote());
+}
+
+marked.use({
+  renderer: {
+    code(codeOrToken, infostring) {
+      let code = "";
+      let lang = "";
+      if (typeof codeOrToken === "object" && codeOrToken !== null) {
+        code = codeOrToken.text || "";
+        lang = codeOrToken.lang || "";
+      } else {
+        code = codeOrToken || "";
+        lang = infostring || "";
+      }
+      lang = (lang || "").trim().toLowerCase();
+
+      // Mermaid diagram fence
+      if (lang === "mermaid") {
+        return `<div class="mermaid-container"><pre class="mermaid">${escapeHtml(code)}</pre></div>`;
+      }
+
+      // Syntax highlighting via Highlight.js
+      if (window.hljs) {
+        let highlighted = "";
+        if (lang && window.hljs.getLanguage(lang)) {
+          try {
+            highlighted = window.hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+          } catch (e) {
+            highlighted = escapeHtml(code);
+          }
+        } else {
+          try {
+            highlighted = window.hljs.highlightAuto(code).value;
+          } catch (e) {
+            highlighted = escapeHtml(code);
+          }
+        }
+        return `<pre><code class="hljs ${lang ? 'language-' + lang : ''}">${highlighted}</code></pre>`;
+      }
+
+      return `<pre><code class="${lang ? 'language-' + lang : ''}">${escapeHtml(code)}</code></pre>`;
+    }
+  }
+});
+
+// --- DOMPURIFY SANITIZATION (SECURITY HARDENING) ---
+const sanitizeHtml = (dirtyHtml) => {
+  if (!window.DOMPurify) return dirtyHtml;
+  return window.DOMPurify.sanitize(dirtyHtml, {
+    USE_PROFILES: { html: true, svg: true, mathMl: true },
+    ADD_TAGS: ["foreignObject", "use", "section"],
+    ADD_ATTR: [
+      "target",
+      "rel",
+      "aria-hidden",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "role",
+      "tabindex",
+      "data-footnote-ref",
+      "data-footnotes",
+      "data-footnote-backref"
+    ]
+  });
 };
 
 // --- DATABASE SCHEMA ---
@@ -107,7 +226,6 @@ const formatRelativeTime = (timestamp) => {
   return `${days} days ago`;
 };
 
-// Standardizes tag formatting across modal, commands, and AI emissions
 const normalizeCategory = (rawTag, fallback = "Fact") => {
   if (!rawTag) return fallback;
   const cleaned = rawTag.trim().replace(/^#+/, "");
@@ -120,8 +238,8 @@ const PERSONA_PRESETS = {
   socratic: "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry.",
   feynman: "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy.",
   devil: "You are a Devil's Advocate. Your goal is to critique arguments, highlight logical fallacies, and present strong opposing stances to test the robustness of the user's ideas.",
-  scholar: "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time.",
-  reviewer: "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence.",
+  scholar: "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time. Use academic citations when referencing sources.",
+  reviewer: "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence. Provide structured references.",
   custom: "You are an expert dialogue partner."
 };
 
@@ -139,10 +257,12 @@ createApp({
     const isConfigured = ref(false);
     const systemPrompt = ref("");
 
-    // Reactive flag for KaTeX availability
+    // Reactive flags for on-demand lazy assets
     const katexReady = ref(false);
+    const highlightReady = ref(false);
+    const mermaidReady = ref(false);
 
-    // Iteration 9: Persona & Depth Reactive State
+    // Persona & Depth Reactive State
     const selectedPersona = ref("socratic");
     const personaDirective = ref(PERSONA_PRESETS.socratic);
 
@@ -181,7 +301,7 @@ createApp({
       "Read the following text like a professional audiobook narrator. Tone: Expressive, engaging, and atmospheric.",
     );
 
-    // Facts state & Iteration 8 enhancements
+    // Facts state
     const newFactText = ref("");
     const newFactCategory = ref("");
     const facts = ref([]);
@@ -197,7 +317,7 @@ createApp({
     const superSummaryBatchSize = ref(5);
     const isSuperSummarizing = ref(false);
 
-    const modelJail = ref({}); // { "model-name": expireTimestamp }
+    const modelJail = ref({});
 
     const putModelInJail = (modelName, minutes = 5) => {
       const expireTime = Date.now() + minutes * 60 * 1000;
@@ -224,7 +344,6 @@ createApp({
       customDepthDirective.value = chip;
     };
 
-    // Determines whether to route to Google Gemini's OpenAI endpoint or Universal Base URL
     const getRequestConfig = (modelName) => {
       const trimmed = modelName.trim().toLowerCase();
       const isDirectGoogle = trimmed.startsWith("gemini-") || trimmed.startsWith("gemma-");
@@ -288,13 +407,14 @@ createApp({
         editingMsgId.value = null;
         editingMsgText.value = "";
         await updateCounts();
+        nextTick(renderMermaidDiagrams);
       } catch (err) {
         console.error("Error saving edited message:", err);
         alert("Failed to save changes.");
       }
     };
 
-    // --- FACTS INLINE CRUD & FILTERING (ITERATION 8) ---
+    // --- FACTS INLINE CRUD & FILTERING ---
     const uniqueFactTags = computed(() => {
       const set = new Set();
       facts.value.forEach((f) => {
@@ -364,6 +484,7 @@ createApp({
       await loadArchives();
       await updateCounts();
       scrollToBottom();
+      nextTick(renderMermaidDiagrams);
     };
 
     const switchSession = async (id) => {
@@ -590,11 +711,6 @@ You MUST return a valid JSON object matching this schema format:
       });
 
       // 3. Currency-safe inline math: $...$
-      // - (?<![\$\\])\$  : Opening $ not preceded by $ or \
-      // - (?!\s|\d)      : Opening $ NOT followed by a space or digit ($0.50, $100)
-      // - ((?:[^\$\n]|\\\$)+?) : The math formula
-      // - (?<!\s)\$      : Closing $ NOT preceded by a space
-      // - (?!\d)         : Closing $ NOT immediately followed by a digit
       text = text.replace(/(?<![\$\\])\$(?!\s|\d)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
         const formula = (inner || "").trim();
         if (!formula) return match;
@@ -608,10 +724,27 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
+    // --- MERMAID POST-RENDER PASS ---
+    const renderMermaidDiagrams = async () => {
+      if (!window.mermaid) return;
+      await nextTick();
+      try {
+        const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
+        if (unrenderedNodes.length > 0) {
+          await window.mermaid.run({
+            nodes: Array.from(unrenderedNodes),
+            suppressErrors: true
+          });
+        }
+      } catch (err) {
+        console.warn("Mermaid rendering warning:", err);
+      }
+    };
+
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // Lazy load KaTeX and optional mhchem only when math syntax is detected
+      // 1. Math syntax detection & lazy load
       if (hasMathSyntax(text)) {
         const needsMhchem = hasMhchemSyntax(text);
         if (!window.katex || (needsMhchem && !window.katex.__mhchemLoaded)) {
@@ -623,12 +756,44 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
-      // Reading katexReady registers Vue reactive dependency so it re-evaluates once KaTeX loads
-      const _ = katexReady.value;
+      // 2. Code syntax detection & lazy load
+      if (hasCodeSyntax(text)) {
+        if (!window.hljs) {
+          ensureHighlightLoaded()
+            .then(() => {
+              highlightReady.value = true;
+            })
+            .catch((err) => console.error("Failed to load Highlight.js:", err));
+        }
+      }
 
-      // Pre-render KaTeX HTML spans before marked can interpret subscripts/asterisks
+      // 3. Mermaid diagram detection & lazy load
+      if (hasMermaidSyntax(text)) {
+        if (!window.mermaid) {
+          ensureMermaidLoaded()
+            .then(() => {
+              mermaidReady.value = true;
+              nextTick(renderMermaidDiagrams);
+            })
+            .catch((err) => console.error("Failed to load Mermaid:", err));
+        } else {
+          nextTick(renderMermaidDiagrams);
+        }
+      }
+
+      // Reading reactive flags establishes dependencies so Vue re-evaluates as bundles load
+      const _k = katexReady.value;
+      const _h = highlightReady.value;
+      const _m = mermaidReady.value;
+
+      // KaTeX math rendered first to protect subscripts and asterisks from marked
       const mathRenderedText = window.katex ? renderMathInText(text) : text;
-      return marked.parse(mathRenderedText);
+
+      // Parse markdown with marked (includes footnote extension and code highlight/mermaid hooks)
+      const rawHtml = marked.parse(mathRenderedText);
+
+      // DOMPurify sanitization pipeline (whitelists KaTeX MathML/SVG, Mermaid, and citations)
+      return sanitizeHtml(rawHtml);
     };
 
     const summarizeStory = async () => {
@@ -754,6 +919,7 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
 
         messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await updateCounts();
+        nextTick(renderMermaidDiagrams);
 
         alert("Summary created successfully! Scroll up your chat history to see it.");
 
@@ -876,6 +1042,7 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
         messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await loadArchives();
         await updateCounts();
+        nextTick(renderMermaidDiagrams);
 
         alert("Epoch compression complete! Original chapters have been archived.");
       } catch (err) {
@@ -911,6 +1078,10 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       nextTick(adjustHeight);
     });
 
+    watch(messages, () => {
+      nextTick(renderMermaidDiagrams);
+    }, { deep: true });
+
     onMounted(async () => {
       const storedBaseUrl = localStorage.getItem("story_base_url");
       if (storedBaseUrl) baseUrl.value = storedBaseUrl;
@@ -929,7 +1100,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       if (localStorage.getItem("story_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
 
-      // Iteration 9: Persona and Depth Restoration
       const storedPersona = localStorage.getItem("story_persona");
       if (storedPersona) selectedPersona.value = storedPersona;
 
@@ -1016,7 +1186,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       localStorage.setItem("story_tts_prosody", ttsProsodyNudge.value);
       localStorage.setItem("story_summary_batch", summaryBatchSize.value);
 
-      // Iteration 9 Persistence
       localStorage.setItem("story_persona", selectedPersona.value);
       localStorage.setItem("story_persona_directive", personaDirective.value);
       localStorage.setItem("story_depth", selectedDepth.value);
@@ -1239,7 +1408,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       }
     };
 
-    // --- ITERATION 9: DYNAMIC PROMPT COMPOSITION (CUSTOM PERSONA & DEPTH) ---
     const generateSystemPrompt = () => {
       const personaText = personaDirective.value.trim()
         ? personaDirective.value.trim()
@@ -1262,6 +1430,10 @@ PERSONA & TONE:
 ${personaText}
 
 ${depthText}
+
+VISUAL & SCHOLARLY CAPABILITIES:
+- If visual logic, decision trees, timelines, or structural workflows clarify a concept, you may output Mermaid diagrams using standard \`\`\`mermaid fenced blocks.
+- When citing sources, academic literature, or historical documents, use standard Markdown footnote syntax (e.g., [^1] and [^1]: Author, Title, Year) to ensure academic clarity.
 
 PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
 You possess an active, persistent Knowledge Base. When you establish an important core conclusion, agree on an immutable premise, define a critical term, or discover an evolving variable that must persist across future turns, record it in your response using:
@@ -1419,7 +1591,7 @@ DISCUSSION PROMPT: ${text}`;
           }
         }
 
-        // --- AUTONOMOUS MODEL-EMITTED FACT PARSER ---
+        // Parse model-emitted <fact> tags
         const factRegex = /<fact(?:\s+category=["']?([^"'>]+)["']?)?>([\s\S]*?)<\/fact>/gi;
         let match;
         const emittedFacts = [];
@@ -1449,7 +1621,7 @@ DISCUSSION PROMPT: ${text}`;
           await updateCounts();
         }
 
-        // Scrub <fact> tags cleanly from visible prose
+        // Scrub <fact> tags from visible prose
         responseText = responseText
           .replace(/<fact(?:\s+category=["']?[^"'>]+["']?)?>[\s\S]*?<\/fact>/gi, "")
           .replace(/\n{3,}/g, "\n\n");
@@ -1493,14 +1665,15 @@ DISCUSSION PROMPT: ${text}`;
         }
       }
       await updateCounts();
+      nextTick(renderMermaidDiagrams);
     };
 
-    // --- SEND MESSAGE WITH COMMAND INTERCEPTORS (/persona, /depth, /set, /fact) ---
+    // --- SEND MESSAGE WITH SLASH COMMAND INTERCEPTORS ---
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
 
-      // 1. Intercept /persona <preset | custom instructions> (Iteration 9)
+      // 1. /persona command
       const personaMatch = userText.match(/^\/persona(?:\s+([\s\S]+))?$/i);
       if (personaMatch) {
         const directiveArg = (personaMatch[1] || "").trim();
@@ -1528,7 +1701,7 @@ DISCUSSION PROMPT: ${text}`;
         return;
       }
 
-      // 2. Intercept /depth <eli5 | balanced | deep/academic | custom text> (Iteration 9)
+      // 2. /depth command
       const depthMatch = userText.match(/^\/depth(?:\s+([\s\S]+))?$/i);
       if (depthMatch) {
         const depthArg = (depthMatch[1] || "").trim();
@@ -1558,7 +1731,7 @@ DISCUSSION PROMPT: ${text}`;
         return;
       }
 
-      // 3. Intercept /set (State Upsert Engine - Iteration 8)
+      // 3. /set command (State Upsert Engine)
       const setMatch = userText.match(/^\/set\s+(?:#([a-zA-Z0-9_-]+)\s+)?([\s\S]+)$/i);
       if (setMatch) {
         if (!currentSessionId.value) {
@@ -1607,7 +1780,7 @@ DISCUSSION PROMPT: ${text}`;
         return;
       }
 
-      // 4. Intercept /fact [optional #tag] [text]
+      // 4. /fact command
       const factMatch = userText.match(/^\/fact(?:\s+#([a-zA-Z0-9_-]+))?\s+(.+)$/is);
       if (factMatch) {
         if (!currentSessionId.value) {
@@ -1642,7 +1815,7 @@ DISCUSSION PROMPT: ${text}`;
         return;
       }
 
-      // Standard chat submission continues
+      // Standard submission
       const userId = await saveToDb("user", userText);
       messages.value.push({ id: userId, role: "user", text: userText, timestamp: Date.now() });
 
@@ -1762,7 +1935,7 @@ DISCUSSION PROMPT: ${text}`;
       triggerTTS,
       onTTSProviderChange,
 
-      // Facts & Iteration 8 Features
+      // Facts
       facts,
       filteredFacts,
       uniqueFactTags,
@@ -1794,7 +1967,7 @@ DISCUSSION PROMPT: ${text}`;
       isSuperSummarizing,
       superSummarizeStory,
 
-      // Iteration 9: Flexible Persona & Custom Depth Engine
+      // Persona & Depth Engine
       selectedPersona,
       personaDirective,
       onPersonaChange,
