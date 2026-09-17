@@ -568,3 +568,246 @@ button.small-btn {
     font-size: 1.05em;
     text-rendering: auto;
 }
+/* =========================================================
+   ACADEMIC FOOTNOTES (HIGH-CONTRAST & DYNAMIC BUBBLE THEMING)
+   ========================================================= */
+
+/* Inline citation badges in the text: [1], [2] */
+.data-footnote-ref {
+    font-size: 0.78em;
+    line-height: 0;
+    vertical-align: super;
+    margin: 0 2px;
+}
+
+.data-footnote-ref a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #ffb84d !important;
+    border: 1px solid rgba(255, 184, 77, 0.45);
+    border-radius: 4px;
+    font-weight: 700;
+    text-decoration: none !important;
+    font-size: 0.72rem;
+    transition: all 0.2s ease;
+}
+
+.data-footnote-ref a:hover {
+    background: #ff9d00;
+    color: #111 !important;
+    border-color: #ff9d00;
+    transform: translateY(-1px);
+}
+
+/* If inside a User (Green) Bubble, adapt pill contrast */
+.message.user .data-footnote-ref a {
+    background: rgba(0, 0, 0, 0.25);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.message.user .data-footnote-ref a:hover {
+    background: #ffffff;
+    color: #0e4e34 !important;
+}
+
+/* Footnotes card container at the bottom */
+.footnotes {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* "Footnotes" section title */
+.footnotes h2,
+.footnotes [id="footnote-label"] {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.footnotes h2::before {
+    content: "📚";
+    font-size: 0.85rem;
+}
+
+/* Footnote list items */
+.footnotes ol {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.footnotes li {
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.footnotes li:last-child {
+    margin-bottom: 0;
+}
+
+.footnotes p {
+    margin: 0;
+    display: inline;
+}
+
+/* Backlink jump arrow ↩ */
+.data-footnote-backref {
+    display: inline-inline;
+    margin-left: 6px;
+    color: #ffb84d !important;
+    text-decoration: none !important;
+    font-weight: bold;
+    font-size: 0.95rem;
+    transition:
+        transform 0.15s ease,
+        color 0.15s ease;
+}
+
+.data-footnote-backref:hover {
+    transform: translateY(-2px);
+    color: #ffffff !important;
+}
+
+/* Crisp white backlink when inside User bubble */
+.message.user .data-footnote-backref {
+    color: #ffffff !important;
+}
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+}
+
+.topics-drawer {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100%;
+    background: #111;
+    z-index: 1001;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.8);
+    border-right: 1px solid #333;
+}
+
+.topics-drawer.open {
+    left: 0;
+}
+
+.session-item:hover {
+    background: #2a2a2a !important;
+}
+
+.session-item.active {
+    border-color: #ff9d00 !important;
+    background: rgba(255, 157, 0, 0.1) !important;
+}
+
+/* Tag Filter Pills Bar */
+.fact-filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    scrollbar-width: thin;
+}
+
+.fact-filter-pill {
+    background: #222;
+    color: #aaa;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.fact-filter-pill:hover {
+    background: #333;
+    color: #fff;
+}
+
+.fact-filter-pill.active {
+    background: #ff9d00;
+    color: #000;
+    border-color: #ff9d00;
+    font-weight: bold;
+}
+
+.fact-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.fact-edit-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px;
+    line-height: 1;
+}
+
+.fact-edit-btn:hover {
+    color: #ff9d00;
+}
+
+/* Code Highlighting Tweaks */
+pre code.hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 12px;
+    border-radius: 6px;
+    background: #141414;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    border: 1px solid #2a2a2a;
+}
+
+/* Mermaid Diagram Container */
+.mermaid-container {
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 12px 0;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+}
+
+.mermaid-container svg {
+    max-width: 100%;
+    height: auto;
+}
