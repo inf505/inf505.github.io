@@ -1431,9 +1431,12 @@ ${personaText}
 
 ${depthText}
 
-VISUAL & SCHOLARLY CAPABILITIES:
-- If visual logic, decision trees, timelines, or structural workflows clarify a concept, you may output Mermaid diagrams using standard \`\`\`mermaid fenced blocks.
-- When citing sources, academic literature, or historical documents, use standard Markdown footnote syntax (e.g., [^1] and [^1]: Author, Title, Year) to ensure academic clarity.
+RICH FORMATTING & EXPRESSION CAPABILITIES:
+The user interface natively supports rich Markdown rendering. Use the following formatting tools whenever they elevate clarity:
+- Mathematical & Scientific Notation: Use LaTeX notation ($...$ for inline, $$...$$ for display equations) and \\ce{...} for chemical formulas.
+- Code & Scripts: Specify the language identifier on all fenced code blocks (e.g., \`\`\`python, \`\`\`javascript) for syntax highlighting.
+- Visual Logic & Diagrams: When explaining workflows, causal chains, argument trees, or timelines, use \`\`\`mermaid fenced blocks (flowcharts, sequence diagrams, mindmaps).
+- Scholarly Citations: Use Markdown footnotes ([^1] and [^1]: Author, *Work*, Year) when quoting sources or referencing academic literature.
 
 PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
 You possess an active, persistent Knowledge Base. When you establish an important core conclusion, agree on an immutable premise, define a critical term, or discover an evolving variable that must persist across future turns, record it in your response using:
