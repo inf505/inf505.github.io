@@ -9,11 +9,6 @@
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel="stylesheet" href="style.css" />
 
-    <style>
-
-
-    </style>
-
     <!-- Core External Libraries -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
@@ -27,39 +22,34 @@
     <div id="app">
         <!-- TOPICS DRAWER -->
         <div v-if="isDrawerOpen" class="drawer-overlay" @click="isDrawerOpen = false"></div>
-        <div :class="['topics-drawer', { open: isDrawerOpen }]">
-            <div class="drawer-header"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333;">
-                <h3 style="margin: 0; color: #eee;">📁 Topics</h3>
-                <button @click="isDrawerOpen = false"
-                    style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+        <aside :class="['topics-drawer', { open: isDrawerOpen }]">
+            <div class="drawer-header">
+                <h3 class="drawer-title">📁 Topics</h3>
+                <button class="drawer-close-btn" @click="isDrawerOpen = false"
+                    aria-label="Close Drawer">&times;</button>
             </div>
-            <div class="drawer-content" style="padding: 10px; overflow-y: auto; flex: 1;">
-                <button class="small-btn apply-btn" @click="createNewSession"
-                    style="width: 100%; margin-bottom: 15px;">➕ New Topic</button>
+            <div class="drawer-content">
+                <button class="small-btn apply-btn drawer-new-btn" @click="createNewSession">➕ New Topic</button>
 
                 <div v-for="session in sessions" :key="session.id"
                     :class="['session-item', { active: currentSessionId === session.id }]"
-                    style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; background: #222; border-radius: 6px; border: 1px solid #333; cursor: pointer;"
                     @click="switchSession(session.id)">
-                    <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <div style="font-size: 0.95rem; color: #eee; text-overflow: ellipsis; overflow: hidden;">{{
-                            session.title }}</div>
-                        <div style="font-size: 0.75rem; color: #888;">{{ formatRelativeTime(session.updated) }}</div>
+                    <div class="session-info">
+                        <div class="session-title">{{ session.title }}</div>
+                        <div class="session-timestamp">{{ formatRelativeTime(session.updated) }}</div>
                     </div>
-                    <button class="action-msg-btn delete-btn" @click.stop="deleteSession(session.id)"
-                        style="margin-left: 10px; background: none; border: none; color: #ff5555; cursor: pointer; font-size: 1.2rem;"
+                    <button class="action-msg-btn session-delete-btn" @click.stop="deleteSession(session.id)"
                         title="Delete Topic">&times;</button>
                 </div>
             </div>
-        </div>
+        </aside>
 
         <!-- CHAT INTERFACE -->
-        <div class="chat-container">
+        <main class="chat-container">
             <!-- FLOATING CONTROLS -->
-            <div class="floating-header" style="display: flex; justify-content: space-between; width: 100%;">
+            <header class="floating-header">
                 <!-- Left Side: Drawer & Start Over -->
-                <div style="display: flex; gap: 10px;">
+                <div class="floating-group">
                     <button class="float-btn drawer-btn" @click="isDrawerOpen = true" title="Topics / Sessions">
                         📁
                     </button>
@@ -70,21 +60,20 @@
                 </div>
 
                 <!-- Right Side: Export & Settings Grouped -->
-                <div style="display: flex; gap: 10px;">
+                <div class="floating-group">
                     <button class="float-btn export-btn" @click="exportStudyGuide" title="Export Study Guide">
                         💾
                     </button>
-
-                    <button class="float-btn settings-btn" @click="showSettings = !showSettings">
+                    <button class="float-btn settings-btn" @click="showSettings = !showSettings" title="Settings">
                         ⚙️
                     </button>
                 </div>
-            </div>
+            </header>
 
             <!-- SETTINGS PANEL -->
-            <div v-if="showSettings" class="settings-panel">
+            <section v-if="showSettings" class="settings-panel">
                 <!-- TABS NAVIGATION -->
-                <div class="tabs-header">
+                <nav class="tabs-header">
                     <button :class="['tab-btn', { active: activeTab === 'settings' }]" @click="activeTab = 'settings'">
                         Settings
                     </button>
@@ -97,7 +86,7 @@
                     <button :class="['tab-btn', { active: activeTab === 'archive' }]" @click="activeTab = 'archive'">
                         Archive
                     </button>
-                </div>
+                </nav>
 
                 <!-- TAB CONTENT: SETTINGS -->
                 <div v-if="activeTab === 'settings'" class="tab-content">
@@ -110,9 +99,9 @@
                     <div class="settings-group">
                         <label>Model Fallback List (comma-separated):</label>
                         <textarea v-model="selectedModel" rows="3"
-                            placeholder="e.g., google/gemma-4-26b-a4b-it:free, nvidia/nemotron-3-ultra-550b-a55b:free, nvidia/nemotron-3-super-120b-a12b:free"></textarea>
-                        <small>Listed in order of preference. If a model hits a 429/500 error, it goes into 'jail'
-                            (5-minute cooldown) and the next model is tried instantly.</small>
+                            placeholder="e.g., google/gemma-4-26b-a4b-it:free, nvidia/nemotron-3-ultra-550b-a55b:free"></textarea>
+                        <small>Listed in order of preference. If a model hits a 429/500 error, it enters jail (5-minute
+                            cooldown) and fallback triggers immediately.</small>
                     </div>
 
                     <div class="settings-group">
@@ -127,11 +116,10 @@
                             used.</small>
                     </div>
 
-                    <!-- ITERATION 9: FLEXIBLE PERSONA ARCHITECTURE -->
+                    <!-- PERSONA ARCHITECTURE -->
                     <div class="settings-group">
                         <label>Persona / Pedagogical Role Template:</label>
-                        <select v-model="selectedPersona" @change="onPersonaChange"
-                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
+                        <select v-model="selectedPersona" @change="onPersonaChange" class="form-select">
                             <option value="socratic">🏛️ Socratic Dialogue Partner</option>
                             <option value="feynman">⚛️ Feynman Educator</option>
                             <option value="devil">⚖️ Devil's Advocate</option>
@@ -145,39 +133,32 @@
                         <label>Persona Directive (Editable Instructions):</label>
                         <textarea v-model="personaDirective" rows="3"
                             placeholder="Detailed persona prompt instructions injected into the system prompt..."></textarea>
-                        <small>Tweak preset instructions or formulate your own custom persona. Selecting a preset
-                            updates this field with starter text.</small>
+                        <small>Tweak preset instructions or formulate your own custom persona.</small>
                     </div>
 
-                    <!-- ITERATION 9: CUSTOM DEPTH ENGINE -->
+                    <!-- DEPTH ENGINE -->
                     <div class="settings-group">
                         <label>Explanation Depth & Granularity:</label>
-                        <div style="display: flex; gap: 8px; margin-top: 5px;">
-                            <button
-                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'eli5' ? '#ff9d00' : '#222', color: selectedDepth === 'eli5' ? '#000' : '#fff', fontWeight: selectedDepth === 'eli5' ? 'bold' : 'normal', cursor: 'pointer' }"
+                        <div class="depth-btn-group">
+                            <button :class="['depth-btn', { active: selectedDepth === 'eli5' }]"
                                 @click="selectedDepth = 'eli5'">ELI5</button>
-                            <button
-                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'balanced' ? '#ff9d00' : '#222', color: selectedDepth === 'balanced' ? '#000' : '#fff', fontWeight: selectedDepth === 'balanced' ? 'bold' : 'normal', cursor: 'pointer' }"
+                            <button :class="['depth-btn', { active: selectedDepth === 'balanced' }]"
                                 @click="selectedDepth = 'balanced'">Balanced</button>
-                            <button
-                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'deep' ? '#ff9d00' : '#222', color: selectedDepth === 'deep' ? '#000' : '#fff', fontWeight: selectedDepth === 'deep' ? 'bold' : 'normal', cursor: 'pointer' }"
+                            <button :class="['depth-btn', { active: selectedDepth === 'deep' }]"
                                 @click="selectedDepth = 'deep'">Academic</button>
-                            <button
-                                :style="{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #444', background: selectedDepth === 'custom' ? '#ff9d00' : '#222', color: selectedDepth === 'custom' ? '#000' : '#fff', fontWeight: selectedDepth === 'custom' ? 'bold' : 'normal', cursor: 'pointer' }"
+                            <button :class="['depth-btn', { active: selectedDepth === 'custom' }]"
                                 @click="selectedDepth = 'custom'">Custom</button>
                         </div>
 
                         <!-- Custom Depth Modifier Field & Quick Chips -->
-                        <div v-if="selectedDepth === 'custom'"
-                            style="margin-top: 10px; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; border: 1px solid #333;">
-                            <label style="font-size: 0.8rem; color: #ff9d00;">Custom Depth Directive / Modifier:</label>
-                            <input type="text" v-model="customDepthDirective"
-                                placeholder="e.g., Explain using only culinary analogies, Executive Summary, Code-heavy..."
-                                style="width: 100%; height: 32px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 0 8px; margin-top: 5px; box-sizing: border-box;" />
+                        <div v-if="selectedDepth === 'custom'" class="custom-depth-box">
+                            <label class="custom-depth-label">Custom Depth Directive / Modifier:</label>
+                            <input type="text" v-model="customDepthDirective" class="custom-depth-input"
+                                placeholder="e.g., Explain using only culinary analogies, Executive Summary, Code-heavy..." />
 
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
-                                <button v-for="chip in quickDepthChips" :key="chip" class="fact-filter-pill"
-                                    @click="setQuickDepth(chip)" style="font-size: 0.7rem; padding: 2px 8px;">
+                            <div class="quick-depth-chips">
+                                <button v-for="chip in quickDepthChips" :key="chip" class="fact-filter-pill depth-chip"
+                                    @click="setQuickDepth(chip)">
                                     + {{ chip }}
                                 </button>
                             </div>
@@ -190,57 +171,25 @@
                             placeholder="Additional context, topic parameters, or specific instructions for this chat..."></textarea>
                     </div>
 
-                    <div class="settings-group" style="
-                                margin-top: 20px;
-                                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                                padding-top: 15px;
-                            ">
-                        <label style="color: #ff9d00">Memory & Data Management</label>
+                    <!-- MEMORY & DATA MANAGEMENT -->
+                    <div class="settings-group settings-group-bordered">
+                        <label class="settings-accent-title">Memory & Data Management</label>
 
-                        <div style="
-                                    font-size: 0.85rem;
-                                    margin-bottom: 10px;
-                                    color: #aaa;
-                                    background: rgba(0, 0, 0, 0.2);
-                                    padding: 8px;
-                                    border-radius: 6px;
-                                ">
-                            <strong>Database Size:</strong> {{ totalSizeKb
-                            }} KB<br />
-                            <strong>Last Token Usage:</strong> {{
-                            totalTokens }} tokens
+                        <div class="data-stats-box">
+                            <strong>Database Size:</strong> {{ totalSizeKb }} KB<br />
+                            <strong>Last Token Usage:</strong> {{ totalTokens }} tokens
                         </div>
 
-                        <!-- Batch Size Input -->
-                        <div style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                    margin-bottom: 10px;
-                                ">
-                            <label style="font-size: 0.8rem; flex: 1">Messages to summarize:</label>
-                            <input type="number" v-model="summaryBatchSize" min="2" max="50" style="
-                                        width: 60px;
-                                        text-align: center;
-                                        padding: 4px;
-                                    " />
+                        <div class="settings-inline-row">
+                            <label>Messages to summarize:</label>
+                            <input type="number" v-model="summaryBatchSize" min="2" max="50" class="number-input" />
                         </div>
 
-                        <button class="small-btn" @click="summarizeStory" :disabled="isSummarizing" style="
-                                    width: 100%;
-                                    border: 1px solid #ff9d00;
-                                    color: #ff9d00;
-                                    background: rgba(255, 157, 0, 0.1);
-                                ">
-                            {{ isSummarizing ? "🗜️ Compressing Batch..." :
-                            "🗜️ Summarize Oldest Messages" }}
+                        <button class="small-btn accent-outline-btn w-full" @click="summarizeStory"
+                            :disabled="isSummarizing">
+                            {{ isSummarizing ? "🗜️ Compressing Batch..." : "🗜️ Summarize Oldest Messages" }}
                         </button>
-                        <small style="
-                                    display: block;
-                                    margin-top: 6px;
-                                    text-align: center;
-                                    color: #888;
-                                ">
+                        <small class="settings-hint-center">
                             Compresses unsummarized chronological messages into a narrative Summary block.
                         </small>
                     </div>
@@ -250,49 +199,26 @@
                     </button>
                 </div>
 
-                <!-- TAB CONTENT: FACTS (ITERATION 8 CRUD & FILTERING) -->
+                <!-- TAB CONTENT: FACTS -->
                 <div v-if="activeTab === 'facts'" class="tab-content">
                     <div class="settings-group">
                         <label>Knowledge Base Grimoire</label>
-                        <div class="manual-fact-entry" style="
-                                    margin-top: 15px;
-                                    background: rgba(255, 255, 255, 0.05);
-                                    padding: 10px;
-                                    border-radius: 8px;
-                                    border: 1px solid rgba(255, 255, 255, 0.1);
-                                ">
-                            <textarea v-model="newFactText"
-                                placeholder="Add a new fact manually or use /set #tag <text>..." rows="2" style="
-                                        width: 100%;
-                                        margin-bottom: 8px;
-                                        font-size: 0.9rem;
-                                    "></textarea>
+                        <div class="manual-fact-entry">
+                            <textarea v-model="newFactText" class="manual-fact-textarea"
+                                placeholder="Add a new fact manually or use /set #tag <text>..." rows="2"></textarea>
 
-                            <div style="display: flex; gap: 8px">
-                                <input type="text" v-model="newFactCategory" placeholder="Tag (default: #Fact)" style="
-                                        flex: 1;
-                                        font-size: 0.85rem;
-                                        height: 32px;
-                                        background: #222;
-                                        color: #fff;
-                                        border: 1px solid #444;
-                                        border-radius: 4px;
-                                        padding: 0 8px;
-                                        box-sizing: border-box;
-                                    " />
-                                <button class="small-btn" @click="addManualFact" :disabled="!newFactText.trim()"
-                                    style="flex: 1; height: 32px">
+                            <div class="manual-fact-row">
+                                <input type="text" v-model="newFactCategory" placeholder="Tag (default: #Fact)"
+                                    class="fact-category-input" />
+                                <button class="small-btn fact-add-btn" @click="addManualFact"
+                                    :disabled="!newFactText.trim()">
                                     Add Fact
                                 </button>
                             </div>
                         </div>
 
-                        <button class="small-btn apply-btn" @click="optimizeFacts"
-                            :disabled="isOptimizingFacts || facts.length < 2" style="
-                                    margin-top: 10px;
-                                    margin-bottom: 10px;
-                                    width: 100%;
-                                ">
+                        <button class="small-btn apply-btn w-full my-sm" @click="optimizeFacts"
+                            :disabled="isOptimizingFacts || facts.length < 2">
                             {{ isOptimizingFacts ? "✨ Merging Facts..." : `✨ Optimize & Merge Facts (${facts.length})`
                             }}
                         </button>
@@ -311,34 +237,13 @@
                         </button>
                     </div>
 
-                    <div class="facts-container" style="
-                                max-height: 40vh;
-                                overflow-y: auto;
-                                padding-right: 5px;
-                            ">
-                        <div v-for="fact in filteredFacts" :key="fact.id" class="fact-row"
-                            style="flex-direction: column; align-items: stretch; gap: 6px;">
+                    <div class="facts-container">
+                        <div v-for="fact in filteredFacts" :key="fact.id" class="fact-row fact-row-stacked">
                             <!-- VIEW MODE -->
-                            <div v-if="editingFactId !== fact.id"
-                                style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                                <div class="fact-content" style="flex: 1;">
-                                    <span class="fact-badge" style="
-                                        background: rgba(255, 157, 0, 0.15);
-                                        color: #ff9d00;
-                                        border: 1px solid rgba(255, 157, 0, 0.35);
-                                        font-weight: 600;
-                                        text-transform: uppercase;
-                                        font-size: 0.7rem;
-                                        padding: 2px 6px;
-                                        border-radius: 4px;
-                                        margin-right: 8px;
-                                        white-space: nowrap;
-                                        display: inline-block;
-                                        margin-bottom: 4px;
-                                    ">
-                                        #{{ fact.category }}
-                                    </span>
-                                    <div class="fact-text" style="display: inline;">{{ fact.text }}</div>
+                            <div v-if="editingFactId !== fact.id" class="fact-row-main">
+                                <div class="fact-content">
+                                    <span class="fact-badge">#{{ fact.category }}</span>
+                                    <div class="fact-text inline">{{ fact.text }}</div>
                                 </div>
                                 <div class="fact-row-actions">
                                     <button class="fact-edit-btn" @click="startEditFact(fact)"
@@ -349,19 +254,15 @@
                             </div>
 
                             <!-- INLINE EDIT MODE -->
-                            <div v-else
-                                style="display: flex; flex-direction: column; gap: 8px; width: 100%; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid #444;">
-                                <div style="display: flex; gap: 8px;">
+                            <div v-else class="fact-edit-form">
+                                <div class="fact-edit-tag-row">
                                     <input type="text" v-model="editingFactCategory" placeholder="Tag"
-                                        style="width: 120px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem;" />
-                                    <span style="font-size: 0.75rem; color: #888; align-self: center;">Category
-                                        tag</span>
+                                        class="fact-edit-tag-input" />
+                                    <span class="fact-edit-tag-hint">Category tag</span>
                                 </div>
-                                <textarea v-model="editingFactText" rows="3"
-                                    style="width: 100%; background: #1a1a1a; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 6px; font-size: 0.85rem; box-sizing: border-box; resize: vertical;"></textarea>
-                                <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                                    <button class="small-btn" @click="cancelEditFact"
-                                        style="background: #333; color: #ccc;">Cancel</button>
+                                <textarea v-model="editingFactText" rows="3" class="fact-edit-textarea"></textarea>
+                                <div class="fact-edit-actions">
+                                    <button class="small-btn btn-secondary" @click="cancelEditFact">Cancel</button>
                                     <button class="small-btn apply-btn" @click="saveEditFact(fact.id)">Save</button>
                                 </div>
                             </div>
@@ -377,8 +278,7 @@
                 <div v-if="activeTab === 'audio'" class="tab-content">
                     <div class="settings-group">
                         <label>TTS Provider:</label>
-                        <select v-model="ttsProvider" @change="onTTSProviderChange"
-                            style="width: 100%; height: 36px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 8px;">
+                        <select v-model="ttsProvider" @change="onTTSProviderChange" class="form-select">
                             <option value="gemini">Direct Google Gemini (Free / Developer)</option>
                             <option value="openai">OpenAI-Compatible (/audio/speech)</option>
                         </select>
@@ -410,37 +310,32 @@
 
                 <!-- TAB CONTENT: ARCHIVE -->
                 <div v-if="activeTab === 'archive'" class="tab-content">
-                    <div class="settings-group"
-                        style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-                        <label style="color: #ff9d00">Super-Summarizer (Epoch Compression)</label>
+                    <div class="settings-group settings-group-bordered">
+                        <label class="settings-accent-title">Super-Summarizer (Epoch Compression)</label>
 
-                        <div
-                            style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; margin-top: 5px;">
-                            <label style="font-size: 0.8rem; flex: 1">Summaries to merge:</label>
+                        <div class="settings-inline-row my-sm">
+                            <label>Summaries to merge:</label>
                             <input type="number" v-model="superSummaryBatchSize" min="2" max="20"
-                                style="width: 60px; text-align: center; padding: 4px;" />
+                                class="number-input" />
                         </div>
 
-                        <button class="small-btn" @click="superSummarizeStory" :disabled="isSuperSummarizing"
-                            style="width: 100%; border: 1px solid #ff9d00; color: #ff9d00; background: rgba(255, 157, 0, 0.1);">
+                        <button class="small-btn accent-outline-btn w-full" @click="superSummarizeStory"
+                            :disabled="isSuperSummarizing">
                             {{ isSuperSummarizing ? "📚 Compressing..." : "📚 Compress Old Summaries" }}
                         </button>
-                        <small style="display: block; margin-top: 6px; text-align: center; color: #888;">
+                        <small class="settings-hint-center">
                             Combines older Chapter Summaries into a "Story So Far" block and moves originals to the
-                            Archive
-                            below.
+                            Archive below.
                         </small>
                     </div>
 
                     <!-- LIST OF ARCHIVES -->
                     <div class="settings-group">
                         <label>Archived Chapters</label>
-                        <div class="facts-container" style="max-height: 40vh; overflow-y: auto;">
-                            <div v-for="arc in archivedSummaries" :key="arc.id" class="fact-row"
-                                style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                                <span style="font-size: 0.7rem; color: #888;">{{ formatRelativeTime(arc.timestamp)
-                                    }}</span>
-                                <div class="fact-text" style="color: #bbb; font-style: italic;">{{ arc.text }}</div>
+                        <div class="facts-container">
+                            <div v-for="arc in archivedSummaries" :key="arc.id" class="fact-row archive-row">
+                                <span class="archive-timestamp">{{ formatRelativeTime(arc.timestamp) }}</span>
+                                <div class="fact-text archive-text">{{ arc.text }}</div>
                             </div>
                             <div v-if="archivedSummaries.length === 0" class="empty-facts">
                                 No summaries archived yet.
@@ -448,8 +343,7 @@
                         </div>
                     </div>
                 </div>
-
-            </div> <!-- CLOSE OF SETTINGS PANEL -->
+            </section>
 
             <!-- SCROLLING MESSAGES -->
             <div class="chat-messages" ref="messagesContainer" aria-live="polite" aria-atomic="true">
@@ -460,35 +354,25 @@
                 <div v-for="(msg, index) in messages" :key="msg.id || index" :class="['message', msg.role]">
                     <div class="bubble">
                         <!-- Summary Badge -->
-                        <div v-if="msg.role === 'summary'" style="
-                                    font-size: 0.75rem;
-                                    color: #ff9d00;
-                                    text-transform: uppercase;
-                                    font-weight: bold;
-                                    margin-bottom: 8px;
-                                    border-bottom: 1px solid
-                                        rgba(255, 157, 0, 0.3);
-                                    padding-bottom: 4px;
-                                ">
+                        <div v-if="msg.role === 'summary'" class="summary-badge">
                             📜 Chapter Summary
                         </div>
 
                         <!-- Action Buttons Container -->
                         <div class="msg-actions">
-
-                            <!-- Edit Button (For Summaries AND AI Messages) -->
+                            <!-- Edit Button -->
                             <button v-if="msg.role === 'summary' || msg.role === 'model'"
                                 class="action-msg-btn edit-btn" @click="startEditMessage(msg)" title="Edit Message">
                                 ✏️
                             </button>
 
-                            <!-- Speaker / Read Aloud Button -->
+                            <!-- Speaker / TTS Button -->
                             <button v-if="msg.role === 'model' && !msg.audioData && !msg.isGeneratingAudio"
                                 class="action-msg-btn speaker-btn" @click="triggerTTS(index)" title="Synthesize Audio">
                                 🔊
                             </button>
 
-                            <!-- Retry Button (Only for the last model message) -->
+                            <!-- Retry Button -->
                             <button v-if="msg.role === 'model' && index === messages.length - 1"
                                 class="action-msg-btn retry-btn" @click="retryMessage(index)"
                                 title="Retry / Regenerate">
@@ -510,45 +394,27 @@
                             </details>
                         </div>
 
-                        <!-- Content -->
-                        <!-- EDIT MODE -->
-                        <div v-if="editingMsgId === msg.id" style="margin-top: 8px; width: 100%;">
-                            <textarea v-model="editingMsgText" rows="6" style="
-                                width: 100%;
-                                background: #1a1a1a;
-                                color: #eee;
-                                border: 1px solid #444;
-                                border-radius: 6px;
-                                padding: 8px;
-                                font-family: inherit;
-                                font-size: 0.95rem;
-                                line-height: 1.4;
-                                resize: both;
-                                box-sizing: border-box;
-                            "></textarea>
-                            <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
-                                <button class="small-btn" @click="cancelEditMessage"
-                                    style="background: #444; color: white;">Cancel</button>
-                                <button class="small-btn" @click="saveEditMessage(msg)">Save</button>
+                        <!-- Content EDIT MODE -->
+                        <div v-if="editingMsgId === msg.id" class="message-edit-container">
+                            <textarea v-model="editingMsgText" rows="6" class="message-edit-textarea"></textarea>
+                            <div class="message-edit-actions">
+                                <button class="small-btn btn-secondary" @click="cancelEditMessage">Cancel</button>
+                                <button class="small-btn apply-btn" @click="saveEditMessage(msg)">Save</button>
                             </div>
                         </div>
 
-                        <!-- STANDARD READ MODE -->
+                        <!-- Content STANDARD READ MODE -->
                         <div v-else class="message-text" v-html="renderMarkdown(msg.text)"></div>
 
                         <!-- AUDIO LOADING STATE -->
-                        <div v-if="msg.isGeneratingAudio" class="audio-loading" style="
-                                    font-size: 0.8em;
-                                    color: #888;
-                                    margin-top: 10px;
-                                ">
+                        <div v-if="msg.isGeneratingAudio" class="audio-loading">
                             <i>Synthesizing audio...</i>
                         </div>
 
                         <!-- AUDIO PLAYER -->
-                        <div v-if="msg.audioData" class="audio-player" style="margin-top: 10px">
+                        <div v-if="msg.audioData" class="audio-player">
                             <audio controls autoplay :src="'data:audio/wav;base64,' + msg.audioData"
-                                style="width: 100%; height: 36px"></audio>
+                                class="audio-element"></audio>
                         </div>
                     </div>
                 </div>
@@ -564,7 +430,7 @@
             </div>
 
             <!-- FOOTER -->
-            <div class="chat-footer">
+            <footer class="chat-footer">
                 <div class="chat-input-area">
                     <textarea v-model="currentInput" ref="inputArea" rows="1" @keydown.enter.exact.prevent="sendMessage"
                         placeholder="Type a message, /fact, /set, /persona <text>, or /depth <text>..."
@@ -575,8 +441,8 @@
                         Send
                     </button>
                 </div>
-            </div>
-        </div>
+            </footer>
+        </main>
     </div>
 
     <script src="app.js"></script>
