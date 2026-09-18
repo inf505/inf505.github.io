@@ -161,12 +161,19 @@ marked.use({
   }
 });
 
-// --- DOMPURIFY SANITIZATION (SECURITY HARDENING) ---
+// --- DOMPURIFY SANITIZATION (SECURITY HARDENING WITH KATEX / MATHML FIX) ---
 const sanitizeHtml = (dirtyHtml) => {
   if (!window.DOMPurify) return dirtyHtml;
   return window.DOMPurify.sanitize(dirtyHtml, {
     USE_PROFILES: { html: true, svg: true, mathMl: true },
-    ADD_TAGS: ["foreignObject", "use", "section"],
+    ADD_TAGS: [
+      "foreignObject",
+      "use",
+      "section",
+      "semantics",
+      "annotation",
+      "annotation-xml"
+    ],
     ADD_ATTR: [
       "target",
       "rel",
@@ -178,7 +185,8 @@ const sanitizeHtml = (dirtyHtml) => {
       "tabindex",
       "data-footnote-ref",
       "data-footnotes",
-      "data-footnote-backref"
+      "data-footnote-backref",
+      "encoding"
     ]
   });
 };
@@ -233,7 +241,6 @@ const normalizeCategory = (rawTag, fallback = "Fact") => {
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
-// Iteration 9: Preset Directive Maps
 const PERSONA_PRESETS = {
   socratic: "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry.",
   feynman: "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy.",
@@ -684,7 +691,7 @@ You MUST return a valid JSON object matching this schema format:
       }
     };
 
-    // --- HARDENED KATEX PRE-PROCESSOR ---
+    // --- HARDENED KATEX PRE-PROCESSOR (HTML-ONLY OUTPUT & MHCHEM SUPPORT) ---
     const renderMathInText = (text) => {
       if (!window.katex) return text;
 
@@ -693,7 +700,7 @@ You MUST return a valid JSON object matching this schema format:
         const formula = (inner1 || inner2 || "").trim();
         if (!formula) return match;
         try {
-          return window.katex.renderToString(formula, { displayMode: true, throwOnError: false });
+          return window.katex.renderToString(formula, { displayMode: true, throwOnError: false, output: "html" });
         } catch (e) {
           return match;
         }
@@ -704,7 +711,7 @@ You MUST return a valid JSON object matching this schema format:
         const formula = (inner || "").trim();
         if (!formula) return match;
         try {
-          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false });
+          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false, output: "html" });
         } catch (e) {
           return match;
         }
@@ -715,7 +722,17 @@ You MUST return a valid JSON object matching this schema format:
         const formula = (inner || "").trim();
         if (!formula) return match;
         try {
-          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false });
+          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false, output: "html" });
+        } catch (e) {
+          return match;
+        }
+      });
+
+      // 4. Standalone chemical formula syntax: \ce{...} (handles models omitting dollar signs)
+      text = text.replace(/\\ce\{([^{}]+)\}/g, (match, inner) => {
+        const formula = `\\ce{${inner.trim()}}`;
+        try {
+          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false, output: "html" });
         } catch (e) {
           return match;
         }
@@ -744,7 +761,7 @@ You MUST return a valid JSON object matching this schema format:
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. Math syntax detection & lazy load
+      // 1. Math & chemistry syntax detection & lazy load
       if (hasMathSyntax(text)) {
         const needsMhchem = hasMhchemSyntax(text);
         if (!window.katex || (needsMhchem && !window.katex.__mhchemLoaded)) {
@@ -792,7 +809,7 @@ You MUST return a valid JSON object matching this schema format:
       // Parse markdown with marked (includes footnote extension and code highlight/mermaid hooks)
       const rawHtml = marked.parse(mathRenderedText);
 
-      // DOMPurify sanitization pipeline (whitelists KaTeX MathML/SVG, Mermaid, and citations)
+      // DOMPurify sanitization pipeline (whitelists KaTeX, Mermaid, and footnotes)
       return sanitizeHtml(rawHtml);
     };
 
@@ -1433,7 +1450,7 @@ ${depthText}
 
 RICH FORMATTING & EXPRESSION CAPABILITIES:
 The user interface natively supports rich Markdown rendering. Use the following formatting tools whenever they elevate clarity:
-- Mathematical & Scientific Notation: Use LaTeX notation ($...$ for inline, $$...$$ for display equations) and \\ce{...} for chemical formulas.
+- Mathematical & Scientific Notation: Use LaTeX notation ($...$ for inline math, $$...$$ for display equations). For chemical formulas, always use $\\ce{...}$ (e.g., $\\ce{H2O}$, $\\ce{N2}$, $\\ce{O2}$).
 - Code & Scripts: Specify the language identifier on all fenced code blocks (e.g., \`\`\`python, \`\`\`javascript) for syntax highlighting.
 - Visual Logic & Diagrams: When explaining workflows, causal chains, argument trees, or timelines, use \`\`\`mermaid fenced blocks (flowcharts, sequence diagrams, mindmaps).
 - Scholarly Citations: Use Markdown footnotes ([^1] and [^1]: Author, *Work*, Year) when quoting sources or referencing academic literature.
