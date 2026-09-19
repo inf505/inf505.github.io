@@ -915,14 +915,31 @@ You MUST return a valid JSON object matching this schema format:
     const renderMermaidDiagrams = async () => {
       if (!window.mermaid) return;
       await nextTick();
-      try {
-        const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
-        if (unrenderedNodes.length > 0) {
-          await window.mermaid.run({
-            nodes: Array.from(unrenderedNodes),
-            suppressErrors: true
-          });
+
+      const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
+      if (unrenderedNodes.length === 0) return;
+
+      // 1. Audit each diagram and console.log failures
+      for (const node of unrenderedNodes) {
+        const rawCode = node.textContent;
+        try {
+          await window.mermaid.parse(rawCode);
+        } catch (err) {
+          console.groupCollapsed("❌ [MERMAID SYNTAX ERROR] Diagram Failed to Parse");
+          console.error("Parser Error:", err.message || err);
+          console.log("--- RAW CODE START ---");
+          console.log(rawCode);
+          console.log("--- RAW CODE END ---");
+          console.groupEnd();
         }
+      }
+
+      // 2. Continue running Mermaid as normal
+      try {
+        await window.mermaid.run({
+          nodes: Array.from(unrenderedNodes),
+          suppressErrors: true
+        });
       } catch (err) {
         console.warn("Mermaid rendering warning:", err);
       }
