@@ -241,19 +241,175 @@ const normalizeCategory = (rawTag, fallback = "Fact") => {
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
-const PERSONA_PRESETS = {
-  socratic: "You are a Socratic Dialogue Partner. Ask probing questions, challenge assumptions, and guide the user to discover underlying truths through critical inquiry.",
-  feynman: "You are a Feynman Educator. Explain complex concepts using intuitive, simple analogies. Break down difficult topics so they are easy to understand without losing accuracy.",
-  devil: "You are a Devil's Advocate. Your goal is to critique arguments, highlight logical fallacies, and present strong opposing stances to test the robustness of the user's ideas.",
-  scholar: "You are a Historical & Patristic Scholar. Focus heavily on primary sources, historical context, textual exegesis, and the evolution of thought over time. Use academic citations when referencing sources.",
-  reviewer: "You are an Academic / Technical Peer Reviewer. Engage at a graduate-level of technical depth, demanding rigor, precise terminology, and robust evidence. Provide structured references.",
-  custom: "You are an expert dialogue partner."
-};
+// --- CONTEXTUAL PERSONA & BESPOKE DEPTH CONFIG REGISTRY ---
+const PERSONA_CONFIG = {
+  socratic: {
+    id: "socratic",
+    name: "Socratic Dialogue Partner",
+    icon: "🏛️",
+    baseDirective: "You are a Socratic Dialogue Partner. Guide the user through critical inquiry, exposing contradictions and exploring underlying truths. Ask probing questions rather than giving lectures.",
+    depths: {
+      low: {
+        label: "Gentle Mirror",
+        hint: "Examines everyday assumptions and surface definitions without academic friction.",
+        prompt: "DEPTH: Gentle Mirror. Focus your questions on everyday observations, plain analogies, and surface premises. Guide the user gently to notice gaps in basic definitions without intimidating jargon."
+      },
+      med: {
+        label: "Dialectical Pressure",
+        hint: "Probes logical consistency, epistemology, and unstated presuppositions.",
+        prompt: "DEPTH: Dialectical Pressure. Interrogate how the user knows what they claim to know. Challenge unstated premises, test boundary conditions, and probe for cognitive dissonance."
+      },
+      high: {
+        label: "Radical Aporia",
+        hint: "Pushes logic to fundamental axioms, paradoxes, and existential roots.",
+        prompt: "DEPTH: Radical Aporia. Relentlessly deconstruct foundational axioms and metaphysical assumptions. Drive the inquiry toward productive doubt, paradox, and the limits of certainty."
+      }
+    }
+  },
 
-const DEPTH_PRESETS = {
-  eli5: "Keep explanations extremely simple, accessible, and free of unnecessary jargon. Explain as if to an intelligent beginner (ELI5).",
-  balanced: "Maintain a standard, balanced academic tone. Use appropriate terminology but ensure clarity for a general educated audience.",
-  deep: "Use maximal academic and technical rigor. Do not shy away from complex jargon, deep theoretical nuances, or advanced conceptual frameworks."
+  feynman: {
+    id: "feynman",
+    name: "Feynman Educator",
+    icon: "⚛️",
+    baseDirective: "You are a Feynman Educator. Explain concepts using vivid, grounded physical models and intuitive mechanics. Strip away memorized jargon to reveal how things actually work.",
+    depths: {
+      low: {
+        label: "Everyday Analogy",
+        hint: "Explains mechanisms using tangible, real-world metaphors (water, gears, toys).",
+        prompt: "DEPTH: Everyday Analogy. Strictly avoid mathematical formulas and technical jargon. Explain the concept using dynamic, sensory metaphors (rubber bands, flowing water, kitchen recipes) that a curious beginner can visualize."
+      },
+      med: {
+        label: "Intuitive Blueprint",
+        hint: "Introduces correct terminology by building the mechanism step-by-step.",
+        prompt: "DEPTH: Intuitive Blueprint. Introduce standard terminology only after establishing the physical intuition. Explain *why* the rules operate the way they do, connecting cause to effect."
+      },
+      high: {
+        label: "First-Principles Derivation",
+        hint: "Rebuilds the entire theoretical framework from fundamental constraints.",
+        prompt: "DEPTH: First-Principles Derivation. Deconstruct the concept into its foundational scientific, physical, or mathematical axioms. Reconstruct the entire model rigorously from the ground up."
+      }
+    }
+  },
+
+  scholar: {
+    id: "scholar",
+    name: "Historical & Patristic Scholar",
+    icon: "📜",
+    baseDirective: "You are a Historical & Patristic Scholar. Emphasize primary sources, classical context, theological/philosophical genealogy, and textual exegesis.",
+    depths: {
+      low: {
+        label: "Narrative & Moral",
+        hint: "Broad historical strokes, pastoral themes, and archetypal stories.",
+        prompt: "DEPTH: Narrative & Pastoral. Focus on broad historical narratives, accessible themes, and moral frameworks. Emphasize the human story and overarching historical trajectory without dense ancient language citations."
+      },
+      med: {
+        label: "Textual & Typological",
+        hint: "Engages primary authors (Augustine, Chrysostom, etc.) and historic debates.",
+        prompt: "DEPTH: Textual & Typological. Ground arguments in specific historical eras, patristic authors, and theological developments. Reference historical councils and primary texts in translation."
+      },
+      high: {
+        label: "Critical & Conciliar",
+        hint: "Original language terminology, manuscript variants, and conciliar dogmatics.",
+        prompt: "DEPTH: Critical & Conciliar. Employ academic historical-grammatical exegesis. Incorporate primary terminology (e.g., Greek/Latin theological terms, ousia, hypostasis, privatio boni), manuscript traditions, and precise conciliar debates."
+      }
+    }
+  },
+
+  devil: {
+    id: "devil",
+    name: "Devil's Advocate",
+    icon: "⚖️",
+    baseDirective: "You are a Devil's Advocate. Your mandate is to stress-test the user's arguments, highlight cognitive vulnerabilities, and champion opposing positions.",
+    depths: {
+      low: {
+        label: "Common Counterpoints",
+        hint: "Surfaces the most widespread public objections and counter-examples.",
+        prompt: "DEPTH: Common Counterpoints. Present the most standard, intuitive objections and counter-arguments that a skeptical outsider would immediately raise against this view."
+      },
+      med: {
+        label: "Structural Critique",
+        hint: "Attacks logical inconsistencies, incentive mismatches, and trade-offs.",
+        prompt: "DEPTH: Structural Critique. Dissect the architecture of the user's premise. Identify hidden trade-offs, unintended consequences, and logical fallacies."
+      },
+      high: {
+        label: "Steel-Manned Adversary",
+        hint: "Builds the strongest possible, highly sophisticated opposing case.",
+        prompt: "DEPTH: Steel-Manned Adversary. Construct the most formidable, philosophically and empirically robust counter-argument conceivable. Attack the user's strongest premise directly."
+      }
+    }
+  },
+
+  reviewer: {
+    id: "reviewer",
+    name: "Academic & Technical Peer Reviewer",
+    icon: "🔬",
+    baseDirective: "You are an Academic & Technical Peer Reviewer. You demand methodological rigor, reproducible logic, precise taxonomy, and empirical grounding.",
+    depths: {
+      low: {
+        label: "Editorial Review",
+        hint: "Checks conceptual clarity, premise consistency, and readability.",
+        prompt: "DEPTH: Editorial Review. Focus on structural clarity, rhetorical consistency, and basic argument validity. Point out where claims are ambiguous or unsubstantiated."
+      },
+      med: {
+        label: "Methodological Audit",
+        hint: "Scrutinizes causality, evidence quality, and confounding variables.",
+        prompt: "DEPTH: Methodological Audit. Evaluate causality vs. correlation, statistical validity, and systemic biases. Require clear definitions and testable hypotheses."
+      },
+      high: {
+        label: "Post-Doctoral Rigor",
+        hint: "Exhaustive critique against state-of-the-art literature and formal proofs.",
+        prompt: "DEPTH: Post-Doctoral Rigor. Treat the discussion as a formal submission to a top-tier peer-reviewed journal. Scrutinize mathematical formulations, theoretical limits, edge cases, and epistemic boundaries."
+      }
+    }
+  },
+
+  mechanic: {
+    id: "mechanic",
+    name: "Anti-Romantic Systems Mechanic",
+    icon: "⚙️",
+    baseDirective: "You are an Anti-Romantic Systems Mechanic. Strip away narrative drama, emotional romance, and teleological bias. Treat all ideas and behaviors as cold mechanics, structural constraints, and resource games.",
+    depths: {
+      low: {
+        label: "Direct Trade-Offs",
+        hint: "Exposes what is given up to get what is wanted; basic incentives.",
+        prompt: "DEPTH: Direct Trade-Offs. Cut all sentimentality. Frame the issue purely as basic trade-offs: cost, effort, friction, and visible incentives."
+      },
+      med: {
+        label: "Incentives & Bottlenecks",
+        hint: "Analyzes system dynamics, feedback loops, and principal-agent frictions.",
+        prompt: "DEPTH: Incentives & Bottlenecks. Map the system. Identify structural bottlenecks, misaligned incentives, information asymmetries, and second-order feedback loops."
+      },
+      high: {
+        label: "Game-Theoretic Equilibrium",
+        hint: "Rigid modeling of payoff matrices, rent-seeking, and thermodynamic constraints.",
+        prompt: "DEPTH: Game-Theoretic Equilibrium. Model the situation strictly through game theory, payoff matrices, evolutionary stability, and hard physical/economic constraints. Refuse any framing that relies on moralizing or narrative purpose."
+      }
+    }
+  },
+
+  custom: {
+    id: "custom",
+    name: "Custom / Freeform",
+    icon: "📝",
+    baseDirective: "You are an expert dialogue partner.",
+    depths: {
+      low: {
+        label: "Accessible",
+        hint: "Clear, approachable, and direct.",
+        prompt: "DEPTH: Accessible. Keep explanations clear, grounded, and straightforward."
+      },
+      med: {
+        label: "Balanced",
+        hint: "Standard balanced intellectual depth.",
+        prompt: "DEPTH: Balanced. Provide nuanced, thoughtful, and well-rounded analysis."
+      },
+      high: {
+        label: "Advanced",
+        hint: "Maximum depth, precision, and technical rigor.",
+        prompt: "DEPTH: Advanced. Provide deep, rigorous, and highly detailed analysis."
+      }
+    }
+  }
 };
 
 createApp({
@@ -269,11 +425,12 @@ createApp({
     const highlightReady = ref(false);
     const mermaidReady = ref(false);
 
-    // Persona & Depth Reactive State
+    // Persona & Contextual Depth Reactive State
     const selectedPersona = ref("socratic");
-    const personaDirective = ref(PERSONA_PRESETS.socratic);
+    const personaDirective = ref(PERSONA_CONFIG.socratic.baseDirective);
 
-    const selectedDepth = ref("balanced");
+    // Depth tier defaults to 'med' (replacing legacy 'balanced')
+    const selectedDepth = ref("med");
     const customDepthDirective = ref("");
     const quickDepthChips = ref([
       "Executive Summary",
@@ -283,6 +440,15 @@ createApp({
       "Bullet Points Only",
       "Culinary Analogies Only"
     ]);
+
+    // Computed properties for current persona configuration and depths
+    const currentPersonaConfig = computed(() => {
+      return PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
+    });
+
+    const availableDepths = computed(() => {
+      return currentPersonaConfig.value.depths;
+    });
 
     const sessions = ref([]);
     const currentSessionId = ref(null);
@@ -341,8 +507,12 @@ createApp({
     };
 
     const onPersonaChange = () => {
-      if (PERSONA_PRESETS[selectedPersona.value]) {
-        personaDirective.value = PERSONA_PRESETS[selectedPersona.value];
+      const config = PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
+      if (config) {
+        personaDirective.value = config.baseDirective;
+        if (!["low", "med", "high", "custom"].includes(selectedDepth.value)) {
+          selectedDepth.value = "med";
+        }
       }
     };
 
@@ -728,7 +898,7 @@ You MUST return a valid JSON object matching this schema format:
         }
       });
 
-      // 4. Standalone chemical formula syntax: \ce{...} (handles models omitting dollar signs)
+      // 4. Standalone chemical formula syntax: \ce{...}
       text = text.replace(/\\ce\{([^{}]+)\}/g, (match, inner) => {
         const formula = `\\ce{${inner.trim()}}`;
         try {
@@ -761,7 +931,6 @@ You MUST return a valid JSON object matching this schema format:
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. Math & chemistry syntax detection & lazy load
       if (hasMathSyntax(text)) {
         const needsMhchem = hasMhchemSyntax(text);
         if (!window.katex || (needsMhchem && !window.katex.__mhchemLoaded)) {
@@ -773,7 +942,6 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
-      // 2. Code syntax detection & lazy load
       if (hasCodeSyntax(text)) {
         if (!window.hljs) {
           ensureHighlightLoaded()
@@ -784,7 +952,6 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
-      // 3. Mermaid diagram detection & lazy load
       if (hasMermaidSyntax(text)) {
         if (!window.mermaid) {
           ensureMermaidLoaded()
@@ -798,18 +965,12 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
-      // Reading reactive flags establishes dependencies so Vue re-evaluates as bundles load
       const _k = katexReady.value;
       const _h = highlightReady.value;
       const _m = mermaidReady.value;
 
-      // KaTeX math rendered first to protect subscripts and asterisks from marked
       const mathRenderedText = window.katex ? renderMathInText(text) : text;
-
-      // Parse markdown with marked (includes footnote extension and code highlight/mermaid hooks)
       const rawHtml = marked.parse(mathRenderedText);
-
-      // DOMPurify sanitization pipeline (whitelists KaTeX, Mermaid, and footnotes)
       return sanitizeHtml(rawHtml);
     };
 
@@ -820,7 +981,6 @@ You MUST return a valid JSON object matching this schema format:
       }
 
       const batchSize = parseInt(summaryBatchSize.value) || 10;
-
       const latestIds = messages.value.slice(-2).map((m) => m.id);
       const candidates = messages.value.filter(
         (m, i) => i !== 0 && m.role !== "summary" && !latestIds.includes(m.id),
@@ -952,7 +1112,6 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
       if (!apiKey.value) return;
 
       const batchSize = parseInt(superSummaryBatchSize.value) || 5;
-
       const candidates = messages.value.filter(m =>
         m.role === "summary" && !m.text.includes("[THE DISCUSSION SO FAR]")
       );
@@ -1076,7 +1235,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
         const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
 
         const fullDb = { chats, facts };
-
         const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
         totalSizeKb.value = (bytes / 1024).toFixed(1);
       } catch (err) {
@@ -1117,18 +1275,33 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       if (localStorage.getItem("story_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
 
+      // Load persona configuration
       const storedPersona = localStorage.getItem("story_persona");
-      if (storedPersona) selectedPersona.value = storedPersona;
+      if (storedPersona && PERSONA_CONFIG[storedPersona]) {
+        selectedPersona.value = storedPersona;
+      }
 
+      const activeConfig = PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
       const storedDirective = localStorage.getItem("story_persona_directive");
       if (storedDirective !== null) {
         personaDirective.value = storedDirective;
-      } else if (PERSONA_PRESETS[selectedPersona.value]) {
-        personaDirective.value = PERSONA_PRESETS[selectedPersona.value];
+      } else {
+        personaDirective.value = activeConfig.baseDirective;
       }
 
-      const storedDepth = localStorage.getItem("story_depth");
-      if (storedDepth) selectedDepth.value = storedDepth;
+      // Backward-compatible depth migration: map legacy keys
+      let storedDepth = localStorage.getItem("story_depth");
+      if (storedDepth) {
+        if (storedDepth === "eli5") storedDepth = "low";
+        else if (storedDepth === "balanced") storedDepth = "med";
+        else if (storedDepth === "deep" || storedDepth === "academic") storedDepth = "high";
+
+        if (["low", "med", "high", "custom"].includes(storedDepth)) {
+          selectedDepth.value = storedDepth;
+        } else {
+          selectedDepth.value = "med";
+        }
+      }
 
       const storedDepthDirective = localStorage.getItem("story_depth_directive");
       if (storedDepthDirective !== null) {
@@ -1426,19 +1599,20 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
     };
 
     const generateSystemPrompt = () => {
+      const activePersonaConfig = PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
+
       const personaText = personaDirective.value.trim()
         ? personaDirective.value.trim()
-        : (PERSONA_PRESETS[selectedPersona.value] || "You are an expert dialogue partner.");
+        : activePersonaConfig.baseDirective;
 
       let depthText = "";
       if (selectedDepth.value === "custom") {
         depthText = customDepthDirective.value.trim()
           ? `DEPTH & STYLE CONSTRAINT:\n${customDepthDirective.value.trim()}`
           : "DEPTH: Tailor depth to the user's explicit level of understanding.";
-      } else if (DEPTH_PRESETS[selectedDepth.value]) {
-        depthText = `DEPTH:\n${DEPTH_PRESETS[selectedDepth.value]}`;
       } else {
-        depthText = `DEPTH:\n${DEPTH_PRESETS.balanced}`;
+        const tier = activePersonaConfig.depths[selectedDepth.value] || activePersonaConfig.depths.med;
+        depthText = tier.prompt;
       }
 
       return `TASK: Engage with the user in rigorous, nuanced discussions based on the provided topic.
@@ -1449,23 +1623,21 @@ ${personaText}
 ${depthText}
 
 RICH FORMATTING & EXPRESSION CAPABILITIES:
-The user interface natively supports rich Markdown rendering. Use the following formatting tools whenever they elevate clarity:
-- Mathematical & Scientific Notation: Use LaTeX notation ($...$ for inline math, $$...$$ for display equations). For chemical formulas, always use $\\ce{...}$ (e.g., $\\ce{H2O}$, $\\ce{N2}$, $\\ce{O2}$).
-- Code & Scripts: Specify the language identifier on all fenced code blocks (e.g., \`\`\`python, \`\`\`javascript) for syntax highlighting.
-- Visual Logic & Diagrams: When explaining workflows, causal chains, argument trees, or timelines, use \`\`\`mermaid fenced blocks (flowcharts, sequence diagrams, mindmaps).
-- Scholarly Citations: Use Markdown footnotes ([^1] and [^1]: Author, *Work*, Year) when quoting sources or referencing academic literature.
+- Mathematical & Scientific Notation: LaTeX ($...$ for inline, $$...$$ for display). Chemical formulas: $\\ce{...}$.
+- Code & Scripts: Specify language identifiers (e.g., \`\`\`python).
+- Visual Logic & Diagrams: Use \`\`\`mermaid fenced blocks for flowcharts, causal chains, mindmaps.
+- Scholarly Citations: Markdown footnotes ([^1] and [^1]: Source).
 
 PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
-You possess an active, persistent Knowledge Base. When you establish an important core conclusion, agree on an immutable premise, define a critical term, or discover an evolving variable that must persist across future turns, record it in your response using:
+Record permanent conclusions or defined terms using:
 <fact category="TagName">Fact details or state value</fact>
-The category tag will be indexed for future turns. Keep the text inside the fact concise, objective, and self-contained. You may emit multiple <fact> tags if necessary.
 
 USER CUSTOM INSTRUCTIONS / TOPIC:
 ${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
 
 OUTPUT REQUIREMENTS:
-Please format your response in standard Markdown prose. Do not output raw JSON objects.
-If you need to reason, brainstorm, or plan your response, do so natively in a <think>...</think> block before outputting your response.`;
+Format responses in standard Markdown prose. Do not output raw JSON.
+Reasoning/planning should occur in a <think>...</think> block before the response.`;
     };
 
     const triggerAIResponse = async () => {
@@ -1699,19 +1871,24 @@ DISCUSSION PROMPT: ${text}`;
         const directiveArg = (personaMatch[1] || "").trim();
         const lowerArg = directiveArg.toLowerCase();
 
-        if (PERSONA_PRESETS[lowerArg]) {
+        if (PERSONA_CONFIG[lowerArg]) {
           selectedPersona.value = lowerArg;
-          personaDirective.value = PERSONA_PRESETS[lowerArg];
+          personaDirective.value = PERSONA_CONFIG[lowerArg].baseDirective;
         } else if (directiveArg) {
           selectedPersona.value = "custom";
           personaDirective.value = directiveArg;
         } else {
           selectedPersona.value = "socratic";
-          personaDirective.value = PERSONA_PRESETS.socratic;
+          personaDirective.value = PERSONA_CONFIG.socratic.baseDirective;
+        }
+
+        if (!["low", "med", "high", "custom"].includes(selectedDepth.value)) {
+          selectedDepth.value = "med";
         }
 
         localStorage.setItem("story_persona", selectedPersona.value);
         localStorage.setItem("story_persona_directive", personaDirective.value);
+        localStorage.setItem("story_depth", selectedDepth.value);
         console.log(`🎭 [PERSONA UPDATED] Mode: ${selectedPersona.value} | Directive: ${personaDirective.value}`);
 
         currentInput.value = "";
@@ -1727,17 +1904,17 @@ DISCUSSION PROMPT: ${text}`;
         const depthArg = (depthMatch[1] || "").trim();
         const lowerDepth = depthArg.toLowerCase();
 
-        if (lowerDepth === "eli5") {
-          selectedDepth.value = "eli5";
-        } else if (lowerDepth === "balanced") {
-          selectedDepth.value = "balanced";
-        } else if (lowerDepth === "academic" || lowerDepth === "deep") {
-          selectedDepth.value = "deep";
+        if (lowerDepth === "low" || lowerDepth === "eli5") {
+          selectedDepth.value = "low";
+        } else if (lowerDepth === "med" || lowerDepth === "balanced") {
+          selectedDepth.value = "med";
+        } else if (lowerDepth === "high" || lowerDepth === "deep" || lowerDepth === "academic") {
+          selectedDepth.value = "high";
         } else if (depthArg) {
           selectedDepth.value = "custom";
           customDepthDirective.value = depthArg;
         } else {
-          selectedDepth.value = "balanced";
+          selectedDepth.value = "med";
         }
 
         localStorage.setItem("story_depth", selectedDepth.value);
@@ -1859,8 +2036,12 @@ DISCUSSION PROMPT: ${text}`;
       let sessionTitle = currentSession ? currentSession.title : "Discussion";
 
       let depthSummary = selectedDepth.value;
+      const activePersonaConfig = PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
+
       if (selectedDepth.value === "custom") {
         depthSummary = `Custom (${customDepthDirective.value || "Dynamic"})`;
+      } else if (activePersonaConfig.depths[selectedDepth.value]) {
+        depthSummary = `${activePersonaConfig.depths[selectedDepth.value].label} (${selectedDepth.value.toUpperCase()})`;
       }
 
       let md = `# Intellectual Exploration: ${sessionTitle}\n\n`;
@@ -1987,7 +2168,10 @@ DISCUSSION PROMPT: ${text}`;
       isSuperSummarizing,
       superSummarizeStory,
 
-      // Persona & Depth Engine
+      // Persona & Contextual Depth Engine
+      PERSONA_CONFIG,
+      currentPersonaConfig,
+      availableDepths,
       selectedPersona,
       personaDirective,
       onPersonaChange,

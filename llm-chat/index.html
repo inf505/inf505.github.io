@@ -120,12 +120,9 @@
                     <div class="settings-group">
                         <label>Persona / Pedagogical Role Template:</label>
                         <select v-model="selectedPersona" @change="onPersonaChange" class="form-select">
-                            <option value="socratic">🏛️ Socratic Dialogue Partner</option>
-                            <option value="feynman">⚛️ Feynman Educator</option>
-                            <option value="devil">⚖️ Devil's Advocate</option>
-                            <option value="scholar">📜 Historical & Patristic Scholar</option>
-                            <option value="reviewer">🔬 Academic / Technical Peer Reviewer</option>
-                            <option value="custom">📝 Custom / Freeform</option>
+                            <option v-for="(cfg, key) in PERSONA_CONFIG" :key="key" :value="key">
+                                {{ cfg.icon }} {{ cfg.name }}
+                            </option>
                         </select>
                     </div>
 
@@ -136,19 +133,24 @@
                         <small>Tweak preset instructions or formulate your own custom persona.</small>
                     </div>
 
-                    <!-- DEPTH ENGINE -->
+                    <!-- CONTEXTUAL DEPTH ENGINE -->
                     <div class="settings-group">
-                        <label>Explanation Depth & Granularity:</label>
+                        <label>Explanation Depth & Intensity:</label>
                         <div class="depth-btn-group">
-                            <button :class="['depth-btn', { active: selectedDepth === 'eli5' }]"
-                                @click="selectedDepth = 'eli5'">ELI5</button>
-                            <button :class="['depth-btn', { active: selectedDepth === 'balanced' }]"
-                                @click="selectedDepth = 'balanced'">Balanced</button>
-                            <button :class="['depth-btn', { active: selectedDepth === 'deep' }]"
-                                @click="selectedDepth = 'deep'">Academic</button>
+                            <button v-for="(tier, key) in currentPersonaConfig.depths" :key="key"
+                                :class="['depth-btn', { active: selectedDepth === key }]" @click="selectedDepth = key"
+                                :title="tier.hint">
+                                {{ tier.label }}
+                            </button>
                             <button :class="['depth-btn', { active: selectedDepth === 'custom' }]"
-                                @click="selectedDepth = 'custom'">Custom</button>
+                                @click="selectedDepth = 'custom'" title="Freeform Depth Directive">
+                                Custom
+                            </button>
                         </div>
+                        <small class="settings-hint-center"
+                            v-if="selectedDepth !== 'custom' && currentPersonaConfig.depths[selectedDepth]">
+                            {{ currentPersonaConfig.depths[selectedDepth].hint }}
+                        </small>
 
                         <!-- Custom Depth Modifier Field & Quick Chips -->
                         <div v-if="selectedDepth === 'custom'" class="custom-depth-box">
