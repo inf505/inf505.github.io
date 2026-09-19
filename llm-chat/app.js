@@ -911,6 +911,16 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
+    // Auto-quotes unquoted node labels that contain parentheses or brackets
+    const autoFixMermaid = (code) => {
+      if (!code) return "";
+      return code
+        // Matches: id[text with (parens)] -> id["text with (parens)"]
+        .replace(/(\b\w+)\[([^"\]\n]*[\(\)][^"\]\n]*)\]/g, '$1["$2"]')
+        // Matches: id(text with [brackets]) -> id("text with [brackets]")
+        .replace(/(\b\w+)\(([^"\)\n]*[\[\]][^"\)\n]*)\)/g, '$1("$2")');
+    };
+
     // --- MERMAID POST-RENDER PASS ---
     const renderMermaidDiagrams = async () => {
       if (!window.mermaid) return;
@@ -919,22 +929,31 @@ You MUST return a valid JSON object matching this schema format:
       const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
       if (unrenderedNodes.length === 0) return;
 
-      // 1. Audit each diagram and console.log failures
+      // 1. Auto-heal syntax and audit nodes
       for (const node of unrenderedNodes) {
         const rawCode = node.textContent;
+        const fixedCode = autoFixMermaid(rawCode);
+
+        // Update the DOM node with the sanitized code so mermaid.run reads it
+        if (fixedCode !== rawCode) {
+          node.textContent = fixedCode;
+        }
+
+        // Test parse the sanitized version
         try {
-          await window.mermaid.parse(rawCode);
+          await window.mermaid.parse(node.textContent);
         } catch (err) {
-          console.groupCollapsed("❌ [MERMAID SYNTAX ERROR] Diagram Failed to Parse");
+          console.groupCollapsed("❌ [MERMAID SYNTAX ERROR] Still Failed After Auto-Fix");
           console.error("Parser Error:", err.message || err);
-          console.log("--- RAW CODE START ---");
+          console.log("--- RAW CODE (ORIGINAL) ---");
           console.log(rawCode);
-          console.log("--- RAW CODE END ---");
+          console.log("--- SANITIZED CODE ---");
+          console.log(node.textContent);
           console.groupEnd();
         }
       }
 
-      // 2. Continue running Mermaid as normal
+      // 2. Render all nodes as usual
       try {
         await window.mermaid.run({
           nodes: Array.from(unrenderedNodes),
