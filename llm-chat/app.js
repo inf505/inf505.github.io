@@ -107,7 +107,7 @@ const ensureMermaidLoaded = async () => {
           theme: "dark",
           securityLevel: "loose",
           themeVariables: {
-            fontSize: "18px", // Default is ~14px. Bump to 18px or 20px
+            fontSize: "17px", // Default is ~14px. Bump to 18px or 20px
             fontFamily: "inherit"
           },
           flowchart: {
