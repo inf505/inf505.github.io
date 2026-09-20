@@ -112,7 +112,8 @@ const ensureMermaidLoaded = async () => {
           },
           flowchart: {
             useMaxWidth: false, // Prevents tiny compressed diagrams on wide screens
-            htmlLabels: true
+            htmlLabels: true,
+            padding: 15
           }
         });
       }
