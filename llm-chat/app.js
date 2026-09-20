@@ -105,7 +105,15 @@ const ensureMermaidLoaded = async () => {
         window.mermaid.initialize({
           startOnLoad: false,
           theme: "dark",
-          securityLevel: "loose"
+          securityLevel: "loose",
+          themeVariables: {
+            fontSize: "18px", // Default is ~14px. Bump to 18px or 20px
+            fontFamily: "inherit"
+          },
+          flowchart: {
+            useMaxWidth: false, // Prevents tiny compressed diagrams on wide screens
+            htmlLabels: true
+          }
         });
       }
     })();
