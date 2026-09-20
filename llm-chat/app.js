@@ -38,7 +38,6 @@ let katexLoadingPromise = null;
 
 const hasMathSyntax = (text) => {
   if (!text) return false;
-  // Allows numbers in math ($1.0$, $1.6\text{...}$) while preventing spaced currency ($10 and $20)
   return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{?|(?<![\$\\])\$(?!\s)[^\$\n]+?(?<!\s)\$(?!\d))/.test(text);
 };
 
@@ -87,6 +86,92 @@ const ensureHighlightLoaded = async () => {
   return window.hljs;
 };
 
+// Language normalization map for clean visual badges
+const normalizeLangName = (rawLang) => {
+  if (!rawLang) return "Code";
+  const l = rawLang.trim().toLowerCase();
+  const map = {
+    js: "JavaScript",
+    javascript: "JavaScript",
+    ts: "TypeScript",
+    typescript: "TypeScript",
+    py: "Python",
+    python: "Python",
+    sh: "Bash",
+    bash: "Bash",
+    shell: "Shell",
+    zsh: "Zsh",
+    html: "HTML",
+    css: "CSS",
+    json: "JSON",
+    sql: "SQL",
+    cpp: "C++",
+    "c++": "C++",
+    c: "C",
+    cs: "C#",
+    csharp: "C#",
+    rust: "Rust",
+    rs: "Rust",
+    go: "Go",
+    golang: "Go",
+    java: "Java",
+    yaml: "YAML",
+    yml: "YAML",
+    xml: "XML",
+    markdown: "Markdown",
+    md: "Markdown",
+    latex: "LaTeX",
+    tex: "TeX",
+    diff: "Diff",
+    dockerfile: "Dockerfile",
+    r: "R",
+    kotlin: "Kotlin",
+    swift: "Swift",
+    php: "PHP"
+  };
+  return map[l] || (l.charAt(0).toUpperCase() + l.slice(1));
+};
+
+// --- GLOBAL EVENT DELEGATION: COPY CODE BUTTON ---
+document.addEventListener("click", async (e) => {
+  const copyBtn = e.target.closest(".code-copy-btn");
+  if (!copyBtn) return;
+
+  const wrapper = copyBtn.closest(".code-block-wrapper");
+  if (!wrapper) return;
+
+  const codeEl = wrapper.querySelector("pre code");
+  if (!codeEl) return;
+
+  const textToCopy = codeEl.innerText || codeEl.textContent || "";
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(textToCopy);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = textToCopy;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    const originalText = copyBtn.innerText;
+    copyBtn.innerText = "Copied!";
+    copyBtn.classList.add("copied");
+
+    setTimeout(() => {
+      copyBtn.innerText = originalText;
+      copyBtn.classList.remove("copied");
+    }, 2000);
+  } catch (err) {
+    console.error("Clipboard copy failed:", err);
+  }
+});
+
 // --- DYNAMIC MERMAID.JS ON-DEMAND LOADER ---
 let mermaidLoadingPromise = null;
 
@@ -107,11 +192,11 @@ const ensureMermaidLoaded = async () => {
           theme: "dark",
           securityLevel: "loose",
           themeVariables: {
-            fontSize: "17px", // Default is ~14px. Bump to 18px or 20px
+            fontSize: "17px",
             fontFamily: "inherit"
           },
           flowchart: {
-            useMaxWidth: false, // Prevents tiny compressed diagrams on wide screens
+            useMaxWidth: false,
             htmlLabels: true,
             padding: 15
           }
@@ -147,9 +232,12 @@ marked.use({
         return `<div class="mermaid-container"><pre class="mermaid">${escapeHtml(code)}</pre></div>`;
       }
 
-      // Syntax highlighting via Highlight.js
-      if (window.hljs) {
-        let highlighted = "";
+      // Syntax highlighting with Highlight.js
+      let highlighted = "";
+      let detectedLang = lang;
+      const isHljsAvailable = typeof window.hljs !== "undefined";
+
+      if (isHljsAvailable) {
         if (lang && window.hljs.getLanguage(lang)) {
           try {
             highlighted = window.hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
@@ -158,15 +246,30 @@ marked.use({
           }
         } else {
           try {
-            highlighted = window.hljs.highlightAuto(code).value;
+            const autoResult = window.hljs.highlightAuto(code);
+            highlighted = autoResult.value;
+            if (!detectedLang && autoResult.language) {
+              detectedLang = autoResult.language;
+            }
           } catch (e) {
             highlighted = escapeHtml(code);
           }
         }
-        return `<pre><code class="hljs ${lang ? 'language-' + lang : ''}">${highlighted}</code></pre>`;
+      } else {
+        highlighted = escapeHtml(code);
       }
 
-      return `<pre><code class="${lang ? 'language-' + lang : ''}">${escapeHtml(code)}</code></pre>`;
+      const displayBadge = normalizeLangName(detectedLang);
+      const codeClass = detectedLang ? `language-${detectedLang}` : "";
+      const hljsClass = isHljsAvailable ? "hljs" : "hljs-pending";
+
+      return `<div class="code-block-wrapper">` +
+        `<div class="code-block-header">` +
+        `<span class="code-lang-badge">${escapeHtml(displayBadge)}</span>` +
+        `<button class="code-copy-btn" type="button" aria-label="Copy code">Copy</button>` +
+        `</div>` +
+        `<pre><code class="${hljsClass} ${codeClass}">${highlighted}</code></pre>` +
+        `</div>`;
     }
   }
 });
@@ -182,7 +285,8 @@ const sanitizeHtml = (dirtyHtml) => {
       "section",
       "semantics",
       "annotation",
-      "annotation-xml"
+      "annotation-xml",
+      "button"
     ],
     ADD_ATTR: [
       "target",
@@ -196,7 +300,8 @@ const sanitizeHtml = (dirtyHtml) => {
       "data-footnote-ref",
       "data-footnotes",
       "data-footnote-backref",
-      "encoding"
+      "encoding",
+      "type"
     ]
   });
 };
@@ -473,7 +578,6 @@ createApp({
     const selectedPersona = ref("socratic");
     const personaDirective = ref(PERSONA_CONFIG.socratic.baseDirective);
 
-    // Depth tier defaults to 'med' (replacing legacy 'balanced')
     const selectedDepth = ref("med");
     const customDepthDirective = ref("");
     const quickDepthChips = ref([
@@ -485,7 +589,6 @@ createApp({
       "Culinary Analogies Only"
     ]);
 
-    // Computed properties for current persona configuration and depths
     const currentPersonaConfig = computed(() => {
       return PERSONA_CONFIG[selectedPersona.value] || PERSONA_CONFIG.custom;
     });
@@ -628,7 +731,7 @@ createApp({
         editingMsgId.value = null;
         editingMsgText.value = "";
         await updateCounts();
-        nextTick(renderMermaidDiagrams);
+        nextTick(postRenderPass);
       } catch (err) {
         console.error("Error saving edited message:", err);
         alert("Failed to save changes.");
@@ -705,7 +808,7 @@ createApp({
       await loadArchives();
       await updateCounts();
       scrollToBottom();
-      nextTick(renderMermaidDiagrams);
+      nextTick(postRenderPass);
     };
 
     const switchSession = async (id) => {
@@ -905,11 +1008,11 @@ You MUST return a valid JSON object matching this schema format:
       }
     };
 
-    // --- HARDENED KATEX PRE-PROCESSOR (HTML-ONLY OUTPUT & MHCHEM SUPPORT) ---
+    // --- HARDENED KATEX PRE-PROCESSOR ---
     const renderMathInText = (text) => {
       if (!window.katex) return text;
 
-      // Clean up loose \ce before numbers/spaces (e.g. \ce2.8 -> 2.8)
+      // Clean loose \ce before numbers/spaces (e.g. \ce2.8 -> 2.8)
       text = text.replace(/\\ce\s*([0-9])/g, '$1');
 
       // 1. Display math: $$...$$ or \[...\]
@@ -934,8 +1037,7 @@ You MUST return a valid JSON object matching this schema format:
         }
       });
 
-      // In renderMathInText (Rule 3):
-      // 3. Currency-safe inline math: $...$ (now supports formulas starting with numbers!)
+      // 3. Currency-safe inline math: $...$
       text = text.replace(/(?<![\$\\])\$(?!\s)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
         const formula = (inner || "").trim();
         if (!formula) return match;
@@ -959,11 +1061,10 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
-    // Auto-heals syntax AND auto-wraps long labels into multi-line boxes
+    // Auto-heals syntax and wraps long labels
     const autoFixMermaid = (code) => {
       if (!code) return "";
 
-      // Helper: Inserts <br/> every ~32 chars at word boundaries if no <br> exists
       const wrapText = (text, limit = 32) => {
         if (text.includes("<br") || text.length <= limit) return text;
         const words = text.split(" ");
@@ -983,13 +1084,10 @@ You MUST return a valid JSON object matching this schema format:
       };
 
       return code
-        // 1. Clean loose or braced \ce / /ce before numbers
         .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
         .replace(/[\\\/]+ce\s*([0-9])/gi, '$1')
-        // 2. Wrap labels containing parentheses or operators in quotes
         .replace(/(\b\w+)\[([^"\]\n]*[\(\)\>\<\=\/][^"\]\n]*)\]/g, '$1["$2"]')
         .replace(/(\b\w+)\(([^"\)\n]*[\[\]\>\<\=\/][^"\)\n]*)\)/g, '$1("$2")')
-        // 3. Auto-wrap long text inside node labels so boxes stay neat and compact
         .replace(/(\b\w+)\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
         .replace(/(\b\w+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
     };
@@ -1002,17 +1100,14 @@ You MUST return a valid JSON object matching this schema format:
       const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
       if (unrenderedNodes.length === 0) return;
 
-      // 1. Auto-heal syntax and audit nodes
       for (const node of unrenderedNodes) {
         const rawCode = node.textContent;
         const fixedCode = autoFixMermaid(rawCode);
 
-        // Update the DOM node with the sanitized code so mermaid.run reads it
         if (fixedCode !== rawCode) {
           node.textContent = fixedCode;
         }
 
-        // Test parse the sanitized version
         try {
           await window.mermaid.parse(node.textContent);
         } catch (err) {
@@ -1026,7 +1121,6 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
-      // 2. Render all nodes as usual
       try {
         await window.mermaid.run({
           nodes: Array.from(unrenderedNodes),
@@ -1037,13 +1131,45 @@ You MUST return a valid JSON object matching this schema format:
       }
     };
 
+    // --- CODE BLOCKS POST-RENDER HIGHLIGHT PASS ---
+    const highlightCodeBlocks = async () => {
+      if (!window.hljs) return;
+      await nextTick();
+
+      const pendingBlocks = document.querySelectorAll("pre code.hljs-pending, pre code:not(.hljs)");
+      pendingBlocks.forEach((block) => {
+        try {
+          window.hljs.highlightElement(block);
+          block.classList.remove("hljs-pending");
+          block.classList.add("hljs");
+
+          // Sync the language badge if it was inferred via auto-detection
+          const wrapper = block.closest(".code-block-wrapper");
+          if (wrapper) {
+            const badge = wrapper.querySelector(".code-lang-badge");
+            if (badge && (badge.textContent === "Code" || !badge.textContent)) {
+              const match = block.className.match(/language-([a-z0-9_-]+)/i);
+              if (match && match[1]) {
+                badge.textContent = normalizeLangName(match[1]);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Highlight.js element highlight failed:", e);
+        }
+      });
+    };
+
+    // Unified post-render pass for rich assets
+    const postRenderPass = () => {
+      renderMermaidDiagrams();
+      highlightCodeBlocks();
+    };
+
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      // 1. Handles braced: \ce{2.8 mEq/L} or /ce{2.8 mEq/L} -> 2.8 mEq/L
       text = text.replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1');
-
-      // 2. Handles unbraced: \ce2.8 or /ce 2.8 or \\ce2.8 -> 2.8
       text = text.replace(/[\\\/]+ce\s*([0-9])/gi, '$1');
 
       if (hasMathSyntax(text)) {
@@ -1062,6 +1188,7 @@ You MUST return a valid JSON object matching this schema format:
           ensureHighlightLoaded()
             .then(() => {
               highlightReady.value = true;
+              nextTick(highlightCodeBlocks);
             })
             .catch((err) => console.error("Failed to load Highlight.js:", err));
         }
@@ -1080,6 +1207,7 @@ You MUST return a valid JSON object matching this schema format:
         }
       }
 
+      // Track reactivity for dynamic script loading
       const _k = katexReady.value;
       const _h = highlightReady.value;
       const _m = mermaidReady.value;
@@ -1211,7 +1339,7 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
 
         messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await updateCounts();
-        nextTick(renderMermaidDiagrams);
+        nextTick(postRenderPass);
 
         alert("Summary created successfully! Scroll up your chat history to see it.");
 
@@ -1333,7 +1461,7 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
         messages.value = await db.chats.where({ sessionId: currentSessionId.value }).sortBy("timestamp");
         await loadArchives();
         await updateCounts();
-        nextTick(renderMermaidDiagrams);
+        nextTick(postRenderPass);
 
         alert("Epoch compression complete! Original chapters have been archived.");
       } catch (err) {
@@ -1369,7 +1497,7 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
     });
 
     watch(messages, () => {
-      nextTick(renderMermaidDiagrams);
+      nextTick(postRenderPass);
     }, { deep: true });
 
     onMounted(async () => {
@@ -1390,7 +1518,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       if (localStorage.getItem("story_tts_prosody"))
         ttsProsodyNudge.value = localStorage.getItem("story_tts_prosody");
 
-      // Load persona configuration
       const storedPersona = localStorage.getItem("story_persona");
       if (storedPersona && PERSONA_CONFIG[storedPersona]) {
         selectedPersona.value = storedPersona;
@@ -1404,7 +1531,6 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
         personaDirective.value = activeConfig.baseDirective;
       }
 
-      // Backward-compatible depth migration: map legacy keys
       let storedDepth = localStorage.getItem("story_depth");
       if (storedDepth) {
         if (storedDepth === "eli5") storedDepth = "low";
@@ -1898,7 +2024,6 @@ DISCUSSION PROMPT: ${text}`;
           }
         }
 
-        // Parse model-emitted <fact> tags
         const factRegex = /<fact(?:\s+category=["']?([^"'>]+)["']?)?>([\s\S]*?)<\/fact>/gi;
         let match;
         const emittedFacts = [];
@@ -1928,7 +2053,6 @@ DISCUSSION PROMPT: ${text}`;
           await updateCounts();
         }
 
-        // Scrub <fact> tags from visible prose
         responseText = responseText
           .replace(/<fact(?:\s+category=["']?[^"'>]+["']?)?>[\s\S]*?<\/fact>/gi, "")
           .replace(/\n{3,}/g, "\n\n");
@@ -1972,10 +2096,9 @@ DISCUSSION PROMPT: ${text}`;
         }
       }
       await updateCounts();
-      nextTick(renderMermaidDiagrams);
+      nextTick(postRenderPass);
     };
 
-    // --- SEND MESSAGE WITH SLASH COMMAND INTERCEPTORS ---
     const sendMessage = async () => {
       const userText = currentInput.value.trim();
       if (!userText || isLoading.value) return;
@@ -2043,7 +2166,7 @@ DISCUSSION PROMPT: ${text}`;
         return;
       }
 
-      // 3. /set command (State Upsert Engine)
+      // 3. /set command
       const setMatch = userText.match(/^\/set\s+(?:#([a-zA-Z0-9_-]+)\s+)?([\s\S]+)$/i);
       if (setMatch) {
         if (!currentSessionId.value) {
