@@ -107,15 +107,12 @@ const ensureMermaidLoaded = async () => {
           theme: "dark",
           securityLevel: "loose",
           themeVariables: {
-            fontSize: "17px",
+            fontSize: "17px", // Default is ~14px. Bump to 18px or 20px
             fontFamily: "inherit"
           },
           flowchart: {
-            htmlLabels: true,
-            curve: "basis",       // Smooth rounded connector lines instead of sharp right angles
-            nodeSpacing: 45,      // Horizontal space between nodes on the same level (default 50)
-            rankSpacing: 55,      // Vertical space between rows/tiers (default 50)
-            padding: 15           // Padding inside each box
+            useMaxWidth: false, // Prevents tiny compressed diagrams on wide screens
+            htmlLabels: true
           }
         });
       }
