@@ -46,22 +46,21 @@ const hasMhchemSyntax = (text) => {
   return /\\ce\{/.test(text);
 };
 
-const ensureKaTeXLoaded = async (includeMhchem = false) => {
+const ensureKaTeXLoaded = async () => {
   if (!katexLoadingPromise) {
     katexLoadingPromise = (async () => {
       loadStylesheet("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css");
       if (!window.katex) {
         await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js");
       }
+      // Always bundle mhchem with KaTeX so chemistry formulas never encounter an unready state
+      if (window.katex && !window.katex.__mhchemLoaded) {
+        await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/mhchem.min.js");
+        window.katex.__mhchemLoaded = true;
+      }
     })();
   }
   await katexLoadingPromise;
-
-  if (includeMhchem && (!window.katex || !window.katex.__mhchemLoaded)) {
-    await loadScript("https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/mhchem.min.js");
-    if (window.katex) window.katex.__mhchemLoaded = true;
-  }
-
   return window.katex;
 };
 
@@ -570,7 +569,7 @@ createApp({
     const systemPrompt = ref("");
 
     // Reactive flags for on-demand lazy assets
-    const katexReady = ref(false);
+    const katexReady = ref(0);
     const highlightReady = ref(false);
     const mermaidReady = ref(false);
 
@@ -1172,14 +1171,13 @@ You MUST return a valid JSON object matching this schema format:
       text = text.replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1');
       text = text.replace(/[\\\/]+ce\s*([0-9])/gi, '$1');
 
-      if (hasMathSyntax(text)) {
-        const needsMhchem = hasMhchemSyntax(text);
-        if (!window.katex || (needsMhchem && !window.katex.__mhchemLoaded)) {
-          ensureKaTeXLoaded(needsMhchem)
+      if (hasMathSyntax(text) || hasMhchemSyntax(text)) {
+        if (!window.katex || !window.katex.__mhchemLoaded) {
+          ensureKaTeXLoaded()
             .then(() => {
-              katexReady.value = true;
+              katexReady.value++; // Increments to guarantee Vue triggers a re-render
             })
-            .catch((err) => console.error("Failed to load KaTeX:", err));
+            .catch((err) => console.error("Failed to load KaTeX & mhchem:", err));
         }
       }
 
