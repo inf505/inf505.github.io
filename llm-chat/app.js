@@ -899,6 +899,9 @@ You MUST return a valid JSON object matching this schema format:
     const renderMathInText = (text) => {
       if (!window.katex) return text;
 
+      // Clean up loose \ce before numbers/spaces (e.g. \ce2.8 -> 2.8)
+      text = text.replace(/\\ce\s*([0-9])/g, '$1');
+
       // 1. Display math: $$...$$ or \[...\]
       text = text.replace(/(\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\])/g, (match, full, inner1, inner2) => {
         const formula = (inner1 || inner2 || "").trim();
