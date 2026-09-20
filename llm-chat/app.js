@@ -1878,7 +1878,7 @@ ${systemPrompt.value || "(None provided. Drive the conversation based on the use
 
 OUTPUT REQUIREMENTS:
 Format responses in standard Markdown prose. Do not output raw JSON.
-Reasoning/planning should occur in a <think>...</think> block before the response.`;
+If using an internal scratchpad or reasoning, wrap it strictly within a single <think>...</think> block at the very beginning of the message. Never emit naked planning notes or use alternative delimiters like "<<<".`;
     };
 
     const triggerAIResponse = async () => {
