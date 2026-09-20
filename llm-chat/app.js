@@ -38,7 +38,8 @@ let katexLoadingPromise = null;
 
 const hasMathSyntax = (text) => {
   if (!text) return false;
-  return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{|(?<![\$\\])\$(?!\s|\d)(?:[^\$\n]|\\\$)+?(?<!\s)\$(?!\d))/.test(text);
+  // Allows numbers in math ($1.0$, $1.6\text{...}$) while preventing spaced currency ($10 and $20)
+  return /(?:\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\(.+?\\\)|\x5cce\{?|(?<![\$\\])\$(?!\s)[^\$\n]+?(?<!\s)\$(?!\d))/.test(text);
 };
 
 const hasMhchemSyntax = (text) => {
@@ -924,8 +925,9 @@ You MUST return a valid JSON object matching this schema format:
         }
       });
 
-      // 3. Currency-safe inline math: $...$
-      text = text.replace(/(?<![\$\\])\$(?!\s|\d)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
+      // In renderMathInText (Rule 3):
+      // 3. Currency-safe inline math: $...$ (now supports formulas starting with numbers!)
+      text = text.replace(/(?<![\$\\])\$(?!\s)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
         const formula = (inner || "").trim();
         if (!formula) return match;
         try {
@@ -1003,6 +1005,8 @@ You MUST return a valid JSON object matching this schema format:
 
     const renderMarkdown = (text) => {
       if (!text) return "";
+
+      text = text.replace(/\\ce\s*([0-9])/g, '$1');
 
       if (hasMathSyntax(text)) {
         const needsMhchem = hasMhchemSyntax(text);
