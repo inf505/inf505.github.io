@@ -1360,3 +1360,25 @@ pre code.hljs {
         max-width: 95%;
     }
 }
+
+/* Fix Mermaid text truncation and monospace font blowout */
+.mermaid-container pre.mermaid,
+.mermaid,
+.mermaid svg,
+.mermaid text,
+.mermaid .nodeLabel,
+.mermaid .label {
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif !important;
+    letter-spacing: normal !important;
+}
+
+/* Allow text to breathe without hard-clipping at the border */
+.mermaid foreignObject {
+    overflow: visible !important;
+}
