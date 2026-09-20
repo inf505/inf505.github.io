@@ -1006,7 +1006,11 @@ You MUST return a valid JSON object matching this schema format:
     const renderMarkdown = (text) => {
       if (!text) return "";
 
-      text = text.replace(/\\ce\s*([0-9])/g, '$1');
+      text = text.replace(/\\ce\s*([0-9])/g, '// 1. Handles braced: \ce{2.8 mEq/L} or /ce{2.8 mEq/L} -> 2.8 mEq/L
+      text = text.replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1');
+
+      // 2. Handles unbraced: \ce2.8 or /ce 2.8 or \\ce2.8 -> 2.8
+      text = text.replace(/[\\\/]+ce\s*([0-9])/gi, '$1');$1');
 
       if (hasMathSyntax(text)) {
         const needsMhchem = hasMhchemSyntax(text);
