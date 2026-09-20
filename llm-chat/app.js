@@ -958,14 +958,39 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
-    // Auto-quotes unquoted node labels that contain parentheses or brackets
+    // Auto-heals syntax AND auto-wraps long labels into multi-line boxes
     const autoFixMermaid = (code) => {
       if (!code) return "";
+
+      // Helper: Inserts <br/> every ~32 chars at word boundaries if no <br> exists
+      const wrapText = (text, limit = 32) => {
+        if (text.includes("<br") || text.length <= limit) return text;
+        const words = text.split(" ");
+        let line = "";
+        const lines = [];
+
+        for (const word of words) {
+          if ((line + " " + word).trim().length > limit) {
+            if (line) lines.push(line);
+            line = word;
+          } else {
+            line = line ? line + " " + word : word;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.join("<br/>");
+      };
+
       return code
-        // Matches: id[text with (parens)] -> id["text with (parens)"]
-        .replace(/(\b\w+)\[([^"\]\n]*[\(\)][^"\]\n]*)\]/g, '$1["$2"]')
-        // Matches: id(text with [brackets]) -> id("text with [brackets]")
-        .replace(/(\b\w+)\(([^"\)\n]*[\[\]][^"\)\n]*)\)/g, '$1("$2")');
+        // 1. Clean loose or braced \ce / /ce before numbers
+        .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
+        .replace(/[\\\/]+ce\s*([0-9])/gi, '$1')
+        // 2. Wrap labels containing parentheses or operators in quotes
+        .replace(/(\b\w+)\[([^"\]\n]*[\(\)\>\<\=\/][^"\]\n]*)\]/g, '$1["$2"]')
+        .replace(/(\b\w+)\(([^"\)\n]*[\[\]\>\<\=\/][^"\)\n]*)\)/g, '$1("$2")')
+        // 3. Auto-wrap long text inside node labels so boxes stay neat and compact
+        .replace(/(\b\w+)\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
+        .replace(/(\b\w+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
     };
 
     // --- MERMAID POST-RENDER PASS ---
