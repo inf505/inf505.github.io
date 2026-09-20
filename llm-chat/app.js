@@ -111,7 +111,7 @@ const ensureMermaidLoaded = async () => {
             fontFamily: "inherit"
           },
           flowchart: {
-            useMaxWidth: false, // Prevents tiny compressed diagrams on wide screens
+            useMaxWidth: true, // Prevents tiny compressed diagrams on wide screens
             htmlLabels: true
           }
         });
