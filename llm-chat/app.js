@@ -1900,10 +1900,10 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
 
           if (index === 0) {
             text = `[KNOWLEDGE BASE / ESTABLISHED FACTS]
-${factsSummary || "No facts established yet."}
-[END KNOWLEDGE BASE]
+    ${factsSummary || "No facts established yet."}
+    [END KNOWLEDGE BASE]
 
-DISCUSSION PROMPT: ${text}`;
+    DISCUSSION PROMPT: ${text}`;
           }
 
           return {
@@ -1959,12 +1959,22 @@ DISCUSSION PROMPT: ${text}`;
 
             clearTimeout(timeoutId);
 
+            // 1. Handle HTTP non-2xx responses
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
-              const errMsg = errorData.error?.message || "";
+              const errMsg = errorData.error?.message || errorData.message || "";
+              const errCode = errorData.error?.code || errorData.code || response.status;
 
-              if (response.status === 429 || response.status >= 500) {
-                console.warn(`⚠️ Model ${activeModel} failed with status ${response.status}: ${errMsg}. Putting in jail...`);
+              const isOverloadedOrUnavailable =
+                response.status === 429 ||
+                response.status >= 500 ||
+                Number(errCode) === 503 ||
+                Number(errCode) === 429 ||
+                Number(errCode) >= 500 ||
+                /overloaded|upstream error|temporarily unavailable/i.test(errMsg);
+
+              if (isOverloadedOrUnavailable) {
+                console.warn(`⚠️ Model ${activeModel} failed (${errCode}): ${errMsg || "Service overloaded/unavailable"}. Putting in jail...`);
                 putModelInJail(activeModel, 5);
 
                 if (attemptedInThisTurn.length < modelList.length) {
@@ -1972,11 +1982,36 @@ DISCUSSION PROMPT: ${text}`;
                 }
               }
 
-              throw new Error(`[${activeModel}] API Error (${response.status}): ${errMsg}`);
+              throw new Error(`[${activeModel}] API Error (${errCode}): ${errMsg}`);
             }
 
             data = await response.json();
             console.log("RAW API RESPONSE:", data);
+
+            // 2. Handle 200 OK responses that wrap an upstream error payload (e.g. Nvidia / OpenRouter 503 overload)
+            const payloadError = data.error || (data.code && Number(data.code) >= 400 ? data : null);
+            if (payloadError) {
+              const errMsg = payloadError.message || data.message || JSON.stringify(payloadError);
+              const errCode = payloadError.code || data.code || 503;
+
+              const isOverloadedOrUnavailable =
+                Number(errCode) === 503 ||
+                Number(errCode) === 429 ||
+                Number(errCode) >= 500 ||
+                /overloaded|upstream error|temporarily unavailable/i.test(errMsg);
+
+              if (isOverloadedOrUnavailable) {
+                console.warn(`⚠️ Model ${activeModel} returned upstream overload (${errCode}): ${errMsg}. Putting in jail...`);
+                putModelInJail(activeModel, 5);
+
+                if (attemptedInThisTurn.length < modelList.length) {
+                  continue;
+                }
+              }
+
+              throw new Error(`[${activeModel}] API Error (${errCode}): ${errMsg}`);
+            }
+
             break;
           } catch (error) {
             clearTimeout(timeoutId);
@@ -1987,9 +2022,14 @@ DISCUSSION PROMPT: ${text}`;
               continue;
             }
 
-            if (attemptedInThisTurn.length >= modelList.length) {
-              throw error;
+            // Fallback: If this model threw any other error and fallback models remain, jail it and try next
+            if (attemptedInThisTurn.length < modelList.length) {
+              console.warn(`⚠️ Model ${activeModel} encountered an error: ${error.message}. Jailing and trying next...`);
+              putModelInJail(activeModel, 5);
+              continue;
             }
+
+            throw error;
           }
         }
 
