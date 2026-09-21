@@ -1060,7 +1060,7 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
-    // Auto-heals syntax and wraps long labels
+    // Auto-heals common LLM Mermaid syntax quirks and wraps long labels
     const autoFixMermaid = (code) => {
       if (!code) return "";
 
@@ -1082,13 +1082,52 @@ You MUST return a valid JSON object matching this schema format:
         return lines.join("<br/>");
       };
 
-      return code
+      let fixed = code
+        // 1. Strip stray LaTeX/chemistry \ce tags
         .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
         .replace(/[\\\/]+ce\s*([0-9])/gi, '$1')
-        .replace(/(\b\w+)\[([^"\]\n]*[\(\)\>\<\=\/][^"\]\n]*)\]/g, '$1["$2"]')
-        .replace(/(\b\w+)\(([^"\)\n]*[\[\]\>\<\=\/][^"\)\n]*)\)/g, '$1("$2")')
-        .replace(/(\b\w+)\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
-        .replace(/(\b\w+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
+
+        // 2. Fix Rhombus / Decision nodes: H{go func()} -> H{"go func()"}
+        .replace(/(?<!\{)(\b[\w-]+)\{([^{"\n]+)\}(?!\})/g, (match, id, label) => {
+          const trimmed = label.trim();
+          if (/[\(\)\[\]\>\<\=\/\;\:\?\!]/.test(trimmed)) {
+            return `${id}{"${trimmed.replace(/"/g, "'")}"}`;
+          }
+          return match;
+        })
+
+        // 3. Fix Hexagon nodes: H{{go func()}} -> H{{"go func()"}}
+        .replace(/(\b[\w-]+)\{\{([^{"\n]+)\}\}/g, (match, id, label) => {
+          const trimmed = label.trim();
+          if (/[\(\)\[\]\>\<\=\/\;\:\?\!]/.test(trimmed)) {
+            return `${id}{{"${trimmed.replace(/"/g, "'")}"}}`;
+          }
+          return match;
+        })
+
+        // 4. Fix Square Bracket nodes: A[call(args)] -> A["call(args)"]
+        .replace(/(\b[\w-]+)\[([^"\]\n]+)\]/g, (match, id, label) => {
+          const trimmed = label.trim();
+          if (/[\(\)\{\}\>\<\=\/\;\:\?\!]/.test(trimmed)) {
+            return `${id}["${trimmed.replace(/"/g, "'")}"]`;
+          }
+          return match;
+        })
+
+        // 5. Fix Rounded nodes with nested parens: A(call(x)) -> A("call(x)")
+        .replace(/(?<!\()(\b[\w-]+)\(([^"\n]+?\([^\n]+?\)[^"\n]*?)\)(?!\))/g, (match, id, label) => {
+          return `${id}("${label.trim().replace(/"/g, "'")}")`;
+        })
+
+        // 6. Fix edge labels with parentheses: A -- Spawns (x) --> B -> A -- "Spawns (x)" --> B
+        .replace(/--\s*([^"\n\-]+?[\(\)\[\]\{\}][^"\n\-]+?)\s*-->/g, '-- "$1" -->')
+
+        // 7. Auto-wrap long labels for clean rendering
+        .replace(/(\b[\w-]+)\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
+        .replace(/(\b[\w-]+)\{"([^"\n]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
+        .replace(/(\b[\w-]+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
+
+      return fixed;
     };
 
     // --- MERMAID POST-RENDER PASS ---
@@ -1098,6 +1137,8 @@ You MUST return a valid JSON object matching this schema format:
 
       const unrenderedNodes = document.querySelectorAll(".mermaid:not([data-processed='true'])");
       if (unrenderedNodes.length === 0) return;
+
+      const validNodes = [];
 
       for (const node of unrenderedNodes) {
         const rawCode = node.textContent;
@@ -1109,6 +1150,7 @@ You MUST return a valid JSON object matching this schema format:
 
         try {
           await window.mermaid.parse(node.textContent);
+          validNodes.push(node);
         } catch (err) {
           console.groupCollapsed("❌ [MERMAID SYNTAX ERROR] Still Failed After Auto-Fix");
           console.error("Parser Error:", err.message || err);
@@ -1117,16 +1159,25 @@ You MUST return a valid JSON object matching this schema format:
           console.log("--- SANITIZED CODE ---");
           console.log(node.textContent);
           console.groupEnd();
+
+          // Mark node as processed and display a clean fallback rather than crashing
+          node.setAttribute("data-processed", "true");
+          const wrapper = node.closest(".mermaid-container");
+          if (wrapper) {
+            wrapper.classList.add("mermaid-error");
+          }
         }
       }
 
-      try {
-        await window.mermaid.run({
-          nodes: Array.from(unrenderedNodes),
-          suppressErrors: true
-        });
-      } catch (err) {
-        console.warn("Mermaid rendering warning:", err);
+      if (validNodes.length > 0) {
+        try {
+          await window.mermaid.run({
+            nodes: validNodes,
+            suppressErrors: true
+          });
+        } catch (err) {
+          console.warn("Mermaid rendering warning:", err);
+        }
       }
     };
 
