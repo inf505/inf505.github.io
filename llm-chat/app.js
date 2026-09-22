@@ -2134,6 +2134,13 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
               messageContent = messageContent.slice(0, unclosedThinkMatch.index).trim();
             }
 
+            // 4. Fallback: Catch plain-text "Thinking: ... Response: ..." formats
+            const textThinkMatch = messageContent.match(/^(?:Thinking|Thought):\s*([\s\S]*?)\n+(?:Response|Answer):\s*([\s\S]*)$/i);
+            if (textThinkMatch) {
+              thoughtText += textThinkMatch[1].trim() + "\n\n";
+              messageContent = textThinkMatch[2].trim();
+            }
+
             responseText = messageContent;
           }
         }
