@@ -2153,15 +2153,44 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
         }
 
         if (emittedFacts.length > 0 && currentSessionId.value) {
+          // Fetch existing facts for this session to check against
+          const existingFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
+
+          // Helper to normalize strings for comparison (lowercase, strip trailing punctuation/spaces)
+          const normalizeForCompare = (str) =>
+            (str || "")
+              .toLowerCase()
+              .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+              .replace(/\s+/g, " ")
+              .trim();
+
           for (const ef of emittedFacts) {
-            await db.facts.add({
+            const cleanNew = normalizeForCompare(ef.text);
+
+            // Check if exact or near-identical fact already exists
+            const isDuplicate = existingFacts.some((existing) => {
+              const cleanExisting = normalizeForCompare(existing.text);
+              return cleanExisting === cleanNew;
+            });
+
+            if (isDuplicate) {
+              console.warn(`⚠️ [FACT SKIPPED - DUPLICATE]: [${ef.category}] "${ef.text}"`);
+              continue;
+            }
+
+            // Save new unique fact
+            const newId = await db.facts.add({
               sessionId: currentSessionId.value,
               category: ef.category,
               text: ef.text,
               timestamp: Date.now()
             });
+
+            // Push to local list immediately so duplicate facts in the same message are caught
+            existingFacts.push({ id: newId, ...ef });
             console.log(`🧠 [AI MODEL EMITTED FACT] [${ef.category}] ${ef.text}`);
           }
+
           await loadFacts();
           await updateCounts();
         }
