@@ -1047,16 +1047,15 @@ You MUST return a valid JSON object matching this schema format:
       text = text.replace(/(?<![\$\\])\$(?!\s)((?:[^\$\n]|\\\$)+?)(?<!\s)\$(?!\d)/g, (match, inner) => {
         const formula = (inner || "").trim();
         if (!formula) return match;
-        try {
-          return window.katex.renderToString(formula, { displayMode: false, throwOnError: false, output: "html" });
-        } catch (e) {
+
+        // HEURISTIC: Prevent currency false-positives (e.g. "$20 and shipping was $5")
+        // If it contains spaces and normal words, but NO math operators, it's likely plain text.
+        const hasMathSymbols = /[\\[\]{}_\^=+\-*/<>!|]/.test(formula);
+        const hasWords = /[a-zA-Z]{2,}/.test(formula);
+        if (!hasMathSymbols && hasWords && formula.includes(" ")) {
           return match;
         }
-      });
 
-      // 4. Standalone chemical formula syntax: \ce{...}
-      text = text.replace(/\\ce\{([^{}]+)\}/g, (match, inner) => {
-        const formula = `\\ce{${inner.trim()}}`;
         try {
           return window.katex.renderToString(formula, { displayMode: false, throwOnError: false, output: "html" });
         } catch (e) {
