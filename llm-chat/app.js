@@ -873,6 +873,13 @@ createApp({
       await updateCounts();
     };
 
+    const deleteFactFromMessage = async (msg, factId) => {
+      await deleteFact(factId);
+      if (msg.learnedFacts) {
+        msg.learnedFacts = msg.learnedFacts.filter(f => f.id !== factId);
+      }
+    };
+
     const addManualFact = async () => {
       if (!newFactText.value.trim() || !currentSessionId.value) return;
       const category = normalizeCategory(newFactCategory.value, "Fact");
@@ -2167,11 +2174,12 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           }
         }
 
+        // Track facts learned during THIS specific turn so we can show badges
+        const savedTurnFacts = [];
+
         if (emittedFacts.length > 0 && currentSessionId.value) {
-          // Fetch existing facts for this session to check against
           const existingFacts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
 
-          // Helper to normalize strings for comparison (lowercase, strip trailing punctuation/spaces)
           const normalizeForCompare = (str) =>
             (str || "")
               .toLowerCase()
@@ -2182,10 +2190,8 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           for (const ef of emittedFacts) {
             const cleanNew = normalizeForCompare(ef.text);
 
-            // Check if exact or near-identical fact already exists
             const isDuplicate = existingFacts.some((existing) => {
-              const cleanExisting = normalizeForCompare(existing.text);
-              return cleanExisting === cleanNew;
+              return normalizeForCompare(existing.text) === cleanNew;
             });
 
             if (isDuplicate) {
@@ -2193,7 +2199,6 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
               continue;
             }
 
-            // Save new unique fact
             const newId = await db.facts.add({
               sessionId: currentSessionId.value,
               category: ef.category,
@@ -2201,8 +2206,9 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
               timestamp: Date.now()
             });
 
-            // Push to local list immediately so duplicate facts in the same message are caught
-            existingFacts.push({ id: newId, ...ef });
+            const factRecord = { id: newId, ...ef };
+            existingFacts.push(factRecord);
+            savedTurnFacts.push(factRecord); // Keep this to show on the bubble!
             console.log(`🧠 [AI MODEL EMITTED FACT] [${ef.category}] ${ef.text}`);
           }
 
@@ -2216,7 +2222,6 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           .replace(/\n{3,}/g, "\n\n")
           .trim();
 
-        // If the model only emitted a fact and forgot to speak, generate a clean confirmation
         let finalResponse = responseText;
         if (!finalResponse) {
           if (emittedFacts.length > 0) {
@@ -2241,6 +2246,7 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           role: "model",
           text: finalResponse,
           thought: finalThoughtString,
+          learnedFacts: savedTurnFacts, // Attach facts to this message
           options: null,
           audioData: null,
           isGeneratingAudio: false,
@@ -2551,6 +2557,7 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
       activeFactTagFilter,
       loadFacts,
       deleteFact,
+      deleteFactFromMessage,
       newFactText,
       newFactCategory,
       addManualFact,
