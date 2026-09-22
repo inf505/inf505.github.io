@@ -408,6 +408,16 @@
                         <!-- Content STANDARD READ MODE -->
                         <div v-else class="message-text" v-html="renderMarkdown(msg.text)"></div>
 
+                        <!-- LEARNED FACTS BADGES -->
+                        <div v-if="msg.learnedFacts && msg.learnedFacts.length > 0" class="learned-facts-container">
+                            <span v-for="fact in msg.learnedFacts" :key="fact.id" class="learned-fact-chip">
+                                🧠 <b>#{{ fact.category }}</b>: {{ fact.text }}
+                                <button type="button" class="learned-fact-remove-btn"
+                                    @click.stop="deleteFactFromMessage(msg, fact.id)"
+                                    title="Delete this fact">&times;</button>
+                            </span>
+                        </div>
+
                         <!-- AUDIO LOADING STATE -->
                         <div v-if="msg.isGeneratingAudio" class="audio-loading">
                             <i>Synthesizing audio...</i>
