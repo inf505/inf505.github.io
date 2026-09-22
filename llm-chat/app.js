@@ -1530,17 +1530,37 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
       }
     };
 
-    const updateCounts = async () => {
-      try {
-        const chats = await db.chats.where({ sessionId: currentSessionId.value }).toArray();
-        const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
+    let countUpdateTimer = null;
 
-        const fullDb = { chats, facts };
-        const bytes = new TextEncoder().encode(JSON.stringify(fullDb)).length;
-        totalSizeKb.value = (bytes / 1024).toFixed(1);
-      } catch (err) {
-        console.error("Error updating stats:", err);
-      }
+    const updateCounts = () => {
+      // 1. Clear any pending calculation so we don't calculate multiple times in a row
+      if (countUpdateTimer) clearTimeout(countUpdateTimer);
+
+      // 2. Wait 2 seconds (until the UI is idle) before running the heavy math
+      countUpdateTimer = setTimeout(async () => {
+        try {
+          if (!currentSessionId.value) return;
+
+          const chats = await db.chats.where({ sessionId: currentSessionId.value }).toArray();
+          const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
+
+          // 3. Fast estimation: Just count text lengths instead of JSON stringifying everything
+          let charCount = 0;
+          for (const c of chats) {
+            charCount += (c.text?.length || 0) + (c.thought?.length || 0);
+          }
+          for (const f of facts) {
+            charCount += (f.text?.length || 0) + (f.category?.length || 0);
+          }
+
+          // Approx 2 bytes per character, plus 15% overhead for database structuring/IDs
+          const estimatedBytes = (charCount * 2) * 1.15;
+
+          totalSizeKb.value = (estimatedBytes / 1024).toFixed(1);
+        } catch (err) {
+          console.error("Error updating stats:", err);
+        }
+      }, 2000);
     };
 
     const adjustHeight = () => {
