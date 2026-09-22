@@ -1226,9 +1226,13 @@ You MUST return a valid JSON object matching this schema format:
     };
 
     // Unified post-render pass for rich assets
-    const postRenderPass = () => {
-      renderMermaidDiagrams();
+    const postRenderPass = async () => {
+      await renderMermaidDiagrams();
       highlightCodeBlocks();
+
+      // Wait for Vue and the browser to finish drawing the new DOM height
+      await nextTick();
+      scrollToBottom();
     };
 
     const renderMarkdown = (text) => {
@@ -1685,12 +1689,13 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
     };
 
     const scrollToBottom = () => {
-      setTimeout(() => {
+      // Use requestAnimationFrame for a buttery smooth, immediate scroll
+      // rather than blindly waiting 300ms.
+      requestAnimationFrame(() => {
         if (messagesContainer.value) {
-          messagesContainer.value.scrollTop =
-            messagesContainer.value.scrollHeight;
+          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
         }
-      }, 300);
+      });
     };
 
     const saveToDb = async (role, text, thought = "") => {
