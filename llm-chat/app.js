@@ -2095,6 +2095,7 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           let msgObj = data.choices[0].message;
           let messageContent = msgObj.content || "";
 
+          // 1. Collect API-native reasoning fields (e.g. DeepSeek / OpenAI / OpenRouter)
           if (msgObj.reasoning) {
             thoughtText += msgObj.reasoning.trim() + "\n\n";
           } else if (msgObj.reasoning_content) {
@@ -2102,6 +2103,7 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           }
 
           if (messageContent) {
+            // 2. Strip standard closed <think>...</think> blocks
             messageContent = messageContent.replace(
               /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
               (m, tag, inner) => {
@@ -2109,22 +2111,44 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
                 return "";
               }
             );
+
+            // 3. Fallback: Catch UNCLOSED <think> tags (if cutoff mid-thought or token limit hit)
+            const unclosedThinkMatch = messageContent.match(/<(think|thought|thinking)>([\s\S]*)$/i);
+            if (unclosedThinkMatch) {
+              thoughtText += unclosedThinkMatch[2].trim() + "\n\n";
+              messageContent = messageContent.slice(0, unclosedThinkMatch.index).trim();
+            }
+
             responseText = messageContent;
           }
         }
 
-        const factRegex = /<fact(?:\s+category=["']?([^"'>]+)["']?)?>([\s\S]*?)<\/fact>/gi;
-        let match;
+        // 4. Safely extract facts strictly from responseText (with hard limits)
         const emittedFacts = [];
+        const MAX_FACT_LENGTH = 350; // Hard cap: Prevents huge chunks of prose/thinking
+        const MAX_FACTS_PER_TURN = 5;
 
-        while ((match = factRegex.exec(responseText)) !== null) {
+        // Strip code fences so examples in code blocks don't trigger fact ingestion
+        const strippedForFactCheck = responseText.replace(/```[\s\S]*?```/g, "");
+
+        // Category limited to 30 chars without newlines; body bounded to non-empty
+        const factRegex = /<fact(?:\s+category=["']?([^"'>\r\n]{1,30})["']?)?>([\s\S]*?)<\/fact>/gi;
+        let match;
+
+        while ((match = factRegex.exec(strippedForFactCheck)) !== null && emittedFacts.length < MAX_FACTS_PER_TURN) {
           const rawCat = match[1];
-          const factBody = match[2] ? match[2].trim() : "";
-          if (factBody) {
+          let factBody = (match[2] || "").trim();
+
+          // Flatten multi-line thinking/prose into a clean single line and enforce size cap
+          factBody = factBody.replace(/[\r\n]+/g, " ").trim();
+
+          if (factBody.length >= 3 && factBody.length <= MAX_FACT_LENGTH) {
             emittedFacts.push({
               category: normalizeCategory(rawCat, "Fact"),
               text: factBody
             });
+          } else if (factBody.length > MAX_FACT_LENGTH) {
+            console.warn(`⚠️ [FACT REJECTED - EXCEEDED MAX LENGTH]:`, factBody.slice(0, 100) + "...");
           }
         }
 
@@ -2142,8 +2166,9 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           await updateCounts();
         }
 
+        // Clean out <fact> tags from final rendered message text
         responseText = responseText
-          .replace(/<fact(?:\s+category=["']?[^"'>]+["']?)?>[\s\S]*?<\/fact>/gi, "")
+          .replace(/<fact(?:\s+category=["']?[^"'>]*["']?)?>[\s\S]*?<\/fact>/gi, "")
           .replace(/\n{3,}/g, "\n\n");
 
         let finalResponse = responseText.trim() || "*(No response text)*";
