@@ -1926,6 +1926,7 @@ RULES FOR FACTS:
 - Atomic & Concise: Maximum 1-2 sentences (< 300 characters). Never output long paragraphs.
 - No Duplicates: Do not record facts that are already present in the Knowledge Base.
 - Placement: Place <fact> tags at the very end of your response, never inside reasoning/thinking.
+- Conversational Response Required: Never output ONLY a <fact> tag. Always include a natural, conversational reply acknowledging the user.
 
 USER CUSTOM INSTRUCTIONS / TOPIC:
 ${systemPrompt.value || "(None provided. Drive the conversation based on the user's input.)"}
@@ -2212,9 +2213,21 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
         // Clean out <fact> tags from final rendered message text
         responseText = responseText
           .replace(/<fact(?:\s+category=["']?[^"'>]*["']?)?>[\s\S]*?<\/fact>/gi, "")
-          .replace(/\n{3,}/g, "\n\n");
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
 
-        let finalResponse = responseText.trim() || "*(No response text)*";
+        // If the model only emitted a fact and forgot to speak, generate a clean confirmation
+        let finalResponse = responseText;
+        if (!finalResponse) {
+          if (emittedFacts.length > 0) {
+            finalResponse = emittedFacts
+              .map(f => `📌 *Recorded to Knowledge Base: [${f.category}] ${f.text}*`)
+              .join("\n\n");
+          } else {
+            finalResponse = "*(No response text)*";
+          }
+        }
+
         let finalThoughtString = thoughtText.trim();
 
         const modelId = await saveToDb(
