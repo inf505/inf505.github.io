@@ -569,9 +569,9 @@ createApp({
     const systemPrompt = ref("");
 
     // Reactive flags for on-demand lazy assets
-    const katexReady = ref(0);
-    const highlightReady = ref(false);
-    const mermaidReady = ref(false);
+    // const katexReady = ref(0);
+    // const highlightReady = ref(false);
+    // const mermaidReady = ref(false);
 
     // Persona & Contextual Depth Reactive State
     const selectedPersona = ref("socratic");
@@ -1133,6 +1133,15 @@ You MUST return a valid JSON object matching this schema format:
         .replace(/(\b[\w-]+)\{"([^"\n]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
         .replace(/(\b[\w-]+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
 
+      // 8. Auto-inject missing flowchart definition if the LLM just started writing nodes
+      const lines = fixed.trim().split("\n");
+      const validChartTypes = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)/i;
+
+      if (lines.length > 0 && !validChartTypes.test(lines[0].trim())) {
+        console.warn("🔧 [MERMAID AUTO-FIX] Missing chart type detected. Injecting 'flowchart TD'.");
+        fixed = "flowchart TD\n" + fixed;
+      }
+
       return fixed;
     };
 
@@ -1232,19 +1241,17 @@ You MUST return a valid JSON object matching this schema format:
         if (!window.katex || !window.katex.__mhchemLoaded) {
           ensureKaTeXLoaded()
             .then(() => {
-              katexReady.value++; // Increments to guarantee Vue triggers a re-render
+              // Force Vue to re-evaluate v-html natively without render-loop side effects
+              messages.value = [...messages.value];
             })
-            .catch((err) => console.error("Failed to load KaTeX & mhchem:", err));
+            .catch((err) => console.error("Failed to load KaTeX:", err));
         }
       }
 
       if (hasCodeSyntax(text)) {
         if (!window.hljs) {
           ensureHighlightLoaded()
-            .then(() => {
-              highlightReady.value = true;
-              nextTick(highlightCodeBlocks);
-            })
+            .then(() => nextTick(highlightCodeBlocks))
             .catch((err) => console.error("Failed to load Highlight.js:", err));
         }
       }
@@ -1252,20 +1259,12 @@ You MUST return a valid JSON object matching this schema format:
       if (hasMermaidSyntax(text)) {
         if (!window.mermaid) {
           ensureMermaidLoaded()
-            .then(() => {
-              mermaidReady.value = true;
-              nextTick(renderMermaidDiagrams);
-            })
+            .then(() => nextTick(renderMermaidDiagrams))
             .catch((err) => console.error("Failed to load Mermaid:", err));
         } else {
           nextTick(renderMermaidDiagrams);
         }
       }
-
-      // Track reactivity for dynamic script loading
-      const _k = katexReady.value;
-      const _h = highlightReady.value;
-      const _m = mermaidReady.value;
 
       const mathRenderedText = window.katex ? renderMathInText(text) : text;
       const rawHtml = marked.parse(mathRenderedText);
