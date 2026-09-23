@@ -1312,17 +1312,17 @@ You MUST return a valid JSON object matching this schema format:
           .join("\n\n");
 
         const prompt = `Summarize the following chronological excerpt of a discussion into a highly dense, information-packed paragraph.
-Focus entirely on critical intellectual progression, major breakthroughs, and core concepts.
+    Focus entirely on critical intellectual progression, major breakthroughs, and core concepts.
 
-CRITICAL RULES:
-1. SHIFT POV: Write objectively about the discussion in the third-person.
-2. MAXIMIZE DENSITY: Strip out conversational fluff. Condense the events into concise, factual narrative history.
+    CRITICAL RULES:
+    1. SHIFT POV: Write objectively about the discussion in the third-person.
+    2. MAXIMIZE DENSITY: Strip out conversational fluff. Condense the events into concise, factual narrative history.
 
-DISCUSSION EXCERPT:
-${transcript}
+    DISCUSSION EXCERPT:
+    ${transcript}
 
-OUTPUT REQUIREMENTS:
-Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
+    OUTPUT REQUIREMENTS:
+    Do not use JSON. Output a <think>...</think> tag with your brief analysis of events, followed by the dense summary paragraph.`;
 
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
@@ -1350,24 +1350,9 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
         let thoughtText = "";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let msgObj = data.choices[0].message;
-          let rawText = msgObj.content || "";
-
-          if (msgObj.reasoning) {
-            thoughtText += msgObj.reasoning.trim() + "\n\n";
-          } else if (msgObj.reasoning_content) {
-            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
-          }
-
-          rawText = rawText.replace(
-            /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
-            (m, tag, inner) => {
-              thoughtText += inner.trim() + "\n\n";
-              return "";
-            }
-          );
-
-          summaryText = rawText.trim();
+          const parsed = extractThinkingAndContent(data.choices[0].message);
+          summaryText = parsed.text;
+          thoughtText = parsed.thought;
         }
 
         if (!summaryText) throw new Error("Received empty summary from AI.");
@@ -1389,7 +1374,7 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
             sessionId: currentSessionId.value,
             role: "summary",
             text: summaryText,
-            thought: "",
+            thought: thoughtText,
             options: null,
             timestamp: baseTimestamp + 1,
           });
@@ -1434,13 +1419,13 @@ Do not use JSON. Output a <think>...</think> tag with your brief analysis of eve
           .join("\n\n");
 
         const prompt = `You are an expert summarizer. Summarize the following sequential summaries into a single, cohesive "The Discussion So Far" narrative arc.
-Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
+    Focus entirely on the overarching progression, major milestones, and critical insights. Do not lose the main thread.
 
-PREVIOUS SUMMARIES:
-${transcript}
+    PREVIOUS SUMMARIES:
+    ${transcript}
 
-OUTPUT REQUIREMENTS:
-Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
+    OUTPUT REQUIREMENTS:
+    Do not use JSON. Output a <think>...</think> tag with your internal analysis, followed by the overarching summary block.`;
 
         const activeModel = getNextAvailableModel();
         const { url, key } = getRequestConfig(activeModel);
@@ -1465,25 +1450,11 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
 
         let summaryText = "";
         let thoughtText = "";
+
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let msgObj = data.choices[0].message;
-          let rawText = msgObj.content || "";
-
-          if (msgObj.reasoning) {
-            thoughtText += msgObj.reasoning.trim() + "\n\n";
-          } else if (msgObj.reasoning_content) {
-            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
-          }
-
-          rawText = rawText.replace(
-            /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
-            (m, tag, inner) => {
-              thoughtText += inner.trim() + "\n\n";
-              return "";
-            }
-          );
-
-          summaryText = rawText.trim();
+          const parsed = extractThinkingAndContent(data.choices[0].message);
+          summaryText = parsed.text;
+          thoughtText = parsed.thought;
         }
 
         if (!summaryText) throw new Error("Received empty summary.");
@@ -1510,7 +1481,7 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
             sessionId: currentSessionId.value,
             role: "summary",
             text: `**[THE DISCUSSION SO FAR]**\n\n${summaryText}`,
-            thought: "",
+            thought: thoughtText,
             options: null,
             timestamp: baseTimestamp + 1,
           });
@@ -1533,34 +1504,33 @@ Do not use JSON. Output a <think>...</think> tag with your internal analysis, fo
     let countUpdateTimer = null;
 
     const updateCounts = () => {
-      // 1. Clear any pending calculation so we don't calculate multiple times in a row
-      if (countUpdateTimer) clearTimeout(countUpdateTimer);
+      return new Promise((resolve) => {
+        if (countUpdateTimer) clearTimeout(countUpdateTimer);
 
-      // 2. Wait 2 seconds (until the UI is idle) before running the heavy math
-      countUpdateTimer = setTimeout(async () => {
-        try {
-          if (!currentSessionId.value) return;
+        countUpdateTimer = setTimeout(async () => {
+          try {
+            if (!currentSessionId.value) return resolve();
 
-          const chats = await db.chats.where({ sessionId: currentSessionId.value }).toArray();
-          const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
+            const chats = await db.chats.where({ sessionId: currentSessionId.value }).toArray();
+            const facts = await db.facts.where({ sessionId: currentSessionId.value }).toArray();
 
-          // 3. Fast estimation: Just count text lengths instead of JSON stringifying everything
-          let charCount = 0;
-          for (const c of chats) {
-            charCount += (c.text?.length || 0) + (c.thought?.length || 0);
+            let charCount = 0;
+            for (const c of chats) {
+              charCount += (c.text?.length || 0) + (c.thought?.length || 0);
+            }
+            for (const f of facts) {
+              charCount += (f.text?.length || 0) + (f.category?.length || 0);
+            }
+
+            const estimatedBytes = (charCount * 2) * 1.15;
+            totalSizeKb.value = (estimatedBytes / 1024).toFixed(1);
+          } catch (err) {
+            console.error("Error updating stats:", err);
+          } finally {
+            resolve();
           }
-          for (const f of facts) {
-            charCount += (f.text?.length || 0) + (f.category?.length || 0);
-          }
-
-          // Approx 2 bytes per character, plus 15% overhead for database structuring/IDs
-          const estimatedBytes = (charCount * 2) * 1.15;
-
-          totalSizeKb.value = (estimatedBytes / 1024).toFixed(1);
-        } catch (err) {
-          console.error("Error updating stats:", err);
-        }
-      }, 2000);
+        }, 1000);
+      });
     };
 
     const adjustHeight = () => {
@@ -1963,7 +1933,91 @@ ${systemPrompt.value || "(None provided. Drive the conversation based on the use
 
 OUTPUT REQUIREMENTS:
 Format responses in standard Markdown prose. Do not output raw JSON.
-If using an internal scratchpad or reasoning, wrap it strictly within a single <think>...</think> block at the very beginning of the message. Never emit naked planning notes or use alternative delimiters like "<<<".`;
+If using an internal scratchpad or reasoning, wrap it strictly within a single <think>...</think> block at the very beginning of the message. Never emit naked planning notes or use alternative delimiters like "<<<".
+Do NOT output "Thinking Process:", "Thought Process:", or markdown section headers for planning. If you reason, use <think>...</think> tags ONLY.`;
+    };
+
+    // --- UNIFIED REASONING & THINKING EXTRACTION HELPER ---
+    const extractThinkingAndContent = (msgObj) => {
+      let thoughtParts = [];
+      let rawContent = "";
+
+      if (!msgObj) return { text: "", thought: "" };
+
+      // 1. Capture API-level reasoning properties (OpenAI, DeepSeek, OpenRouter, etc.)
+      if (msgObj.reasoning && typeof msgObj.reasoning === "string") {
+        thoughtParts.push(msgObj.reasoning.trim());
+      }
+      if (msgObj.reasoning_content && typeof msgObj.reasoning_content === "string") {
+        thoughtParts.push(msgObj.reasoning_content.trim());
+      }
+      if (msgObj.thought && typeof msgObj.thought === "string") {
+        thoughtParts.push(msgObj.thought.trim());
+      }
+
+      // 2. Extract content from string or array (multi-part/multimodal responses)
+      if (typeof msgObj.content === "string") {
+        rawContent = msgObj.content;
+      } else if (Array.isArray(msgObj.content)) {
+        for (const part of msgObj.content) {
+          if (part.type === "thinking" || part.type === "reasoning") {
+            if (part.thinking) thoughtParts.push(part.thinking.trim());
+            else if (part.text) thoughtParts.push(part.text.trim());
+          } else if (part.type === "text" && part.text) {
+            rawContent += part.text;
+          }
+        }
+      }
+
+      let text = rawContent || "";
+
+      // 3. Standard closed XML-style reasoning tags: <think>...</think>, <thought>, <reasoning>, etc.
+      const closedTagRegex = /<(think|thought|thinking|reasoning|reflection|antThinking)[^>]*>([\s\S]*?)<\/\1>/gi;
+      text = text.replace(closedTagRegex, (match, tag, inner) => {
+        if (inner.trim()) thoughtParts.push(inner.trim());
+        return "";
+      });
+
+      // 4. Orphan closing tags (Crucial: DeepSeek-R1 / OpenRouter starting generation mid-thought without opening <think>)
+      const orphanCloseRegex = /^([\s\S]*?)<\/(?:think|thought|thinking|reasoning|reflection|antThinking)>/i;
+      const orphanMatch = text.match(orphanCloseRegex);
+      if (orphanMatch) {
+        const orphanThought = orphanMatch[1].trim();
+        if (orphanThought) thoughtParts.push(orphanThought);
+        text = text.slice(orphanMatch[0].length);
+      }
+
+      // 5. Unclosed tags (cut off mid-thought due to max_tokens or stop sequences)
+      const unclosedTagRegex = /<(think|thought|thinking|reasoning|reflection|antThinking)[^>]*>([\s\S]*)$/i;
+      const unclosedMatch = text.match(unclosedTagRegex);
+      if (unclosedMatch) {
+        const unclosedThought = unclosedMatch[2].trim();
+        if (unclosedThought) thoughtParts.push(unclosedThought);
+        text = text.slice(0, unclosedMatch.index);
+      }
+
+      // 6. Delimiter styles: <<<thought ... >>> or [THOUGHT]...[/THOUGHT]
+      text = text.replace(/<{3,}(?:thought|thinking|reasoning)[^\n]*\n([\s\S]*?)>{3,}/gi, (m, inner) => {
+        if (inner.trim()) thoughtParts.push(inner.trim());
+        return "";
+      });
+      text = text.replace(/\[\/?(?:THOUGHT|THINKING|REASONING)\]([\s\S]*?)\[\/(?:THOUGHT|THINKING|REASONING)\]/gi, (m, inner) => {
+        if (inner.trim()) thoughtParts.push(inner.trim());
+        return "";
+      });
+
+      // 7. Markdown/Plaintext thinking headers (e.g. **Thinking Process:** ... **Response:**)
+      const headerThinkRegex = /^(?:[#*_\s]*)(?:Thinking(?:\s+Process)?|Thought(?:\s+Process)?|Reasoning|Internal\s+Monologue)[:\s*#_]*\n+([\s\S]*?)(?:\n+[#*_\s]*(?:Response|Answer|Final\s+Response|Output|Conclusion)[:\s*#_]*\n+)([\s\S]*)$/i;
+      const headerMatch = text.match(headerThinkRegex);
+      if (headerMatch) {
+        if (headerMatch[1].trim()) thoughtParts.push(headerMatch[1].trim());
+        text = headerMatch[2];
+      }
+
+      return {
+        text: text.trim(),
+        thought: thoughtParts.filter(Boolean).join("\n\n").trim()
+      };
     };
 
     const triggerAIResponse = async () => {
@@ -2130,42 +2184,9 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
           data.usage?.total_tokens?.toLocaleString("en-US") || "0";
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
-          let msgObj = data.choices[0].message;
-          let messageContent = msgObj.content || "";
-
-          // 1. Collect API-native reasoning fields (e.g. DeepSeek / OpenAI / OpenRouter)
-          if (msgObj.reasoning) {
-            thoughtText += msgObj.reasoning.trim() + "\n\n";
-          } else if (msgObj.reasoning_content) {
-            thoughtText += msgObj.reasoning_content.trim() + "\n\n";
-          }
-
-          if (messageContent) {
-            // 2. Strip standard closed <think>...</think> blocks
-            messageContent = messageContent.replace(
-              /<(think|thought|thinking)>([\s\S]*?)<\/\1>/gi,
-              (m, tag, inner) => {
-                thoughtText += inner.trim() + "\n\n";
-                return "";
-              }
-            );
-
-            // 3. Fallback: Catch UNCLOSED <think> tags (if cutoff mid-thought or token limit hit)
-            const unclosedThinkMatch = messageContent.match(/<(think|thought|thinking)>([\s\S]*)$/i);
-            if (unclosedThinkMatch) {
-              thoughtText += unclosedThinkMatch[2].trim() + "\n\n";
-              messageContent = messageContent.slice(0, unclosedThinkMatch.index).trim();
-            }
-
-            // 4. Fallback: Catch plain-text "Thinking: ... Response: ..." formats
-            const textThinkMatch = messageContent.match(/^(?:Thinking|Thought):\s*([\s\S]*?)\n+(?:Response|Answer):\s*([\s\S]*)$/i);
-            if (textThinkMatch) {
-              thoughtText += textThinkMatch[1].trim() + "\n\n";
-              messageContent = textThinkMatch[2].trim();
-            }
-
-            responseText = messageContent;
-          }
+          const parsed = extractThinkingAndContent(data.choices[0].message);
+          responseText = parsed.text;
+          thoughtText = parsed.thought;
         }
 
         // 4. Safely extract facts strictly from responseText (with hard limits)
