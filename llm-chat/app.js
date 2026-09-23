@@ -1937,14 +1937,14 @@ If using an internal scratchpad or reasoning, wrap it strictly within a single <
 Do NOT output "Thinking Process:", "Thought Process:", or markdown section headers for planning. If you reason, use <think>...</think> tags ONLY.`;
     };
 
-    // --- UNIFIED REASONING & THINKING EXTRACTION HELPER ---
+    // --- UNIFIED REASONING & THINKING EXTRACTION HELPER (NEMOTRON HARDENED) ---
     const extractThinkingAndContent = (msgObj) => {
       let thoughtParts = [];
       let rawContent = "";
 
       if (!msgObj) return { text: "", thought: "" };
 
-      // 1. Capture API-level reasoning properties (OpenAI, DeepSeek, OpenRouter, etc.)
+      // 1. Capture API-level reasoning properties
       if (msgObj.reasoning && typeof msgObj.reasoning === "string") {
         thoughtParts.push(msgObj.reasoning.trim());
       }
@@ -1955,7 +1955,7 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
         thoughtParts.push(msgObj.thought.trim());
       }
 
-      // 2. Extract content from string or array (multi-part/multimodal responses)
+      // 2. Extract content from string or array
       if (typeof msgObj.content === "string") {
         rawContent = msgObj.content;
       } else if (Array.isArray(msgObj.content)) {
@@ -1971,14 +1971,14 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
 
       let text = rawContent || "";
 
-      // 3. Standard closed XML-style reasoning tags: <think>...</think>, <thought>, <reasoning>, etc.
+      // 3. XML-style reasoning tags: <think>, <thought>, <reasoning>, etc.
       const closedTagRegex = /<(think|thought|thinking|reasoning|reflection|antThinking)[^>]*>([\s\S]*?)<\/\1>/gi;
       text = text.replace(closedTagRegex, (match, tag, inner) => {
         if (inner.trim()) thoughtParts.push(inner.trim());
         return "";
       });
 
-      // 4. Orphan closing tags (Crucial: DeepSeek-R1 / OpenRouter starting generation mid-thought without opening <think>)
+      // 4. Orphan closing tags (starts mid-thought without opening <think>)
       const orphanCloseRegex = /^([\s\S]*?)<\/(?:think|thought|thinking|reasoning|reflection|antThinking)>/i;
       const orphanMatch = text.match(orphanCloseRegex);
       if (orphanMatch) {
@@ -1987,7 +1987,7 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
         text = text.slice(orphanMatch[0].length);
       }
 
-      // 5. Unclosed tags (cut off mid-thought due to max_tokens or stop sequences)
+      // 5. Unclosed tags (cut off due to token limits)
       const unclosedTagRegex = /<(think|thought|thinking|reasoning|reflection|antThinking)[^>]*>([\s\S]*)$/i;
       const unclosedMatch = text.match(unclosedTagRegex);
       if (unclosedMatch) {
@@ -1996,7 +1996,7 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
         text = text.slice(0, unclosedMatch.index);
       }
 
-      // 6. Delimiter styles: <<<thought ... >>> or [THOUGHT]...[/THOUGHT]
+      // 6. Delimiter brackets: <<<thought ... >>> or [THOUGHT]...[/THOUGHT]
       text = text.replace(/<{3,}(?:thought|thinking|reasoning)[^\n]*\n([\s\S]*?)>{3,}/gi, (m, inner) => {
         if (inner.trim()) thoughtParts.push(inner.trim());
         return "";
@@ -2006,12 +2006,25 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
         return "";
       });
 
-      // 7. Markdown/Plaintext thinking headers (e.g. **Thinking Process:** ... **Response:**)
-      const headerThinkRegex = /^(?:[#*_\s]*)(?:Thinking(?:\s+Process)?|Thought(?:\s+Process)?|Reasoning|Internal\s+Monologue)[:\s*#_]*\n+([\s\S]*?)(?:\n+[#*_\s]*(?:Response|Answer|Final\s+Response|Output|Conclusion)[:\s*#_]*\n+)([\s\S]*)$/i;
-      const headerMatch = text.match(headerThinkRegex);
-      if (headerMatch) {
-        if (headerMatch[1].trim()) thoughtParts.push(headerMatch[1].trim());
-        text = headerMatch[2];
+      // 7. NEMOTRON SPECIFIC PATTERN A:
+      // Starts with "Thinking Process:", "Thought Process:", "Analysis:", or "Reasoning:"
+      // and ends with "Response:", "Final Answer:", or a horizontal divider line "---"
+      const nemotronHeaderRegex = /^\s*(?:[#*_\s]*)(?:Thinking(?:\s+Process)?|Thought(?:\s+Process)?|Reasoning(?:\s+Process)?|Detailed\s+Analysis|Internal\s+Monologue)[:\s*#_]*\n+([\s\S]*?)(?:\n+(?:[#*_\s]*(?:Response|Answer|Final\s+(?:Response|Answer)|Output|Conclusion)[:\s*#_]*|\s*---+\s*)\n+)([\s\S]*)$/i;
+      const nemotronMatch = text.match(nemotronHeaderRegex);
+      if (nemotronMatch) {
+        if (nemotronMatch[1].trim()) thoughtParts.push(nemotronMatch[1].trim());
+        text = nemotronMatch[2];
+      }
+
+      // 8. NEMOTRON SPECIFIC PATTERN B:
+      // Unlabeled thinking block that abruptly transitions with "---" or "Final Answer:"
+      if (!thoughtParts.length) {
+        const dividerTransition = /^\s*([0-9]+\.\s+Analyze[\s\S]*?)\n+\s*---+\s*\n+([\s\S]*)$/i;
+        const dividerMatch = text.match(dividerTransition);
+        if (dividerMatch) {
+          thoughtParts.push(dividerMatch[1].trim());
+          text = dividerMatch[2];
+        }
       }
 
       return {
