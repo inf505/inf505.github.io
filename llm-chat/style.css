@@ -1521,3 +1521,12 @@ pre code.hljs {
 .learned-fact-remove-btn:hover {
     color: #f87171;
 }
+.mermaid-container.mermaid-error {
+    border: 1px dashed #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+}
