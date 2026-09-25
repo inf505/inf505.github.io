@@ -1066,114 +1066,151 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
-    // Auto-heals common LLM Mermaid syntax quirks and wraps long labels
+    // Auto-heals common LLM Mermaid syntax quirks based on chart type
     const autoFixMermaid = (code) => {
       if (!code) return "";
 
+      // 1. Strip stray LaTeX/chemistry \ce tags universally
+      let fixed = code
+        .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
+        .replace(/[\\\/]+ce\s*([0-9])/gi, '$1');
+
+      // 2. Identify the diagram type from the first non-comment line
+      const lines = fixed.trim().split("\n");
+      let chartType = "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("%%")) continue;
+        const match = trimmed.match(/^([a-zA-Z0-9_-]+)/);
+        if (match) {
+          chartType = match[1].toLowerCase();
+        }
+        break;
+      }
+
+      // ==========================================
+      // DIAGRAM SPECIFIC HANDLER: MINDMAP
+      // ==========================================
+      if (chartType === "mindmap") {
+        return fixed
+          // A. Fix bare quoted lines: "Text (with parens)" -> [Text (with parens)]
+          // In mindmaps, bare quotes crash the parser. Square brackets create valid default boxes.
+          .replace(/^(\s*)"([^"\n]+)"\s*$/gm, (match, indent, text) => {
+            const cleanText = text.replace(/"/g, "'").trim();
+            return `${indent}[${cleanText}]`;
+          })
+          // B. Fix nodes that quoted inside brackets: ["Text"] -> [Text]
+          .replace(/^(\s*)([\w-]+)?\s*\[\s*"([^"\n]+)"\s*\]\s*$/gm, (match, indent, id, text) => {
+            const prefix = id ? `${id}` : "";
+            return `${indent}${prefix}[${text.replace(/"/g, "'").trim()}]`;
+          })
+          // C. Strip redundant quotes inside shape delimiters: (( "Text" )) -> (( Text ))
+          .replace(/\(\(\s*"([^"\n]+)"\s*\)\)/g, '(( $1 ))')
+          .replace(/\(\s*"([^"\n]+)"\s*\)/g, '( $1 )')
+          .replace(/\{\{\s*"([^"\n]+)"\s*\}\}/g, '{{ $1 }}');
+      }
+
+      // ==========================================
+      // DIAGRAM SPECIFIC HANDLER: SEQUENCE / CLASS / STATE / PIE
+      // ==========================================
+      // Do not apply flowchart node replacement logic to these
+      if (/^(sequencediagram|classdiagram|statediagram|erdiagram|journey|gantt|pie|timeline|gitgraph|quadrantchart)/i.test(chartType)) {
+        return fixed;
+      }
+
+      // ==========================================
+      // DIAGRAM SPECIFIC HANDLER: FLOWCHART / GRAPH
+      // ==========================================
       const wrapText = (text, limit = 40) => {
         if (text.includes("<br") || text.length <= limit) return text;
         const words = text.split(" ");
         let line = "";
-        const lines = [];
+        const out = [];
 
         for (const word of words) {
           if ((line + " " + word).trim().length > limit) {
-            if (line) lines.push(line);
+            if (line) out.push(line);
             line = word;
           } else {
             line = line ? line + " " + word : word;
           }
         }
-        if (line) lines.push(line);
-        return lines.join("<br/>");
+        if (line) out.push(line);
+        return out.join("<br/>");
       };
 
-      // Helper to detect if a string needs quotes (Mermaid reserved characters or newlines)
       const needsQuotes = (text) => {
         return /[\(\)\[\]\{\}\>\<\=\/\;\:\?\!\+\*\&\^\%\$\#\@\|]/.test(text) || text.includes('\n');
       };
 
-      // Helper to safely format labels for Mermaid
       const sanitize = (text) => {
         return text.trim().replace(/"/g, "'").replace(/\n/g, "<br/>");
       };
 
-      let fixed = code
-        // 1. Strip stray LaTeX/chemistry \ce tags
-        .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
-        .replace(/[\\\/]+ce\s*([0-9])/gi, '$1')
-
-        // 2. Fix Subgraphs with missing quotes or nested quotes
-        // Matches: subgraph ID [Label] OR subgraph ID ["Label"]
+      // Flowchart auto-injections and node repairs
+      fixed = fixed
+        // Fix Subgraphs with missing quotes or nested quotes
         .replace(/subgraph\s+([a-zA-Z0-9_-]+)\s*\[(.*?)\]/g, (match, id, label) => {
           let cleanLabel = label.trim();
-          // Strip outer quotes if the LLM provided them
           if (cleanLabel.startsWith('"') && cleanLabel.endsWith('"')) {
             cleanLabel = cleanLabel.slice(1, -1);
           }
-          // Sanitize any INNER quotes into single quotes
-          cleanLabel = sanitize(cleanLabel);
-          return `subgraph ${id} ["${cleanLabel}"]`;
+          return `subgraph ${id} ["${sanitize(cleanLabel)}"]`;
         })
 
-        // 3. Fix Nodes that already have quotes, but have invalid NESTED quotes inside them
-        // Matches A["Label with "quotes""] -> A["Label with 'quotes'"]
+        // Fix Nodes with invalid NESTED quotes inside them
         .replace(/(\b[\w-]+)\s*([\[\{\(]+)\s*"([\s\S]+?)"\s*([\]\}\)]+)/g, (match, id, openShape, label, closeShape) => {
-          const cleanLabel = label.replace(/"/g, "'");
-          return `${id}${openShape}"${cleanLabel}"${closeShape}`;
+          return `${id}${openShape}"${label.replace(/"/g, "'")}"${closeShape}`;
         })
 
-        // 4. Fix Subroutine nodes: A[[call()]] -> A[["call()"]]
+        // Fix Subroutine nodes: A[[call()]] -> A[["call()"]]
         .replace(/(\b[\w-]+)\s*\[\[([^"\]]+)\]\]/g, (match, id, label) => {
           if (needsQuotes(label)) return `${id}[["${sanitize(label)}"]]`;
           return match;
         })
 
-        // 5. Fix Square Bracket nodes missing quotes: A[C++] -> A["C++"]
-        .replace(/(?<!\[)(\b[\w-]+)\s*\[([^"\]]+)\](?!\])/g, (match, id, label) => {
+        // Fix Square Bracket nodes missing quotes (skips subroutines [[ ]])
+        .replace(/(?<!\[)(\b[\w-]+)\s*\[(?!\[)([^"\]]+)\](?!\])/g, (match, id, label) => {
           if (needsQuotes(label)) return `${id}["${sanitize(label)}"]`;
           return match;
         })
 
-        // 6. Fix Rhombus / Decision nodes missing quotes: H{go func()} -> H{"go func()"}
-        .replace(/(?<!\{)(\b[\w-]+)\s*\{([^"\}]+)\}(?!\})/g, (match, id, label) => {
+        // Fix Decision nodes missing quotes (skips hexagons {{ }})
+        .replace(/(?<!\{)(\b[\w-]+)\s*\{(?!\{)([^"\}]+)\}(?!\{)/g, (match, id, label) => {
           if (needsQuotes(label)) return `${id}{"${sanitize(label)}"}`;
           return match;
         })
 
-        // 7. Fix Hexagon nodes missing quotes: H{{go func()}} -> H{{"go func()"}}
+        // Fix Hexagon nodes missing quotes
         .replace(/(\b[\w-]+)\s*\{\{([^"\}]+)\}\}/g, (match, id, label) => {
           if (needsQuotes(label)) return `${id}{{"${sanitize(label)}"}}`;
           return match;
         })
 
-        // 8. Fix Rounded nodes missing quotes with nested parens: A(call(x)) -> A("call(x)")
-        .replace(/(?<!\()(\b[\w-]+)\s*\(([^"\)\n]*\([^"\n]+\)[^"\)\n]*)\)(?!\))/g, (match, id, label) => {
+        // Fix Rounded nodes with nested parens (skips circle nodes (( )))
+        .replace(/(?<![\(\w])([a-zA-Z0-9_-]+)\s*\((?!\()([^"\)\n]*\([^"\n\)]+\)[^"\)\n]*)\)(?!\))/g, (match, id, label) => {
           return `${id}("${sanitize(label)}")`;
         })
 
-        // 9. Fix standard Round nodes missing quotes with weird chars: A(C++) -> A("C++")
-        .replace(/(?<!\()(\b[\w-]+)\s*\(([^"\)\n]+)\)(?!\))/g, (match, id, label) => {
-          if (needsQuotes(label)) {
-            return `${id}("${sanitize(label)}")`;
-          }
+        // Fix standard Round nodes with weird chars (skips circle nodes (( )))
+        .replace(/(?<![\(\w])([a-zA-Z0-9_-]+)\s*\((?!\()([^"\)\n]+)\)(?!\))/g, (match, id, label) => {
+          if (needsQuotes(label)) return `${id}("${sanitize(label)}")`;
           return match;
         })
 
-        // 10. Fix edge labels with parentheses/math: A -- Spawns (x) --> B -> A -- "Spawns (x)" --> B
+        // Fix edge labels with punctuation
         .replace(/--\s*([^"\n\-]*?[\(\)\[\]\{\}\+\*\&\|\/\=\!\?][^"\n\-]*?)\s*-->/g, '-- "$1" -->')
 
-        // 11. Auto-wrap long labels for clean rendering
+        // Auto-wrap long labels
         .replace(/(\b[\w-]+)\s*\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
         .replace(/(\b[\w-]+)\s*\{"([^"\n]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
         .replace(/(\b[\w-]+)\s*\("([^"\n]+)"\)/g, (m, id, label) => `${id}("${wrapText(label)}")`)
         .replace(/(\b[\w-]+)\s*\[([^"\]\n]{40,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
 
-      // 12. Auto-inject missing flowchart definition if the LLM just started writing nodes
-      const lines = fixed.trim().split("\n");
-      const validChartTypes = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)/i;
-
-      if (lines.length > 0 && !validChartTypes.test(lines[0].trim())) {
+      // Auto-inject missing flowchart definition if the LLM just started writing nodes
+      const validChartTypes = /^(graph|flowchart)/i;
+      if (!validChartTypes.test(chartType)) {
         console.warn("🔧 [MERMAID AUTO-FIX] Missing chart type detected. Injecting 'flowchart TD'.");
         fixed = "flowchart TD\n" + fixed;
       }
