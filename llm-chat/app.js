@@ -1951,7 +1951,7 @@ ${depthText}
 RICH FORMATTING & EXPRESSION CAPABILITIES:
 - Mathematical & Scientific Notation: LaTeX ($...$ for inline, $$...$$ for display). Chemical formulas: $\\ce{...}$.
 - Code & Scripts: Specify language identifiers (e.g., \`\`\`python).
-- Visual Logic & Diagrams: Use \`\`\`mermaid fenced blocks for flowcharts, causal chains, mindmaps.
+- Visual Logic & Diagrams: Use \`\`\`mermaid syntax. IMPORTANT: Always wrap node and subgraph text in double quotes to prevent syntax errors (e.g., id["Process (Step 1)"] or subgraph G ["My Subgraph"]). Never use raw double quotes inside a label; use single quotes instead.
 - Scholarly Citations: Markdown footnotes ([^1] and [^1]: Source).
 
 PERSISTENT KNOWLEDGE BASE & AUTONOMOUS MEMORY:
