@@ -1066,6 +1066,7 @@ You MUST return a valid JSON object matching this schema format:
       return text;
     };
 
+
     // Auto-heals common LLM Mermaid syntax quirks based on chart type
     const autoFixMermaid = (code) => {
       if (!code) return "";
