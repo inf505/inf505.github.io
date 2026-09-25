@@ -1067,6 +1067,7 @@ You MUST return a valid JSON object matching this schema format:
     };
 
     // Auto-heals common LLM Mermaid syntax quirks and wraps long labels
+    // Auto-heals common LLM Mermaid syntax quirks and wraps long labels
     const autoFixMermaid = (code) => {
       if (!code) return "";
 
@@ -1088,52 +1089,68 @@ You MUST return a valid JSON object matching this schema format:
         return lines.join("<br/>");
       };
 
+      // Helper to detect if a string needs quotes (Mermaid reserved characters or newlines)
+      const needsQuotes = (text) => {
+        return /[\(\)\[\]\{\}\>\<\=\/\;\:\?\!\+\*\&\^\%\$\#\@\|]/.test(text) || text.includes('\n');
+      };
+
+      // Helper to safely format labels for Mermaid
+      const sanitize = (text) => {
+        return text.trim().replace(/"/g, "'").replace(/\n/g, "<br/>");
+      };
+
       let fixed = code
         // 1. Strip stray LaTeX/chemistry \ce tags
         .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
         .replace(/[\\\/]+ce\s*([0-9])/gi, '$1')
 
-        // 2. Fix Rhombus / Decision nodes: H{go func()} -> H{"go func()"}
-        .replace(/(?<!\{)(\b[\w-]+)\{([^{"\n]+)\}(?!\})/g, (match, id, label) => {
-          const trimmed = label.trim();
-          if (/[\(\)\[\]\>\<\=\/\;\:\?\!]/.test(trimmed)) {
-            return `${id}{"${trimmed.replace(/"/g, "'")}"}`;
+        // 2. Fix Subroutine nodes: A[[call()]] -> A[["call()"]]
+        .replace(/(\b[\w-]+)\s*\[\[([^"\]]+)\]\]/g, (match, id, label) => {
+          if (needsQuotes(label)) return `${id}[["${sanitize(label)}"]]`;
+          return match;
+        })
+
+        // 3. Fix Square Bracket nodes: A[C++] -> A["C++"]
+        // Uses (?<!\[) and (?!\]) to avoid matching subroutine brackets.
+        .replace(/(?<!\[)(\b[\w-]+)\s*\[([^"\]]+)\](?!\])/g, (match, id, label) => {
+          if (needsQuotes(label)) return `${id}["${sanitize(label)}"]`;
+          return match;
+        })
+
+        // 4. Fix Rhombus / Decision nodes: H{go func()} -> H{"go func()"}
+        .replace(/(?<!\{)(\b[\w-]+)\s*\{([^"\}]+)\}(?!\})/g, (match, id, label) => {
+          if (needsQuotes(label)) return `${id}{"${sanitize(label)}"}`;
+          return match;
+        })
+
+        // 5. Fix Hexagon nodes: H{{go func()}} -> H{{"go func()"}}
+        .replace(/(\b[\w-]+)\s*\{\{([^"\}]+)\}\}/g, (match, id, label) => {
+          if (needsQuotes(label)) return `${id}{{"${sanitize(label)}"}}`;
+          return match;
+        })
+
+        // 6. Fix Rounded nodes with nested parens: A(call(x)) -> A("call(x)")
+        .replace(/(?<!\()(\b[\w-]+)\s*\(([^"\)\n]*\([^"\n]+\)[^"\)\n]*)\)(?!\))/g, (match, id, label) => {
+          return `${id}("${sanitize(label)}")`;
+        })
+
+        // 7. Fix standard Round nodes with weird chars: A(C++) -> A("C++")
+        .replace(/(?<!\()(\b[\w-]+)\s*\(([^"\)\n]+)\)(?!\))/g, (match, id, label) => {
+          if (/[\{\}\>\<\=\/\;\:\?\!\+\*\&\[\]\|]/.test(label)) {
+            return `${id}("${sanitize(label)}")`;
           }
           return match;
         })
 
-        // 3. Fix Hexagon nodes: H{{go func()}} -> H{{"go func()"}}
-        .replace(/(\b[\w-]+)\{\{([^{"\n]+)\}\}/g, (match, id, label) => {
-          const trimmed = label.trim();
-          if (/[\(\)\[\]\>\<\=\/\;\:\?\!]/.test(trimmed)) {
-            return `${id}{{"${trimmed.replace(/"/g, "'")}"}}`;
-          }
-          return match;
-        })
+        // 8. Fix edge labels with parentheses/math: A -- Spawns (x) --> B -> A -- "Spawns (x)" --> B
+        .replace(/--\s*([^"\n\-]*?[\(\)\[\]\{\}\+\*\&\|\/\=\!\?][^"\n\-]*?)\s*-->/g, '-- "$1" -->')
 
-        // 4. Fix Square Bracket nodes: A[call(args)] -> A["call(args)"]
-        .replace(/(\b[\w-]+)\[([^"\]\n]+)\]/g, (match, id, label) => {
-          const trimmed = label.trim();
-          if (/[\(\)\{\}\>\<\=\/\;\:\?\!]/.test(trimmed)) {
-            return `${id}["${trimmed.replace(/"/g, "'")}"]`;
-          }
-          return match;
-        })
+        // 9. Auto-wrap long labels for clean rendering
+        .replace(/(\b[\w-]+)\s*\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
+        .replace(/(\b[\w-]+)\s*\{"([^"\n]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
+        .replace(/(\b[\w-]+)\s*\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
 
-        // 5. Fix Rounded nodes with nested parens: A(call(x)) -> A("call(x)")
-        .replace(/(?<!\()(\b[\w-]+)\(([^"\n]+?\([^\n]+?\)[^"\n]*?)\)(?!\))/g, (match, id, label) => {
-          return `${id}("${label.trim().replace(/"/g, "'")}")`;
-        })
-
-        // 6. Fix edge labels with parentheses: A -- Spawns (x) --> B -> A -- "Spawns (x)" --> B
-        .replace(/--\s*([^"\n\-]+?[\(\)\[\]\{\}][^"\n\-]+?)\s*-->/g, '-- "$1" -->')
-
-        // 7. Auto-wrap long labels for clean rendering
-        .replace(/(\b[\w-]+)\["([^"\n]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
-        .replace(/(\b[\w-]+)\{"([^"\n]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
-        .replace(/(\b[\w-]+)\[([^"\]\n]{30,})\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`);
-
-      // 8. Auto-inject missing flowchart definition if the LLM just started writing nodes
+      // 10. Auto-inject missing flowchart definition if the LLM just started writing nodes
       const lines = fixed.trim().split("\n");
       const validChartTypes = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)/i;
 
