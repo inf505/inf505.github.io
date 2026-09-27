@@ -188,11 +188,26 @@ const ensureMermaidLoaded = async () => {
       if (window.mermaid) {
         window.mermaid.initialize({
           startOnLoad: false,
-          theme: "dark",
+          theme: "base",
           securityLevel: "loose",
           themeVariables: {
-            fontSize: "17px",
-            fontFamily: "inherit"
+            darkMode: true,
+            fontFamily: "inherit",
+            fontSize: "15px",
+            // Canvas & Subgraph backgrounds
+            background: "transparent",
+            clusterBkg: "#121217",
+            clusterBorder: "#2e2e3d",
+            titleColor: "#e2e2ec",
+            // Node backgrounds & text
+            primaryColor: "#1c1c24",
+            primaryBorderColor: "#424254",
+            primaryTextColor: "#f1f1f5",
+            nodeBorder: "#424254",
+            // Connections & Pills
+            lineColor: "#7e7e94",
+            defaultLinkColor: "#7e7e94",
+            edgeLabelBackground: "#181820"
           },
           flowchart: {
             useMaxWidth: false,
@@ -1075,6 +1090,11 @@ You MUST return a valid JSON object matching this schema format:
       let fixed = code
         .replace(/[\\\/]+ce\s*\{\s*([0-9][^}]*)\}/gi, '$1')
         .replace(/[\\\/]+ce\s*([0-9])/gi, '$1');
+
+      // Strip LLM-generated inline styles, classes, and colors
+      fixed = fixed
+        .replace(/^\s*(style|classDef|class|linkStyle)\s+.*$/gm, '')
+        .replace(/:::[a-zA-Z0-9_-]+/g, '');
 
       // 2. Identify the diagram type from the first non-comment line
       const lines = fixed.trim().split("\n");
