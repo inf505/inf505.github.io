@@ -1530,3 +1530,15 @@ pre code.hljs {
     font-size: 0.85rem;
     white-space: pre-wrap;
 }
+.mermaid-container {
+    width: 100%;
+    overflow-x: auto; /* Allow horizontal scrolling */
+    overflow-y: hidden;
+    padding-bottom: 15px; /* Give the scrollbar some breathing room */
+}
+
+/* Force the SVG to maintain its actual readable size */
+.mermaid-container svg {
+    max-width: none !important;
+    height: auto !important;
+}
