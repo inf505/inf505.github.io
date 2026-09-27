@@ -1173,7 +1173,34 @@ You MUST return a valid JSON object matching this schema format:
       // 5. Fix UNQUOTED edge labels with parentheses/symbols: A -- text (x) --> B -> A -- "text (x)" --> B
       fixed = fixed.replace(/--\s*([^"\n\-]*?[\(\)\[\]\{\}\+\*\&\|\/\=\!\?][^"\n\-]*?)\s*-->/g, '-- "$1" -->');
 
-      // 6. Auto-inject missing flowchart definition if the LLM just started writing nodes
+      // 6. Auto-wrap long labels inside quotes to prevent massive horizontal sprawl
+      const wrapText = (text, limit = 35) => {
+        // If it's already short, leave it alone
+        if (text.length <= limit) return text;
+
+        // Strip existing <br> tags so we can cleanly recalculate the wrap
+        const words = text.replace(/<br\s*\/?>/gi, " ").split(/\s+/);
+        let line = "";
+        const out = [];
+
+        for (const word of words) {
+          if ((line + " " + word).trim().length > limit) {
+            if (line) out.push(line);
+            line = word;
+          } else {
+            line = line ? line + " " + word : word;
+          }
+        }
+        if (line) out.push(line);
+        return out.join("<br/>");
+      };
+
+      fixed = fixed
+        .replace(/(\b[a-zA-Z0-9_-]+)\s*\["([^"]+)"\]/g, (m, id, label) => `${id}["${wrapText(label)}"]`)
+        .replace(/(\b[a-zA-Z0-9_-]+)\s*\{"([^"]+)"\}/g, (m, id, label) => `${id}{"${wrapText(label)}"}`)
+        .replace(/(\b[a-zA-Z0-9_-]+)\s*\("([^"]+)"\)/g, (m, id, label) => `${id}("${wrapText(label)}")`);
+
+      // 7. Auto-inject missing flowchart definition if the LLM just started writing nodes
       const validChartTypes = /^(graph|flowchart)/i;
       if (!validChartTypes.test(chartType)) {
         console.warn("🔧 [MERMAID AUTO-FIX] Missing chart type detected. Injecting 'flowchart TD'.");
