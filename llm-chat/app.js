@@ -2018,7 +2018,8 @@ ${systemPrompt.value || "(None provided. Drive the conversation based on the use
 
 OUTPUT REQUIREMENTS:
 Format responses in standard Markdown prose. Do not output raw JSON.
-If using an internal scratchpad or reasoning, wrap it strictly within a single <think>...</think> block at the very beginning of the message. CRITICAL: Keep your <think> reasoning extremely brief, concise, and under 150 words. Do not over-explain internally. Never emit naked planning notes or use alternative delimiters like "<<<".
+If using an internal scratchpad or reasoning, wrap it strictly within a single <think>...</think>.
+CRITICAL: Do NOT double-guess, self-correct, or repeatedly verify rules inside your thought process. Formulate a single, linear plan and IMMEDIATELY close the </think> tag to write your response. Never emit naked planning notes or use alternative delimiters like "<<<".
 Do NOT output "Thinking Process:", "Thought Process:", or markdown section headers for planning. If you reason, use <think>...</think> tags ONLY.`;
     };
 
