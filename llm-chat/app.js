@@ -2180,8 +2180,8 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
           const payload = {
             model: activeModel,
             messages: messagesPayload,
-            temperature: 0.8,
-            max_tokens: 8192,
+            temperature: 0.7,
+            max_tokens: 16384,
           };
 
           const controller = new AbortController();
