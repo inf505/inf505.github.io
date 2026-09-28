@@ -2180,7 +2180,8 @@ Do NOT output "Thinking Process:", "Thought Process:", or markdown section heade
           const payload = {
             model: activeModel,
             messages: messagesPayload,
-            temperature: 0.7,
+            temperature: 0.6,
+            frequency_penalty: 0.3,
             max_tokens: 32768,
           };
 
