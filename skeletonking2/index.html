@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crypt of the Skeleton King</title>
+    <script src="https://unpkg.com/vue@3.5.21/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div id="app" class="game-container">
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-title">Player Status</div>
+
+            <div class="stat-item">
+                <span class="stat-label">Health</span>
+                <span class="stat-value health">{{ player.health }} / {{ player.maxHealth }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Gold</span>
+                <span class="stat-value gold">{{ player.gold }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Torches</span>
+                <span class="stat-value torches">
+                    {{ player.torchCount }}
+                    <template v-if="isTorchLit">(Lit: {{ player.currentTorchDuration }})</template>
+                    <template
+                        v-else-if="player.torchCount > 0 && gameState !== 'combat' && gameState !== 'applying_bonus' && gameState !== 'gear_choice'">
+                        <button @click="lightTorch" style="padding: 2px 5px; font-size: 10px; margin-left: 5px">
+                            Light
+                        </button>
+                    </template>
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Healing Potions</span>
+                <span class="stat-value potions">
+                    {{ player.healingPotionCount }}
+                    <template v-if="canUsePotionInStatusPanel">
+                        <button @click="useHealingPotion"
+                            :class="{ 'button-flash-critical': shouldFlashStatusPotionButton }"
+                            style="padding: 2px 5px; font-size: 10px; margin-left: 5px">
+                            Use
+                        </button>
+                    </template>
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Attack Mod</span>
+                <span class="stat-value attack">+{{ totalAttackModifier }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Damage</span>
+                <span class="stat-value attack">{{ totalDamageRange }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Defense (AC)</span>
+                <span class="stat-value defense">{{ totalDefense }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Progress</span>
+                <span class="stat-value">{{ player.monsterDeckProgression }} / {{ initialMonsterDeckSize }}
+                    defeated ({{ monsterDeckProgressPercentage }}%)</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Merchant Visits</span>
+                <span class="stat-value">{{ merchantEventCount }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Quiet Passages</span>
+                <span class="stat-value">{{ nothingEventCount }}</span>
+            </div>
+
+            <!-- In the Status Panel HTML -->
+            <div class="stat-item">
+                <span class="stat-label">Danger Level</span>
+                <span class="stat-value" :style="{ color: dangerLevelColor }">{{ currentMonsterDeckTier ?
+                    currentMonsterDeckTier.toUpperCase() :
+                    'Unknown' }}</span>
+            </div>
+
+            <div class="stat-item">
+                <span class="stat-value" style="font-size: 13px">
+                    {{ gameState }}
+                </span>
+            </div>
+            <template v-if="player.activeCurses.length > 0">
+                <div class="status-subtitle" style="margin-top: 15px">
+                    Active Curses
+                </div>
+                <div class="stat-item column-layout" v-for="curse in player.activeCurses"
+                    :key="curse.id + curse.duration">
+                    <span class="stat-label">{{ curse.name }} ({{ curse.duration }} turns)</span>
+                    <span class="stat-value" style="font-size: 11px; color: #cbd5e1; text-align: left">{{
+                        curse.effectDescription }}</span>
+                </div>
+            </template>
+        </div>
+
+        <!-- Main Gameplay Area -->
+        <div class="gameplay-area" :style="gameplayAreaBackgroundStyle">
+            <div class="game-field">
+                <!-- Initializing State -->
+                <div v-if="gameState === 'initializing'">
+                    <div class="game-field-label">Loading...</div>
+                </div>
+
+                <!-- Exploring State -->
+                <div v-if="gameState === 'exploring'">
+                    <div class="game-field-label">
+                        {{ lastExploredEventTitle || 'Crypt of the Skeleton King' }}
+                    </div>
+                    <p>
+                        {{ currentExplorationMessage || lastExploredEventDescription ||
+                        'What secrets will you uncover?' }}
+                    </p>
+                    <button @click="exploreNextEvent" ref="exploreButton">
+                        Explore Deeper
+                    </button>
+                    <button v-if="canRestGameplay" @click="rest"
+                        :class="{ 'button-flash-critical': shouldFlashRestButton }">
+                        Rest
+                    </button>
+                    <button v-if="!isTorchLit && player.torchCount > 0" @click="lightTorch">
+                        Light Torch
+                    </button>
+                    <button v-else-if="isTorchLit" disabled>
+                        Torch Lit ({{ player.currentTorchDuration }} turns)
+                    </button>
+                    <button v-if="canUsePotionInExploringGameplay" @click="useHealingPotion"
+                        :class="{ 'button-flash-critical': shouldFlashExploringPotionButton }">
+                        Potion ({{ player.healingPotionCount }})
+                    </button>
+                </div>
+
+                <!-- Event Card Displayed State -->
+                <div v-if="gameState === 'event_card_displayed' && currentEvent">
+                    <div class="game-field-label">{{ currentEvent.title }}</div>
+                    <p>{{ currentEvent.description }}</p>
+                </div>
+
+                <!-- Shop State -->
+                <div v-if="gameState === 'shop'">
+                    <div class="game-field-label">Mysterious Merchant</div>
+                    <p>The hooded figure eyes you, gesturing to their wares.</p>
+                    <div v-for="item in shopItems" :key="item.type" style="margin-bottom: 10px">
+                        <button
+                            @click="item.type === 'curse_removal' ? removeCurse(item.cost) : buyItem(item.type, item.cost)"
+                            :disabled="player.gold < item.cost || (item.type === 'curse_removal' && player.activeCurses.length === 0)">
+                            Buy {{ item.name }} ({{ item.cost }} Gold)
+                            <template v-if="item.type === 'curse_removal' && player.activeCurses.length === 0">(No
+                                Curses)</template>
+                        </button>
+                    </div>
+                    <button @click="exitShop">Leave Shop</button>
+                </div>
+
+                <!-- Combat State -->
+                <div v-if="gameState === 'combat' && (currentMonster || currentGuards.length > 0)" class="monster-info"
+                    :style="monsterInfoBackgroundStyle">
+                    <div class="game-field-label">
+                        {{ currentGuards.length > 0 ? currentGuards[0].name :
+                        currentMonster.name }}
+                    </div>
+                    <p v-if="currentCombatMessage" style="margin-bottom: 15px; color: #facc15">
+                        {{ currentCombatMessage }}
+                    </p>
+
+                    <div v-if="currentGuards.length > 0">
+                        <h4>Attacking Guard: {{ currentGuards[0].name }}</h4>
+                        <p>
+                            HP: {{ currentGuards[0].health }}/{{ currentGuards[0].maxHealth
+                            }}, AC: {{ currentGuards[0].ac }}
+                        </p>
+                        <p>
+                            Atk: +{{currentGuards[0].attackMod}}, Dmg:
+                            {{currentGuards[0].damage}}
+                        </p>
+                        <p v-if="currentGuards.length > 1">
+                            ({{currentGuards.length -1 }} more guard(s) waiting)
+                        </p>
+                        <p v-if="currentMonster && currentMonster.tier === 'boss'">
+                            Then... The {{currentMonster.name}}!
+                        </p>
+                    </div>
+                    <div v-else-if="currentMonster">
+                        <p>
+                            HP: {{ currentMonster.health }}/{{ currentMonster.maxHealth }},
+                            AC: {{ currentMonster.ac }}
+                        </p>
+                        <p>
+                            Atk: +{{currentMonster.attackMod}}, Dmg:
+                            {{currentMonster.damage}}
+                        </p>
+                    </div>
+
+                    <!-- NEW Combat Button Structure -->
+                    <div class="combat-actions-area">
+                        <div class="combat-primary-buttons">
+                            <button @click="playerAttack" :disabled="gameState !== 'combat'" ref="attackButton">
+                                Attack
+                            </button>
+                            <button @click="playerFlee" :disabled="gameState !== 'combat'">
+                                Flee
+                            </button>
+                        </div>
+                        <div class="combat-utility-buttons" v-if="showUtilityCombatButtons">
+                            <button v-if="!isTorchLit && player.torchCount > 0" @click="lightTorch">
+                                Light Torch (Free Action)
+                            </button>
+                            <button v-if="canUsePotionInCombatGameplay" @click="useHealingPotion"
+                                :class="{ 'button-flash-critical': shouldFlashCombatPotionButton }">
+                                Potion ({{ player.healingPotionCount }})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loot Found State -->
+                <div v-if="gameState === 'loot_found' && pendingLoot.length > 0">
+                    <div class="game-field-label">Processing Loot...</div>
+                    <p>Automatically processing loot items one by one.</p>
+                </div>
+
+                <!-- Gear Choice State -->
+                <div v-if="gameState === 'gear_choice' && pendingGearChoice">
+                    <div class="game-field-label">Gear Choice</div>
+                    <p>You found a new piece of gear! Decide what to do.</p>
+
+                    <div class="gear-comparison-item">
+                        <h4>New Item: {{ pendingGearChoice.newItem.name }}</h4>
+                        <p>Type: {{ pendingGearChoice.newItem.type }}</p>
+                        <p>Stats: {{ getGearStats(pendingGearChoice.newItem) }}</p>
+                    </div>
+                    <button @click="confirmEquipNewGear">
+                        Equip {{ pendingGearChoice.newItem.name }}
+                    </button>
+
+                    <div v-if="pendingGearChoice.currentItem" class="gear-comparison-item" style="margin-top: 15px">
+                        <h4>Current Item: {{ pendingGearChoice.currentItem.name }}</h4>
+                        <p>Type: {{ pendingGearChoice.currentItem.type }}</p>
+                        <p>Stats: {{ getGearStats(pendingGearChoice.currentItem) }}</p>
+                        <button @click="confirmKeepCurrentGear" style="margin-top: 10px">
+                            Keep {{ pendingGearChoice.currentItem.name }}
+                        </button>
+                    </div>
+                    <div v-else>
+                        <button @click="discardNewFoundGear">
+                            Discard {{ pendingGearChoice.newItem.name }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Applying Bonus State -->
+                <div v-if="gameState === 'applying_bonus' && pendingGearBonus">
+                    <div class="game-field-label">Apply Enchantment</div>
+                    <p>
+                        Apply '<strong>{{ pendingGearBonus.name }}</strong>' (Effect:
+                        <span v-if="pendingGearBonus.attackMod">Atk+{{pendingGearBonus.attackMod}}
+                        </span>
+                        <span v-if="pendingGearBonus.damageBonus">Dmg+{{pendingGearBonus.damageBonus}}
+                        </span>
+                        <span v-if="pendingGearBonus.defenseMod">Def+{{pendingGearBonus.defenseMod}}</span>) to:
+                    </p>
+
+                    <button
+                        v-if="player.equippedGear.weapon && (pendingGearBonus.appliesTo === player.equippedGear.weapon.type || pendingGearBonus.appliesTo === 'any')"
+                        @click="applyBonusToGear('weapon')">
+                        Weapon: {{ player.equippedGear.weapon.name }}
+                    </button>
+                    <button
+                        v-if="player.equippedGear.armor && (pendingGearBonus.appliesTo === player.equippedGear.armor.type || pendingGearBonus.appliesTo === 'any')"
+                        @click="applyBonusToGear('armor')">
+                        Armor: {{ player.equippedGear.armor.name }}
+                    </button>
+                    <button
+                        v-if="player.equippedGear.shield && (pendingGearBonus.appliesTo === player.equippedGear.shield.type || pendingGearBonus.appliesTo === 'any')"
+                        @click="applyBonusToGear('shield')">
+                        Shield: {{ player.equippedGear.shield.name }}
+                    </button>
+                    <button @click="cancelApplyBonus">Skip/Cancel</button>
+                </div>
+
+                <!-- Trap Triggered State -->
+                <div v-if="gameState === 'trap_triggered'">
+                    <div class="game-field-label">Trap!</div>
+                    <p>{{ currentTrapMessage }}</p>
+                    <button @click="acknowledgeTrap">Continue</button>
+                </div>
+
+                <!-- Game Over/Won State -->
+                <div v-if="gameState === 'game_over' || gameState === 'game_won'">
+                    <div class="game-field-label">
+                        {{ gameState === 'game_over' ? 'Game Over' : 'Victory!' }}
+                    </div>
+                    <p
+                        v-if="gameLog.length > 0 && gameLog[0].text.startsWith('Game Over:') || gameLog[0].text.startsWith('Congratulations!')">
+                        {{ gameLog[0].text }}
+                    </p>
+                    <button @click="restartGame">Play Again?</button>
+                </div>
+            </div>
+
+            <div class="equipped-gear-section">
+                <div class="equipped-gear-items">
+                    <div class="stat-item">
+                        <span class="stat-label">Weapon</span>
+                        <span class="stat-value" :title="getGearDetails('weapon')">{{ player.equippedGear.weapon ?
+                            player.equippedGear.weapon.name
+                            : 'None' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Armor</span>
+                        <span class="stat-value" :title="getGearDetails('armor')">{{ player.equippedGear.armor ?
+                            player.equippedGear.armor.name :
+                            'None' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Shield</span>
+                        <span class="stat-value" :title="getGearDetails('shield')">{{ player.equippedGear.shield ?
+                            player.equippedGear.shield.name
+                            : 'None' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Log -->
+        <div class="events-log">
+            <div class="events-title">Game Log</div>
+            <div v-for="(log, index) in gameLog" :key="index" class="event-item">
+                {{ log.text }}
+                <span class="event-time">{{ log.time }}</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
