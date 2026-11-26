@@ -1,0 +1,1418 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chicken Feed Mixer</title>
+    <style>
+        :root {
+            --bg: #f8f5ee;
+            --card: #ffffff;
+            --ink: #243028;
+            --muted: #66736a;
+            --green: #2d6a4f;
+            --green-soft: #e6f2ec;
+            --amber: #c97a16;
+            --amber-soft: #fdf2e2;
+            --red: #b43c3c;
+            --red-soft: #fbeaea;
+            --border: #e2dcd0;
+            --accent: #3d5a45;
+            --panel-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.4;
+        }
+
+        header {
+            background: var(--accent);
+            color: #fff;
+            padding: 14px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            border: 0;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: var(--accent);
+        }
+
+        .wrap {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stage-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stage-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.15s;
+        }
+
+        .stage-card:hover {
+            border-color: var(--green);
+        }
+
+        .stage-card.active {
+            border-color: var(--green);
+            background: var(--green-soft);
+        }
+
+        .stage-card .ico {
+            font-size: 1.3rem;
+        }
+
+        .stage-card .nm {
+            font-weight: 700;
+            font-size: 0.92rem;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .toolbar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--ink);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background: #f2efe8;
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #fff;
+            border-color: var(--green);
+        }
+
+        .btn-primary:hover {
+            background: #23533d;
+        }
+
+        .pill-input {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 78px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.25fr 0.95fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 940px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .panel h2 {
+            margin: 0 0 12px;
+            font-size: 1.05rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cat-title {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin: 14px 0 6px;
+            font-weight: 700;
+        }
+
+        .ing-row {
+            display: grid;
+            grid-template-columns: 24px 1.2fr 1.1fr 74px 105px;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 6px;
+            border-bottom: 1px solid #f0ece3;
+        }
+
+        .ing-row.off {
+            opacity: 0.45;
+        }
+
+        .ing-name {
+            font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        .ing-sub {
+            font-size: 0.76rem;
+            color: var(--muted);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 0.68rem;
+            padding: 1px 6px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .b-home {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+
+        .b-buy {
+            background: #eceff1;
+            color: #546e7a;
+        }
+
+        .b-either {
+            background: var(--amber-soft);
+            color: var(--amber);
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--green);
+            cursor: pointer;
+        }
+
+        .pct-box {
+            width: 68px;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .wt-col {
+            text-align: right;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .wt-sub {
+            font-size: 0.74rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .sticky {
+            position: sticky;
+            top: 16px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .stat {
+            background: #faf8f2;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat .lbl {
+            font-size: 0.74rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .stat .val {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .banner {
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .banner-warn {
+            background: var(--amber-soft);
+            color: #8c5209;
+            border: 1px solid #f5d8a8;
+        }
+
+        .banner-err {
+            background: var(--red-soft);
+            color: var(--red);
+            border: 1px solid #f0baba;
+        }
+
+        .banner-ok {
+            background: var(--green-soft);
+            color: var(--green);
+            border: 1px solid #b8dec9;
+        }
+
+        .gauge {
+            margin-bottom: 10px;
+        }
+
+        .gauge-head {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.83rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .track {
+            position: relative;
+            height: 10px;
+            background: #ece8df;
+            border-radius: 999px;
+            overflow: visible;
+        }
+
+        .zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: #9bd3b5;
+            border-radius: 999px;
+            opacity: 0.75;
+        }
+
+        .dot {
+            position: absolute;
+            top: -3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            transform: translateX(-50%);
+        }
+
+        .dot-ok {
+            background: var(--green);
+        }
+
+        .dot-low {
+            background: var(--red);
+        }
+
+        .dot-high {
+            background: var(--amber);
+        }
+
+        table.pantry {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        table.pantry th,
+        table.pantry td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        table.pantry input {
+            width: 72px;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media print {
+
+            header,
+            .stage-strip,
+            .toolbar,
+            .sticky,
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .panel {
+                border: 0;
+            }
+        }
+    </style>
+    <script src="solver.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1 id="app-title" style="cursor:text;display:inline-flex;align-items:center;gap:8px;" title="Click to edit">🐔
+            Chicken Feed Mixer</h1>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('mixer')">Feed Mixer</button>
+            <button class="tab-btn" onclick="switchTab('pantry')">Barn Pantry</button>
+        </div>
+    </header>
+
+    <div class="wrap">
+        <!-- TAB 1: FEED MIXER -->
+        <div id="tab-mixer">
+            <div id="stage-strip" class="stage-strip"></div>
+
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <label><strong>Batch:</strong> <input id="batch-lbs" class="pill-input" type="number" min="1"
+                            step="1" onchange="updateBatch(this.value)" /> lbs</label>
+                    <button class="btn" onclick="updateBatch(25)">25 lb</button>
+                    <button class="btn" onclick="updateBatch(50)">50 lb</button>
+                    <button class="btn" onclick="updateBatch(100)">100 lb</button>
+                </div>
+                <div class="toolbar-group">
+                    <label style="font-size:0.88rem;font-weight:600;cursor:pointer;">
+                        <input id="prefer-home" type="checkbox" checked /> Prefer Homegrown Crops
+                    </label>
+                    <button class="btn btn-primary" onclick="autoOptimize()">✨ Auto-Balance Recipe</button>
+                    <button class="btn" onclick="saveCurrentRecipe()">💾 Save Mix</button>
+                    <button class="btn" onclick="window.print()">🖨️ Print Sheet</button>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="panel">
+                    <h2>
+                        <span>Ingredients in Your Mix</span>
+                        <span class="no-print" style="display:flex;gap:6px;margin-left:auto;align-items:center;">
+                            <span id="current-recipe-name"
+                                style="margin:0 12px;font-weight:500;color:var(--accent);font-size:0.9rem;white-space:nowrap;"></span>
+                            <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
+                                onclick="clearMix()">Clear</button>
+                        </span>
+                    </h2>
+                    <div id="ingredients-list"></div>
+                </div>
+
+                <div class="panel sticky">
+                    <h2>Flock Health Meter</h2>
+                    <div class="summary-cards">
+                        <div class="stat">
+                            <div class="lbl">Total Mix</div>
+                            <div id="sum-pct" class="val">100.0%</div>
+                        </div>
+                        <div class="stat">
+                            <div class="lbl">Batch Cost</div>
+                            <div id="sum-cost" class="val">$0.00</div>
+                        </div>
+                        <div class="stat">
+                            <div class="lbl">Cost / lb</div>
+                            <div id="sum-perlb" class="val">$0.00</div>
+                        </div>
+                    </div>
+
+                    <div id="normalize-bar" class="banner banner-err hidden"
+                        style="display:flex;justify-content:space-between;align-items:center;">
+                        <span id="normalize-msg"></span>
+                        <button class="btn" style="padding:4px 10px;font-size:0.78rem;" onclick="normalizeMix()">Fix to
+                            100%</button>
+                    </div>
+
+                    <div id="stage-warning" class="banner banner-warn"></div>
+                    <div id="warning-detail"
+                        style="display:none;margin-top:8px;padding:10px;background:var(--panel-bg);border:1px solid var(--border);border-radius:6px;font-size:0.85rem;line-height:1.5;">
+                    </div>
+                    <div id="solve-msg" class="banner hidden"></div>
+
+                    <div id="gauges"></div>
+                    <div id="gauge-hint"
+                        style="display:none;position:fixed;padding:10px;background:var(--panel-bg);border:1px solid var(--border);border-radius:6px;font-size:0.85rem;line-height:1.5;z-index:1000;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                        <div id="gauge-hint-detail"></div>
+                        <div style="margin-top:6px;"><span style="cursor:pointer;color:var(--accent);"
+                                onclick="document.getElementById('gauge-hint').style.display='none'">✕ Close</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PANTRY & SAVED RECIPES -->
+        <div id="tab-pantry" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+                <h2>
+                    <span>Saved Homestead Recipes</span>
+                    <span style="display:flex;gap:6px;">
+                        <button class="btn" style="padding:4px 10px;font-size:0.78rem;" onclick="exportBackup()">Export
+                            JSON</button>
+                        <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
+                            onclick="document.getElementById('import-file').click()">Import</button>
+                        <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
+                            onclick="resetDefaults()">Reset</button>
+                        <input id="import-file" type="file" accept=".json" class="hidden"
+                            onchange="importBackup(this)" />
+                    </span>
+                </h2>
+                <div id="recipes-list"></div>
+            </div>
+            <div class="grid" style="align-items:start;">
+                <div class="panel" style="min-width:0;max-height:70vh;overflow-y:auto;">
+                    <h2>Ingredient List</h2>
+                    <table class="pantry">
+                        <thead>
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Source</th>
+                                <th>Cost ($/lb)</th>
+                                <th>Max Safe %</th>
+                                <th>ME (kcal/lb)</th>
+                                <th>Protein %</th>
+                                <th>Notes</th>
+                                <th>Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pantry-body"></tbody>
+                    </table>
+                </div>
+                <div class="panel" style="min-width:320px;position:sticky;top:16px;">
+                    <h2><span id="ingredient-form-title">Add New Crop / Ingredient</span></h2>
+                    <input type="hidden" id="edit-ingredient-index" value="-1" />
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem;">
+                        <label style="grid-column:1/3;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Name</span>
+                            <input id="new-name" placeholder="e.g. Hulless Oats"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Source</span>
+                            <select id="new-src" style="padding:7px;border:1px solid var(--border);border-radius:6px;">
+                                <option value="Homegrown">Homegrown</option>
+                                <option value="Purchased">Purchased</option>
+                                <option value="Either">Either</option>
+                            </select>
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Category</span>
+                            <select id="new-category"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;">
+                                <option value="grain">Grain</option>
+                                <option value="protein">Protein</option>
+                                <option value="mineral">Mineral</option>
+                            </select>
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Cost ($/lb)</span>
+                            <input id="new-cost" type="number" step="0.01" placeholder="0.18"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Max Safe %</span>
+                            <input id="new-max" type="number" step="1" placeholder="25"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Energy (kcal/lb)</span>
+                            <input id="new-me" type="number" placeholder="1350"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Protein %</span>
+                            <input id="new-cp" type="number" step="0.1" placeholder="14.5"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Fat %</span>
+                            <input id="new-fat" type="number" step="0.1" placeholder="3.5"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Fiber %</span>
+                            <input id="new-fiber" type="number" step="0.1" placeholder="4.0"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Calcium %</span>
+                            <input id="new-ca" type="number" step="0.01" placeholder="0.08"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Avail. P %</span>
+                            <input id="new-avp" type="number" step="0.01" placeholder="0.15"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Sodium %</span>
+                            <input id="new-na" type="number" step="0.01" placeholder="0.03"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Lysine %</span>
+                            <input id="new-lys" type="number" step="0.01" placeholder="0.50"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Methionine %</span>
+                            <input id="new-met" type="number" step="0.01" placeholder="0.22"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Met+Cys %</span>
+                            <input id="new-metCys" type="number" step="0.01" placeholder="0.45"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Threonine %</span>
+                            <input id="new-thr" type="number" step="0.01" placeholder="0.40"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <label style="grid-column:1/3;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-weight:600;font-size:0.8rem;color:var(--muted);">Notes</span>
+                            <input id="new-notes" placeholder="Optional notes"
+                                style="padding:7px;border:1px solid var(--border);border-radius:6px;" />
+                        </label>
+                        <div style="grid-column:1/3;display:flex;gap:8px;">
+                            <button class="btn btn-primary" id="save-ingredient-btn" onclick="saveIngredient()">+ Add to
+                                Barn Pantry</button>
+                            <button class="btn" id="cancel-edit-btn" style="display:none;"
+                                onclick="cancelEditIngredient()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        const STORAGE_KEY = 'north_idaho_chicken_feed_v1';
+        const DB_NAME = 'chickenfeed-db';
+        const STORE_NAME = 'state';
+        let state = null;
+        let hasGoBackend = false;
+        let syncTimer = null;
+        let dirtyBackend = false;
+        let dbPromise = null;
+        let eventSource = null;
+        let currentRecipeName = '';
+        let titleEditTimeout = null;
+
+        function openDB() {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(STORE_NAME);
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = e => reject(e.target.error);
+            });
+            return dbPromise;
+        }
+
+        async function idbGet(key) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get(key);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function idbPut(key, val) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const req = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(val, key);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        const METRICS = [
+            {key: 'me', label: 'Energy (ME)', fmt: v => Math.round(v) + ' kcal/lb', absMax: 1650},
+            {key: 'cp', label: 'Crude Protein', fmt: v => (v * 100).toFixed(1) + '%', absMax: 0.28},
+            {key: 'fat', label: 'Crude Fat', fmt: v => (v * 100).toFixed(1) + '%', absMax: 0.10},
+            {key: 'fiber', label: 'Crude Fiber', fmt: v => (v * 100).toFixed(1) + '%', absMax: 0.09},
+            {key: 'ca', label: 'Calcium', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.05},
+            {key: 'avp', label: 'Avail. Phosphorus', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.008},
+            {key: 'na', label: 'Sodium (Salt)', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.0035},
+            {key: 'lys', label: 'Lysine', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.016},
+            {key: 'met', label: 'Methionine', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.007},
+            {key: 'metCys', label: 'Met + Cys', fmt: v => (v * 100).toFixed(2) + '%', absMax: 0.012},
+            {key: 'caAvp', label: 'Ratio: Ca : Avail P', fmt: v => v.toFixed(1) + ' : 1', absMax: 14},
+            {key: 'meCp', label: 'Ratio: Energy : Prot', fmt: v => v.toFixed(1), absMax: 100},
+            {key: 'metLys', label: 'Ratio: Met : Lys', fmt: v => v.toFixed(2), absMax: 0.7},
+        ];
+
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m]));
+        }
+
+        async function init() {
+            try {
+                const res = await fetch('api/state');
+                if (res.ok && (res.headers.get('content-type') || '').includes('application/json')) {
+                    hasGoBackend = true;
+                    eventSource = new EventSource('api/events');
+                }
+            } catch (_) { }
+
+            state = await idbGet(STORAGE_KEY);
+            if (!state) state = structuredClone(window.DEFAULT_FEED_STATE);
+            // Ensure customTitle exists
+            if (!state.customTitle) state.customTitle = 'Chicken Feed Mixer';
+            setupTitleEditor();
+            renderAll();
+        }
+
+        async function persist() {
+            await idbPut(STORAGE_KEY, state);
+            if (hasGoBackend) {
+                dirtyBackend = true;
+                clearTimeout(syncTimer);
+                syncTimer = setTimeout(() => {
+                    dirtyBackend = false;
+                    fetch('api/state', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(state)
+                    }).catch(() => { });
+                }, 200);
+            }
+        }
+
+        function setupTitleEditor() {
+            const titleEl = document.getElementById('app-title');
+            titleEl.addEventListener('click', () => {
+                if (titleEl.contentEditable === 'true') return;
+                titleEl.contentEditable = 'true';
+                titleEl.focus();
+                // Move cursor to end
+                const range = document.createRange();
+                range.selectNodeContents(titleEl);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            });
+            titleEl.addEventListener('blur', saveTitle);
+            titleEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    titleEl.blur();
+                }
+                if (e.key === 'Escape') {
+                    titleEl.textContent = '🐔 ' + state.customTitle;
+                    titleEl.blur();
+                }
+            });
+            // Prevent newlines
+            titleEl.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text').replace(/\n/g, ' ');
+                document.execCommand('insertText', false, text);
+            });
+            // Initial render
+            titleEl.textContent = '🐔 ' + state.customTitle;
+        }
+
+        function saveTitle() {
+            const titleEl = document.getElementById('app-title');
+            if (titleEl.contentEditable !== 'true') return;
+            titleEl.contentEditable = 'false';
+            const newTitle = titleEl.textContent.replace(/^🐔\s*/, '').trim();
+            if (newTitle && newTitle !== state.customTitle) {
+                state.customTitle = newTitle;
+                persist();
+            }
+            titleEl.textContent = '🐔 ' + state.customTitle;
+        }
+
+        window.addEventListener('pagehide', () => {
+            if (hasGoBackend && dirtyBackend && state) {
+                navigator.sendBeacon('api/state', new Blob([JSON.stringify(state)], {type: 'application/json'}));
+            }
+        });
+
+        function switchTab(t) {
+            document.getElementById('tab-mixer').classList.toggle('hidden', t !== 'mixer');
+            document.getElementById('tab-pantry').classList.toggle('hidden', t !== 'pantry');
+            document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0 && t === 'mixer') || (i === 1 && t === 'pantry')));
+        }
+
+        function activeStage() {
+            return state.stages.find(s => s.id === state.activeStage) || state.stages[0];
+        }
+
+        function fmtLbsOz(lbs) {
+            const whole = Math.floor(lbs);
+            const oz = Math.round((lbs - whole) * 16);
+            if (oz === 16) return `${whole + 1} lb 0 oz`;
+            return `${whole} lb ${oz} oz`;
+        }
+
+        function renderAll() {
+            document.getElementById('batch-lbs').value = state.batchLbs;
+            document.getElementById('current-recipe-name').textContent = currentRecipeName;
+            renderStages();
+            renderIngredients();
+            renderDashboard();
+            renderPantry();
+            renderRecipes();
+        }
+
+        function renderStages() {
+            document.getElementById('stage-strip').innerHTML = state.stages.map(s => `
+    <button class="stage-card ${s.id === state.activeStage ? 'active' : ''}" onclick="selectStage('${s.id}')">
+      <span class="ico">${s.icon}</span>
+      <span class="nm">${esc(s.name)}</span>
+    </button>
+  `).join('');
+        }
+
+        async function selectStage(id) {
+            state.activeStage = id;
+            document.getElementById('solve-msg').classList.add('hidden');
+            await persist();
+            renderAll();
+        }
+
+        async function updateBatch(val) {
+            state.batchLbs = Math.max(1, parseFloat(val) || 50);
+            await persist();
+            renderAll();
+        }
+
+        function renderIngredients() {
+            const cats = [
+                {id: 'grain', label: 'Grains & Field Pulses'},
+                {id: 'protein', label: 'Proteins, Seeds & Fats'},
+                {id: 'mineral', label: 'Minerals, Vitamins & Amino Acids'},
+            ];
+            let html = '';
+            for (const cat of cats) {
+                const list = state.ingredients.filter(i => i.category === cat.id);
+                if (!list.length) continue;
+                html += `<div class="cat-title">${cat.label}</div>`;
+                for (const ing of list) {
+                    const pct = (state.currentMix[ing.id] || 0) * 100;
+                    const lbs = (pct / 100) * state.batchLbs;
+                    const badgeCls = ing.source === 'Homegrown' ? 'b-home' : (ing.source === 'Purchased' ? 'b-buy' : 'b-either');
+                    const overMax = pct > ing.maxPct * 100 + 0.05;
+                    const step = ing.maxPct <= 0.02 ? '0.05' : '0.5';
+                    html += `
+        <div class="ing-row ${ing.enabled ? '' : 'off'}">
+          <input type="checkbox" ${ing.enabled ? 'checked' : ''} onchange="toggleIng('${ing.id}', this.checked)" title="Available in barn?" />
+          <div>
+            <div class="ing-name">${esc(ing.name)}</div>
+            <div class="ing-sub">
+              <span class="badge ${badgeCls}">${esc(ing.source)}</span>
+              <span>$${ing.cost.toFixed(2)}/lb</span>
+              <span id="max-${ing.id}" style="${overMax ? 'color:var(--red);font-weight:700;' : ''}cursor:pointer" onclick="setToMax('${ing.id}')" title="Click to set to max">Max ${(ing.maxPct * 100).toFixed(ing.maxPct < 0.02 ? 1 : 0)}%</span>
+            </div>
+          </div>
+          <input id="slider-${ing.id}" type="range" min="0" max="${Math.min(100, ing.maxPct * 100)}" step="${step}" value="${pct.toFixed(2)}" ${ing.enabled ? '' : 'disabled'} oninput="setMixPct('${ing.id}', this.value, 'slider')" />
+          <input id="num-${ing.id}" class="pct-box" type="number" min="0" max="100" step="0.05" value="${pct.toFixed(2)}" ${ing.enabled ? '' : 'disabled'} onchange="setMixPct('${ing.id}', this.value, 'num')" />
+          <div id="wt-${ing.id}" class="wt-col">
+            <div>${lbs.toFixed(2)} lbs</div>
+            <div class="wt-sub">${fmtLbsOz(lbs)}</div>
+          </div>
+        </div>
+      `;
+                }
+            }
+            document.getElementById('ingredients-list').innerHTML = html;
+        }
+
+        async function toggleIng(id, checked) {
+            const ing = state.ingredients.find(i => i.id === id);
+            if (ing) ing.enabled = checked;
+            if (!checked) delete state.currentMix[id];
+            persist();
+            renderIngredients();
+            renderDashboard();
+        }
+
+        async function setMixPct(id, pctVal, source) {
+            const ing = state.ingredients.find(i => i.id === id);
+            const v = Math.max(0, Math.min(100, parseFloat(pctVal) || 0)) / 100;
+            if (v <= 0) delete state.currentMix[id];
+            else state.currentMix[id] = v;
+
+            const pct = v * 100;
+            const lbs = v * state.batchLbs;
+            const slider = document.getElementById('slider-' + id);
+            const num = document.getElementById('num-' + id);
+            const wt = document.getElementById('wt-' + id);
+            const maxEl = document.getElementById('max-' + id);
+
+            if (slider && source !== 'slider') slider.value = pct.toFixed(2);
+            if (num && source !== 'num') num.value = pct.toFixed(2);
+            if (wt) wt.innerHTML = `<div>${lbs.toFixed(2)} lbs</div><div class="wt-sub">${fmtLbsOz(lbs)}</div>`;
+            if (maxEl && ing) {
+                const over = pct > ing.maxPct * 100 + 0.05;
+                maxEl.style.color = over ? 'var(--red)' : '';
+                maxEl.style.fontWeight = over ? '700' : '';
+            }
+
+            persist();
+            renderDashboard();
+        }
+
+        function toggleWarningDetail() {
+            const detail = document.getElementById('warning-detail');
+            const info = document.getElementById('warning-info');
+            const stg = activeStage();
+            if (detail.style.display === 'none') {
+                // Find which nutrient the warning is about
+                const w = stg.warning || '';
+                let nutrientKey = null;
+                if (w.toLowerCase().includes('calcium')) nutrientKey = 'ca';
+                else if (w.toLowerCase().includes('protein')) nutrientKey = 'cp';
+                else if (w.toLowerCase().includes('energy') || w.toLowerCase().includes('kcal')) nutrientKey = 'me';
+                else if (w.toLowerCase().includes('phosphorus')) nutrientKey = 'avp';
+
+                let html = '';
+                if (nutrientKey) {
+                    const label = nutrientKey === 'ca' ? 'Calcium' : nutrientKey === 'cp' ? 'Protein' : nutrientKey === 'me' ? 'Energy (ME)' : 'Available Phosphorus';
+                    const sources = state.ingredients
+                        .filter(i => i.enabled && (i[nutrientKey] || 0) > 0)
+                        .sort((a, b) => (b[nutrientKey] || 0) - (a[nutrientKey] || 0));
+                    if (sources.length > 0) {
+                        html = `<strong>Ingredients supplying ${label}:</strong><ul style="margin:4px 0;padding-left:18px;">`;
+                        for (const ing of sources) {
+                            const val = ing[nutrientKey];
+                            const fmt = nutrientKey === 'me' ? val.toFixed(0) + ' kcal/lb' : (val * 100).toFixed(2) + '%';
+                            html += `<li>${esc(ing.name)} — ${fmt}</li>`;
+                        }
+                        html += '</ul>';
+                    } else {
+                        html = `<strong>No enabled ingredients supply ${label}.</strong> Enable some in the Barn Pantry tab.`;
+                    }
+                } else {
+                    html = 'Check the <strong>Barn Pantry</strong> tab to see which ingredients supply each nutrient.';
+                }
+                detail.innerHTML = html;
+                detail.style.display = 'block';
+                info.textContent = '🔽';
+            } else {
+                detail.style.display = 'none';
+                info.textContent = 'ℹ️';
+            }
+        }
+
+        async function clearMix() {
+            state.currentMix = {};
+            currentRecipeName = '';
+            persist();
+            renderIngredients();
+            renderDashboard();
+        }
+
+        function setToMax(id) {
+            const ing = state.ingredients.find(i => i.id === id);
+            if (!ing) return;
+            const maxPct = ing.maxPct * 100;
+            setMixPct(id, maxPct.toFixed(2), 'max');
+        }
+
+        function toggleWarningDetail() {
+            const detail = document.getElementById('warning-detail');
+            const info = document.getElementById('warning-info');
+            const stg = activeStage();
+            if (detail.style.display === 'none') {
+                const w = stg.warning || '';
+                let nutrientKey = null;
+                if (w.toLowerCase().includes('calcium')) nutrientKey = 'ca';
+                else if (w.toLowerCase().includes('protein')) nutrientKey = 'cp';
+                else if (w.toLowerCase().includes('energy') || w.toLowerCase().includes('kcal')) nutrientKey = 'me';
+                else if (w.toLowerCase().includes('phosphorus')) nutrientKey = 'avp';
+
+                let html = '';
+                if (nutrientKey) {
+                    const label = nutrientKey === 'ca' ? 'Calcium' : nutrientKey === 'cp' ? 'Protein' : nutrientKey === 'me' ? 'Energy (ME)' : 'Available Phosphorus';
+                    const sources = state.ingredients
+                        .filter(i => i.enabled && (i[nutrientKey] || 0) > 0)
+                        .sort((a, b) => (b[nutrientKey] || 0) - (a[nutrientKey] || 0));
+                    if (sources.length > 0) {
+                        html = `<strong>Ingredients supplying ${label}:</strong><ul style="margin:4px 0;padding-left:18px;">`;
+                        for (const ing of sources) {
+                            const val = ing[nutrientKey];
+                            const fmt = nutrientKey === 'me' ? val.toFixed(0) + ' kcal/lb' : (val * 100).toFixed(2) + '%';
+                            html += `<li>${esc(ing.name)} — ${fmt}</li>`;
+                        }
+                        html += '</ul>';
+                    } else {
+                        html = `<strong>No enabled ingredients supply ${label}.</strong> Enable some in the Barn Pantry tab.`;
+                    }
+                } else {
+                    html = 'Check the <strong>Barn Pantry</strong> tab to see which ingredients supply each nutrient.';
+                }
+                detail.innerHTML = html;
+                detail.style.display = 'block';
+                info.textContent = '🔽';
+            } else {
+                detail.style.display = 'none';
+                info.textContent = 'ℹ️';
+            }
+        }
+
+        async function normalizeMix() {
+            const total = Object.values(state.currentMix).reduce((a, b) => a + b, 0);
+            if (total <= 0) return;
+            for (const k of Object.keys(state.currentMix)) {
+                state.currentMix[k] = state.currentMix[k] / total;
+            }
+            persist();
+            renderIngredients();
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const stg = activeStage();
+            let totalFrac = 0, costPerLb = 0;
+            const totals = {me: 0, cp: 0, fat: 0, fiber: 0, ca: 0, avp: 0, na: 0, lys: 0, met: 0, metCys: 0, thr: 0};
+
+            for (const ing of state.ingredients) {
+                const f = state.currentMix[ing.id] || 0;
+                totalFrac += f;
+                costPerLb += f * ing.cost;
+                for (const k of Object.keys(totals)) totals[k] += f * ing[k];
+            }
+            totals.caAvp = totals.avp > 0 ? totals.ca / totals.avp : 0;
+            totals.meCp = totals.cp > 0 ? totals.me / (totals.cp * 100) : 0;
+            totals.metLys = totals.lys > 0 ? totals.met / totals.lys : 0;
+
+            document.getElementById('sum-pct').textContent = (totalFrac * 100).toFixed(1) + '%';
+            document.getElementById('sum-pct').style.color = Math.abs(totalFrac - 1) < 0.002 ? 'var(--green)' : 'var(--red)';
+            document.getElementById('sum-cost').textContent = '$' + (costPerLb * state.batchLbs).toFixed(2);
+            document.getElementById('sum-perlb').textContent = '$' + costPerLb.toFixed(3);
+
+            const normBar = document.getElementById('normalize-bar');
+            if (Math.abs(totalFrac - 1) >= 0.002) {
+                normBar.classList.remove('hidden');
+                const diff = ((1 - totalFrac) * 100).toFixed(1);
+                document.getElementById('normalize-msg').textContent = totalFrac < 1 ? `Mix is ${diff}% short of 100%.` : `Mix is ${Math.abs(diff)}% over 100%.`;
+            } else {
+                normBar.classList.add('hidden');
+            }
+
+            document.getElementById('stage-warning').innerHTML = stg.warning + ' <span id="warning-info" style="cursor:pointer;color:var(--accent);">ℹ️</span>';
+            document.getElementById('warning-info').onclick = () => toggleWarningDetail();
+            document.getElementById('warning-detail').style.display = 'none';
+
+            let gHtml = '';
+            for (const m of METRICS) {
+                const val = totals[m.key] || 0;
+                const min = stg.min[m.key] ?? 0;
+                const max = stg.max[m.key] ?? m.absMax;
+                const ceiling = Math.max(m.absMax, max * 1.25);
+                const leftPct = Math.max(0, Math.min(100, (min / ceiling) * 100));
+                const widthPct = Math.max(2, Math.min(100 - leftPct, ((max - min) / ceiling) * 100));
+                const dotPct = Math.max(0, Math.min(100, (val / ceiling) * 100));
+
+                let statusCls = 'dot-ok', statusTxt = 'OK';
+                if (val < min - 1e-6) {statusCls = 'dot-low'; statusTxt = 'LOW';}
+                else if (val > max + 1e-6) {statusCls = 'dot-high'; statusTxt = 'HIGH';}
+
+                const clickable = (statusCls === 'dot-low' || statusCls === 'dot-high') ? ` onclick="toggleGaugeHint(event, '${m.key}')" style="cursor:pointer"` : '';
+                gHtml += `
+      <div class="gauge"${clickable}>
+        <div class="gauge-head">
+          <span>${m.label}</span>
+          <span>
+            <strong>${m.fmt(val)}</strong>
+            <span style="color:var(--muted);font-weight:500;">(${m.fmt(min)}–${m.fmt(max)})</span>
+            <span class="badge" style="margin-left:4px;background:${statusTxt === 'OK' ? 'var(--green-soft)' : statusTxt === 'LOW' ? 'var(--red-soft)' : 'var(--amber-soft)'};color:${statusTxt === 'OK' ? 'var(--green)' : statusTxt === 'LOW' ? 'var(--red)' : 'var(--amber)'}">${statusTxt}</span>
+          </span>
+        </div>
+        <div class="track">
+          <div class="zone" style="left:${leftPct}%;width:${widthPct}%;"></div>
+          <div class="dot ${statusCls}" style="left:${dotPct}%;"></div>
+        </div>
+      </div>
+    `;
+            }
+            document.getElementById('gauges').innerHTML = gHtml;
+            document.getElementById('gauge-hint').style.display = 'none';
+        }
+
+        function toggleGaugeHint(event, key) {
+            event.stopPropagation();
+            const detail = document.getElementById('gauge-hint-detail');
+            const hint = document.getElementById('gauge-hint');
+            const stg = activeStage();
+
+            // Close any existing hint first
+            hint.style.display = 'none';
+            const labelMap = {
+                me: 'Energy (ME)', cp: 'Crude Protein', fat: 'Crude Fat', fiber: 'Crude Fiber',
+                ca: 'Calcium', avp: 'Avail. Phosphorus', na: 'Sodium', lys: 'Lysine',
+                met: 'Methionine', metCys: 'Met + Cys', thr: 'Threonine'
+            };
+            const label = labelMap[key] || key;
+            const min = stg.min[key] ?? 0;
+
+            const sources = state.ingredients
+                .filter(i => i.enabled && (i[key] || 0) > 0)
+                .sort((a, b) => (b[key] || 0) - (a[key] || 0));
+
+            let html = `<strong>Ingredients high in ${label} (target ≥ ${stg.min[key] ? stg.min[key].toFixed(3) : '0'}):</strong>`;
+            if (sources.length > 0) {
+                html += '<ul style="margin:4px 0;padding-left:18px;">';
+                for (const ing of sources) {
+                    const val = ing[key];
+                    const fmt = key === 'me' ? val.toFixed(0) + ' kcal/lb' : (val * 100).toFixed(2) + '%';
+                    html += `<li>${esc(ing.name)} — ${fmt}</li>`;
+                }
+                html += '</ul>';
+            } else {
+                html += '<p style="color:var(--red);margin:4px 0;">No enabled ingredients supply this nutrient.</p>';
+            }
+            detail.innerHTML = html;
+            hint.style.display = 'block';
+            // Position near the click
+            const rect = hint.getBoundingClientRect();
+            let top = event.clientY + 10;
+            let left = event.clientX + 10;
+            if (top + rect.height > window.innerHeight) top = event.clientY - rect.height - 10;
+            if (left + rect.width > window.innerWidth) left = event.clientX - rect.width - 10;
+            hint.style.top = top + 'px';
+            hint.style.left = left + 'px';
+            hint.style.position = 'fixed';
+        }
+
+        // Close hint when clicking outside
+        document.addEventListener('click', (e) => {
+            const hint = document.getElementById('gauge-hint');
+            if (hint && hint.style.display === 'block' && !hint.contains(e.target)) {
+                hint.style.display = 'none';
+            }
+        });
+
+        async function autoOptimize() {
+            const msgEl = document.getElementById('solve-msg');
+            const data = window.solveRationJS(
+                state.ingredients,
+                activeStage(),
+                document.getElementById('prefer-home').checked
+            );
+            msgEl.classList.remove('hidden');
+            if (!data.success) {
+                if (data.bestEffort) {
+                    // Closest mix found — apply it and list what's still off
+                    state.currentMix = data.bestEffort;
+                    currentRecipeName = '';
+                    persist();
+                    renderIngredients();
+                    renderDashboard();
+                    msgEl.className = 'banner banner-warn';
+                    msgEl.innerHTML = '⚠️ ' + esc(data.message) + '<ul style="margin:4px 0;padding-left:18px;">'
+                        + data.violations.map(v => `<li>${esc(v)}</li>`).join('') + '</ul>'
+                        + '<span style="font-size:0.8rem;">Try enabling more ingredients or raising Max % caps in the Barn Pantry.</span>';
+                } else {
+                    msgEl.className = 'banner banner-err';
+                    msgEl.textContent = '⚠️ ' + data.message;
+                }
+                return;
+            }
+            state.currentMix = data.mix;
+            currentRecipeName = '';
+            msgEl.className = 'banner banner-ok';
+            msgEl.textContent = '✅ ' + data.message;
+            persist();
+            renderIngredients();
+            renderDashboard();
+        }
+
+        async function saveCurrentRecipe() {
+            const name = prompt('Name this mix (e.g. "Winter Harvest Layer"):');
+            if (!name) return;
+            state.recipes.unshift({
+                name,
+                stageId: state.activeStage,
+                batchLbs: state.batchLbs,
+                mix: {...state.currentMix}
+            });
+            persist();
+            renderRecipes();
+        }
+
+        async function loadRecipe(idx) {
+            const r = state.recipes[idx];
+            if (!r) return;
+            state.activeStage = r.stageId;
+            state.batchLbs = r.batchLbs;
+            state.currentMix = {...r.mix};
+            currentRecipeName = r.name;
+            persist();
+            renderAll();
+            switchTab('mixer');
+        }
+
+        async function deleteRecipe(idx) {
+            state.recipes.splice(idx, 1);
+            persist();
+            renderRecipes();
+        }
+
+        function renderRecipes() {
+            const el = document.getElementById('recipes-list');
+            if (!state.recipes.length) {
+                el.innerHTML = '<p style="color:var(--muted);">No saved recipes yet.</p>';
+                return;
+            }
+            el.innerHTML = state.recipes.map((r, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <strong>${esc(r.name)}</strong>
+        <div style="font-size:0.78rem;color:var(--muted);">${esc(r.stageId)} • ${r.batchLbs} lbs</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" onclick="loadRecipe(${i})">Load</button>
+        <button class="btn" onclick="deleteRecipe(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+        }
+
+        function renderPantry() {
+            document.getElementById('pantry-body').innerHTML = state.ingredients.map((ing, i) => `
+    <tr>
+      <td><strong>${esc(ing.name)}</strong></td>
+      <td>${esc(ing.source)}</td>
+      <td><input type="number" step="0.01" value="${ing.cost}" onchange="updatePantry(${i},'cost',this.value)" /></td>
+      <td><input type="number" step="0.5" value="${(ing.maxPct * 100).toFixed(1)}" onchange="updatePantry(${i},'maxPct',this.value/100)" /></td>
+      <td>${ing.me}</td>
+      <td>${(ing.cp * 100).toFixed(1)}%</td>
+      <td style="color:var(--muted);">${esc(ing.notes)}</td>
+      <td><button class="btn" style="padding:4px 8px;font-size:0.75rem;" onclick="editIngredient(${i})">Edit</button></td>
+    </tr>
+  `).join('');
+        }
+
+        async function updatePantry(idx, field, val) {
+            state.ingredients[idx][field] = Math.max(0, parseFloat(val) || 0);
+            persist();
+            renderIngredients();
+            renderDashboard();
+        }
+
+        function editIngredient(index) {
+            const ing = state.ingredients[index];
+            document.getElementById('edit-ingredient-index').value = index;
+            document.getElementById('new-name').value = ing.name;
+            document.getElementById('new-src').value = ing.source;
+            document.getElementById('new-category').value = ing.category;
+            document.getElementById('new-cost').value = ing.cost.toFixed(2);
+            document.getElementById('new-max').value = (ing.maxPct * 100).toFixed(1);
+            document.getElementById('new-me').value = ing.me;
+            document.getElementById('new-cp').value = (ing.cp * 100).toFixed(1);
+            document.getElementById('new-fat').value = (ing.fat * 100).toFixed(1);
+            document.getElementById('new-fiber').value = (ing.fiber * 100).toFixed(1);
+            document.getElementById('new-ca').value = (ing.ca * 100).toFixed(2);
+            document.getElementById('new-avp').value = (ing.avp * 100).toFixed(2);
+            document.getElementById('new-na').value = (ing.na * 100).toFixed(2);
+            document.getElementById('new-lys').value = (ing.lys * 100).toFixed(2);
+            document.getElementById('new-met').value = (ing.met * 100).toFixed(2);
+            document.getElementById('new-metCys').value = (ing.metCys * 100).toFixed(2);
+            document.getElementById('new-thr').value = (ing.thr * 100).toFixed(2);
+            document.getElementById('new-notes').value = ing.notes || '';
+            document.getElementById('ingredient-form-title').textContent = 'Edit Ingredient';
+            document.getElementById('save-ingredient-btn').textContent = 'Save Changes';
+            document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+            document.getElementById('new-name').focus();
+        }
+
+        function cancelEditIngredient() {
+            document.getElementById('edit-ingredient-index').value = -1;
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-src').value = 'Homegrown';
+            document.getElementById('new-category').value = 'grain';
+            document.getElementById('new-cost').value = '';
+            document.getElementById('new-max').value = '';
+            document.getElementById('new-me').value = '';
+            document.getElementById('new-cp').value = '';
+            document.getElementById('new-fat').value = '';
+            document.getElementById('new-fiber').value = '';
+            document.getElementById('new-ca').value = '';
+            document.getElementById('new-avp').value = '';
+            document.getElementById('new-na').value = '';
+            document.getElementById('new-lys').value = '';
+            document.getElementById('new-met').value = '';
+            document.getElementById('new-metCys').value = '';
+            document.getElementById('new-thr').value = '';
+            document.getElementById('new-notes').value = '';
+            document.getElementById('ingredient-form-title').textContent = 'Add New Crop / Ingredient';
+            document.getElementById('save-ingredient-btn').textContent = '+ Add to Barn Pantry';
+            document.getElementById('cancel-edit-btn').style.display = 'none';
+        }
+
+        async function saveIngredient() {
+            const name = document.getElementById('new-name').value.trim();
+            if (!name) return alert('Enter a crop/ingredient name');
+            const index = parseInt(document.getElementById('edit-ingredient-index').value);
+            const isEdit = index >= 0;
+            const data = {
+                id: isEdit ? state.ingredients[index].id : 'custom_' + Date.now(),
+                name,
+                category: document.getElementById('new-category').value,
+                source: document.getElementById('new-src').value,
+                enabled: isEdit ? state.ingredients[index].enabled : true,
+                cost: parseFloat(document.getElementById('new-cost').value) || 0.20,
+                maxPct: (parseFloat(document.getElementById('new-max').value) || 25) / 100,
+                me: parseFloat(document.getElementById('new-me').value) || 1200,
+                cp: (parseFloat(document.getElementById('new-cp').value) || 12) / 100,
+                fat: (parseFloat(document.getElementById('new-fat').value) || 2) / 100,
+                fiber: (parseFloat(document.getElementById('new-fiber').value) || 4) / 100,
+                ca: (parseFloat(document.getElementById('new-ca').value) || 0.05) / 100,
+                avp: (parseFloat(document.getElementById('new-avp').value) || 0.14) / 100,
+                na: (parseFloat(document.getElementById('new-na').value) || 0.03) / 100,
+                lys: (parseFloat(document.getElementById('new-lys').value) || 0.4) / 100,
+                met: (parseFloat(document.getElementById('new-met').value) || 0.2) / 100,
+                metCys: (parseFloat(document.getElementById('new-metCys').value) || 0.45) / 100,
+                thr: (parseFloat(document.getElementById('new-thr').value) || 0.4) / 100,
+                notes: document.getElementById('new-notes').value || 'Custom homestead crop'
+            };
+            if (isEdit) {
+                state.ingredients[index] = data;
+            } else {
+                state.ingredients.push(data);
+            }
+            await persist();
+            cancelEditIngredient();
+            renderAll();
+            alert(isEdit ? 'Ingredient updated!' : 'Added ' + name + ' to your Barn Pantry!');
+        }
+
+        function exportBackup() {
+            const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'homestead-feed-backup.json';
+            a.click();
+        }
+
+        function importBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const parsed = JSON.parse(reader.result);
+                    if (!parsed.ingredients || !parsed.stages) throw new Error('Invalid backup file');
+                    state = parsed;
+                    await persist();
+                    renderAll();
+                    alert('Backup loaded!');
+                } catch (e) {
+                    alert('Could not load file: ' + e.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function resetDefaults() {
+            if (!confirm('Reset all ingredients, prices, and recipes back to defaults?')) return;
+            state = structuredClone(window.DEFAULT_FEED_STATE);
+            await persist();
+            renderAll();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
