@@ -582,7 +582,6 @@
                                 <th>Max Safe %</th>
                                 <th>ME (kcal/lb)</th>
                                 <th>Protein %</th>
-                                <th>Notes</th>
                                 <th>Edit</th>
                             </tr>
                         </thead>
@@ -1315,7 +1314,6 @@
       <td><input type="number" step="0.5" value="${(ing.maxPct * 100).toFixed(1)}" onchange="updatePantry(${i},'maxPct',this.value/100)" /></td>
       <td>${ing.me}</td>
       <td>${(ing.cp * 100).toFixed(1)}%</td>
-      <td style="color:var(--muted);">${esc(ing.notes)}</td>
       <td><button class="btn" style="padding:4px 8px;font-size:0.75rem;" onclick="editIngredient(${i})">Edit</button></td>
     </tr>
   `).join('');
